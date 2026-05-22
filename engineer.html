@@ -1,102 +1,101 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.6">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="UTF-8">
+  <title>工程師後台</title>
+  <style>
+    body {
+      font-family: Arial;
+      background:#f0f2f5;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+    }
+    .box {
+      background:white;
+      padding:30px;
+      border-radius:10px;
+      box-shadow:0 4px 8px rgba(0,0,0,0.2);
+      width:500px;
+    }
+    h1 {
+      text-align:center;
+      margin-bottom:20px;
+    }
+    input, button {
+      width:90%;
+      padding:10px;
+      margin:10px 0;
+      border-radius:5px;
+      border:1px solid #ccc;
+    }
+    button {
+      background:#4CAF50;
+      color:white;
+      border:none;
+      cursor:pointer;
+    }
+    button:hover {
+      background:#45a049;
+    }
+    ul {text-align:left;}
   </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;工程師維護頁面&lt;/title&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;h2&gt;工程師維護系統&lt;/h2&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 新增帳號 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;新增帳號&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="newUser" placeholder="帳號"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="newPass" type="password" placeholder="密碼"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;select id="newRole"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;option value="resident"&gt;住戶&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;option value="property"&gt;物業&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;option value="cafe"&gt;咖啡廳&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;option value="engineer"&gt;工程師&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/select&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;button onclick="addAccount()"&gt;新增帳號&lt;/button&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 帳號列表 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;帳號列表&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;ul id="accounts"&gt;&lt;/ul&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Firebase SDK --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"&gt;&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const firebaseConfig = {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>authDomain: "zonghengcafe.firebaseapp.com",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>projectId: "zonghengcafe",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>storageBucket: "zonghengcafe.firebasestorage.app",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>messagingSenderId: "207027108121",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>appId: "1:207027108121:web:e7a39e19982ed77f9aed88",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>measurementId: "G-8ZE4SE2T7T"</p>
-<p class="p1"><span class="Apple-converted-space">    </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>const app = firebase.initializeApp(firebaseConfig);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const db = firebase.firestore();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 新增帳號</p>
-<p class="p1"><span class="Apple-converted-space">    </span>async function addAccount() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const username = document.getElementById("newUser").value;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const password = document.getElementById("newPass").value;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const role = document.getElementById("newRole").value;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>await db.collection("accounts").add({</p>
-<p class="p1"><span class="Apple-converted-space">        </span>username: username,</p>
-<p class="p1"><span class="Apple-converted-space">        </span>password: password,</p>
-<p class="p1"><span class="Apple-converted-space">        </span>role: role</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>alert("帳號已新增！");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>loadAccounts();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 載入帳號</p>
-<p class="p1"><span class="Apple-converted-space">    </span>async function loadAccounts() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("accounts").get();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const list = document.getElementById("accounts");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = "";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>snapshot.forEach(doc =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const acc = doc.data();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const li = document.createElement("li");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>li.innerText = acc.username + "（角色：" + acc.role + "）";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// 加上刪除按鈕</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const btn = document.createElement("button");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>btn.innerText = "刪除";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>btn.onclick = async () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>await db.collection("accounts").doc(doc.id).delete();</p>
-<p class="p1"><span class="Apple-converted-space">          </span>alert("帳號已刪除！");</p>
-<p class="p1"><span class="Apple-converted-space">          </span>loadAccounts();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>};</p>
-<p class="p1"><span class="Apple-converted-space">        </span>li.appendChild(btn);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>list.appendChild(li);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 初始化</p>
-<p class="p1"><span class="Apple-converted-space">    </span>loadAccounts();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+  <div class="box">
+    <h1>工程師後台</h1>
+    <input id="newUser" placeholder="帳號">
+    <input id="newPass" type="password" placeholder="密碼">
+    <select id="newRole">
+      <option value="resident">住戶</option>
+      <option value="property">物業</option>
+      <option value="cafe">咖啡廳</option>
+      <option value="engineer">工程師</option>
+    </select>
+    <button onclick="addAccount()">新增帳號</button>
+    <h2>帳號列表</h2>
+    <ul id="accounts"></ul>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = { /* Firebase 設定 */ };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function addAccount() {
+      const username = document.getElementById("newUser").value;
+      const password = document.getElementById("newPass").value;
+      const role = document.getElementById("newRole").value;
+      if (username && password) {
+        await db.collection("accounts").add({username, password, role});
+        alert("帳號已新增！");
+        location.reload();
+      }
+    }
+
+    async function deleteAccount(id) {
+      await db.collection("accounts").doc(id).delete();
+      alert("帳號已刪除！");
+      location.reload();
+    }
+
+    async function loadAccounts() {
+      const acc = await db.collection("accounts").get();
+      acc.forEach(doc => {
+        const li = document.createElement("li");
+        li.textContent = doc.data().username + " (" + doc.data().role + ")";
+        const btn = document.createElement("button");
+        btn.textContent = "刪除";
+        btn.style.marginLeft = "10px";
+        btn.onclick = () => deleteAccount(doc.id);
+        li.appendChild(btn);
+        document.getElementById("accounts").appendChild(li);
+      });
+    }
+    loadAccounts();
+  </script>
 </body>
 </html>
