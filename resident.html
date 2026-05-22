@@ -17,7 +17,7 @@
       min-height: 100vh;
     }
 
-    /* 頂部固定導航列：Logo 與標題並排 */
+    /* 頂部固定導航列：移除文字標題，只留 Logo */
     header {
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
@@ -34,40 +34,18 @@
     .header-left {
       display: flex;
       align-items: center;
-      gap: 8px;
     }
-    header img { height: 32px; width: auto; }
-    .system-title {
-      font-size: 15px;
-      font-weight: bold;
-      color: #5c4033;
-      letter-spacing: 1px;
-    }
-    .header-right { display: flex; align-items: center; gap: 8px; }
+    header img { height: 35px; width: auto; }
     
     .balance-box {
       background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
       color: white;
-      padding: 5px 10px;
+      padding: 6px 12px;
       border-radius: 4px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 500;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       white-space: nowrap;
-    }
-    
-    .nav-btn {
-      background: white;
-      border: 1px solid #c8c8c8;
-      padding: 5px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      color: #555;
-    }
-    .nav-btn.logout {
-      border-color: #d9534f;
-      color: #d9534f;
     }
 
     /* 手機視窗外殼 */
@@ -101,7 +79,7 @@
 
     #dineType { display: none; }
 
-    /* 設計圖一：外帶/內用頁籤切換 */
+    /* 外帶/內用頁籤切換 */
     .dine-tabs {
       display: flex;
       border: 1px solid #bcaea1;
@@ -116,7 +94,7 @@
       background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%); color: white;
     }
 
-    /* 設計圖二：四宮格點餐首頁 */
+    /* 四宮格點餐首頁 */
     .grid-menu {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px;
     }
@@ -126,7 +104,7 @@
     .grid-item img { width: 100%; height: 110px; object-fit: cover; }
     .grid-item .title { padding: 10px; font-size: 14px; font-weight: bold; color: #5c4033; }
 
-    /* 設計圖三：商品詳細清單 */
+    /* 商品詳細清單與規格 */
     .menu-item {
       background: white; border: 1px solid #ededed; border-radius: 6px; padding: 12px; display: flex; align-items: flex-start; margin: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.03);
     }
@@ -136,14 +114,14 @@
     .menu-price { color: #9c8e81; font-weight: bold; font-size: 14px; margin: 4px 0; }
     
     .spec-row { display: flex; gap: 8px; margin: 6px 0; }
-    .spec-row label { font-size: 11px; color: #666; flex: 1; }
+    .spec-row label { font-size: 11px; color: #666; flex: 1; display: flex; flex-direction: column; gap: 2px; }
     .spec-row select { width: 100%; padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; background: #fafafa; }
     
-    .quantity-control { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-    .quantity-control button { width: 26px; height: 26px; background: #f4ede4; color: #5c4033; border: 1px solid #decbc0; border-radius: 4px; font-size: 14px; cursor: pointer; }
-    .quantity-control span { font-size: 14px; font-weight: bold; min-width: 16px; text-align: center; }
+    .quantity-control { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .quantity-control button { width: 28px; height: 28px; background: #f4ede4; color: #5c4033; border: 1px solid #decbc0; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+    .quantity-control span { font-size: 15px; font-weight: bold; min-width: 20px; text-align: center; }
 
-    textarea { width: 100%; height: 40px; margin-top: 6px; border-radius: 4px; border: 1px solid #ddd; padding: 6px; font-size: 12px; box-sizing: border-box; resize: none; }
+    textarea { width: 100%; height: 45px; margin-top: 8px; border-radius: 4px; border: 1px solid #ddd; padding: 6px; font-size: 12px; box-sizing: border-box; resize: none; }
 
     /* 購物車明細 */
     #cartItems { background: #fafafa; border-radius: 4px; padding: 8px; max-height: 120px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 12px; }
@@ -165,11 +143,34 @@
     }
     .ann-tag { display: inline-block; background: #9c8e81; color: white; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
 
+    /* 個人設定欄位樣式 */
+    .setting-group {
+      padding: 16px;
+    }
+    .setting-item {
+      margin-bottom: 15px;
+    }
+    .setting-item label {
+      display: block; font-size: 13px; color: #666; margin-bottom: 5px; font-weight: bold;
+    }
+    .setting-item input {
+      width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #eee; color: #555; font-size: 14px; box-sizing: border-box;
+    }
+    .btn-setting {
+      width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #c8c8c8; background: white; color: #333; font-size: 14px; cursor: pointer; margin-bottom: 10px; transition: background 0.2s;
+    }
+    .btn-setting:hover { background: #f5f5f5; }
+    .btn-setting.danger { border-color: #d9534f; color: #d9534f; margin-top: 15px; }
+    .btn-setting.danger:hover { background: #fdf7f7; }
+
     /* 磨砂大按鈕 */
     .btn-submit {
       width: 100%; padding: 14px; border-radius: 4px; border: 1px solid #9c9183;
       background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
       color: white; font-size: 16px; letter-spacing: 4px; text-indent: 4px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .btn-back {
+      background: white; border: 1px solid #c8c8c8; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #555;
     }
 
     /* 底部分頁切換欄 */
@@ -197,12 +198,9 @@
   <header>
     <div class="header-left">
       <img src="logo.png" alt="系統Logo">
-      <span class="system-title">昭揚縱橫</span>
     </div>
     <div class="header-right">
       <div class="balance-box">餘額：<span id="balance">載入中...</span></div>
-      <button class="nav-btn" onclick="changePassword()">密碼</button>
-      <button class="nav-btn logout" onclick="logout()">登出</button>
     </div>
   </header>
 
@@ -241,7 +239,7 @@
 
     <div id="sec-menu-detail" class="view-section">
       <div style="margin-bottom: 12px;">
-        <button class="nav-btn" onclick="switchSection('sec-menu-home')">← 返回分類</button>
+        <button class="btn-back" onclick="switchSection('sec-menu-home')">← 返回分類</button>
       </div>
       
       <div class="app-card">
@@ -261,7 +259,7 @@
         <select id="seatSelect" style="display:none; margin-bottom: 12px; width:100%; padding:8px; border-radius:4px; border:1px solid #ddd;"></select>
         
         <label style="display:flex; align-items:center; font-size:13px; margin-bottom:15px; color:#666; cursor:pointer;">
-          <input type="checkbox" id="notify" style="margin-right:6px;"> 點餐完成是否需要通知？
+          <input type="checkbox" id="notify" style="margin-right:6px;"> 點餐確認是否需要通知？
         </label>
         
         <button class="btn-submit" onclick="submitOrder()">送出訂單</button>
@@ -275,6 +273,20 @@
       </div>
     </div>
 
+    <div id="sec-settings" class="view-section">
+      <div class="app-card">
+        <div class="card-header"><h2>個人設定</h2></div>
+        <div class="setting-group">
+          <div class="setting-item">
+            <label>目前登入帳號</label>
+            <input type="text" id="setting-username" readonly>
+          </div>
+          <button type="button" class="btn-setting" onclick="changePassword()">更改登入密碼</button>
+          <button type="button" class="btn-setting danger" onclick="logout()">安全登出系統</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="bottom-nav">
@@ -284,11 +296,15 @@
     </div>
     <div class="nav-item active" id="nav-menu" onclick="switchSection('sec-menu-home', this)">
       <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2v-9.03C10.74 12.84 12.4 11.12 12.4 9V2h-1.4v7zm4-6v8h2.5v11h2V3H15z"/></svg>
-      開始點餐
+      歡迎點餐
     </div>
     <div class="nav-item" id="nav-hist" onclick="switchSection('sec-history', this)">
       <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
       訂單紀錄
+    </div>
+    <div class="nav-item" id="nav-set" onclick="switchSection('sec-settings', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/></svg>
+      個人設定
     </div>
   </div>
 
@@ -300,7 +316,7 @@
     const db = firebase.firestore();
 
     let cart = [];
-    // 動態取得目前登入者（若登入頁有存 savedUser 則自動帶入，否則預設 resident01）
+    // 動態取得目前登入者（若登入頁存 admin 就自動抓 admin），讓餘額跟紀錄不會卡死錯誤
     const currentUsername = localStorage.getItem("savedUser") || "resident01";
 
     function switchSection(sectionId, navElement) {
@@ -326,10 +342,13 @@
       document.getElementById('seatSelect').style.display = (type === 'dinein') ? 'block' : 'none';
     }
 
-    // 核心資料讀取，加入安全防呆機制
+    // 核心讀取與介面渲染邏輯
     async function loadResident() {
+      // 在個人設定填入唯讀帳號
+      document.getElementById("setting-username").value = currentUsername;
+
       try {
-        // 1. 修正點數讀取：防止 undefined 或非數值導致 NaN 錯誤
+        // 1. 餘額讀取（動態串接目前帳號文件名稱）
         const balanceDoc = await db.collection("balances").doc(currentUsername).get();
         if (balanceDoc.exists) {
           const data = balanceDoc.data();
@@ -337,10 +356,11 @@
           const reserved = Number(data.reservedPoints) || 0;
           document.getElementById("balance").innerText = (bonus + reserved) + " 點";
         } else {
+          // 如果沒有對應帳號的文件，嘗試預設為 0 點，不讓介面卡在 "載入中..."
           document.getElementById("balance").innerText = "0 點";
         }
 
-        // 2. 載入菜單
+        // 2. 菜單渲染（完美加回備註 textarea 與正確的 id 數量控制元件）
         const menuSnap = await db.collection("menu").get();
         document.getElementById("menu").innerHTML = "";
         menuSnap.forEach(doc => {
@@ -364,23 +384,23 @@
                   </select>
                 </label>
               </div>
-              <textarea id="note-${item.item}" placeholder="備註"></textarea>
+              <textarea id="note-${item.item}" placeholder="備註（如：少蜜、去冰等）"></textarea>
               <div class="quantity-control">
-                <button onclick="changeQty('${item.item}', -1)">-</button>
+                <button type="button" onclick="changeQty('${item.item}', -1)">-</button>
                 <span id="qty-${item.item}">0</span>
-                <button onclick="changeQty('${item.item}', 1)">+</button>
+                <button type="button" onclick="changeQty('${item.item}', 1)">+</button>
               </div>
             </div>
           `;
           document.getElementById("menu").appendChild(div);
         });
 
-        // 3. 載入公告
+        // 3. 載入最新公告
         const ann = await db.collection("announcements").get();
         document.getElementById("announcements").innerHTML = "";
         ann.forEach(doc => {
           const li = document.createElement("li");
-          li.innerHTML = `<div class="ann-tag">公告通知</div><div>${doc.data().text || doc.data().title || ''}</div>`;
+          li.innerHTML = `<div class="ann-tag">公告通知</div><div>${doc.data().text || ''}</div>`;
           document.getElementById("announcements").appendChild(li);
         });
 
@@ -393,7 +413,7 @@
           document.getElementById("seatSelect").appendChild(opt);
         });
 
-        // 5. 載入歷史訂單
+        // 5. 載入訂單歷史
         const orders = await db.collection("orders").where("customer","==",currentUsername).get();
         document.getElementById("orderHistory").innerHTML = "";
         orders.forEach(doc => {
@@ -403,11 +423,12 @@
           document.getElementById("orderHistory").appendChild(li);
         });
       } catch (error) {
-        console.error("資料載入失敗：", error);
-        document.getElementById("balance").innerText = "錯誤";
+        console.error("Firebase 讀取發生錯誤：", error);
+        document.getElementById("balance").innerText = "無法載入";
       }
     }
 
+    // 原始加減數量與購物車核心邏輯（完全接回）
     function changeQty(item, delta) {
       const qtySpan = document.getElementById("qty-" + item);
       let qty = parseInt(qtySpan.innerText) + delta;
@@ -438,11 +459,11 @@
       });
     }
 
-    // 🚀 新增：實作變更密碼功能
+    // 變更密碼功能實作
     async function changePassword() {
       const newPassword = prompt("請輸入您的新密碼：");
       if (!newPassword || newPassword.trim() === "") {
-        alert("密碼不可為空！");
+        alert("操作取消，新密碼不可為空。");
         return;
       }
       try {
@@ -450,9 +471,9 @@
         if (!snapshot.empty) {
           const docId = snapshot.docs[0].id;
           await db.collection("accounts").doc(docId).update({ password: newPassword.trim() });
-          alert("密碼修改成功！下次登入請使用新密碼。");
+          alert("密碼修改成功！下次請用新密碼登入。");
         } else {
-          alert("找不到對應的帳號資料，無法修改密碼。");
+          alert("錯誤：在資料庫中找不到您目前登入的帳號文件。");
         }
       } catch (e) {
         alert("更變密碼失敗，請稍後再試。");
@@ -460,17 +481,17 @@
       }
     }
 
-    // 🚀 新增：實作登出功能
+    // 登出系統
     function logout() {
-      if (confirm("確定要登出系統嗎？")) {
-        localStorage.removeItem("savedPass"); // 清除密碼緩存確保安全
-        window.location.href = "index.html";  // 跳回登入首頁
+      if (confirm("確定要安全登出點餐系統嗎？")) {
+        localStorage.removeItem("savedPass");
+        window.location.href = "index.html";
       }
     }
 
     function submitOrder() { 
       if(cart.length === 0) { alert("購物車目前是空的喔！"); return; }
-      alert("訂單送出完成！"); 
+      alert("訂單已成功送出！"); 
     }
 
     window.onload = loadResident;
