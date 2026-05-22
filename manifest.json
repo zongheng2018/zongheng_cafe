@@ -1,19 +1,20 @@
 {
   "name": "昭揚縱橫 Cafe",
   "short_name": "縱橫Cafe",
-  "start_url": "/index.html",
+  "start_url": "/zongheng_cafe/index.html",
+  "scope": "/zongheng_cafe/",
   "display": "standalone",
   "background_color": "#f5f1eb",
   "theme_color": "#9c8e81",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
