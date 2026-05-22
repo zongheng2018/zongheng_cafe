@@ -1,25 +1,175 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>物業管理系統</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>物業櫃檯介面</title>
   <style>
-    body {font-family:"Microsoft JhengHei"; background:#fdf6e3; display:flex; justify-content:center; align-items:center; height:100vh;}
-    .box {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2); width:500px;}
-    h1 {text-align:center; margin-bottom:20px; color:#5c4033;}
-    h2 {color:#5c4033;}
+    body {font-family:"Microsoft JhengHei"; background:#fdf6e3; margin:0;}
+    header {
+      background:#5c4033; color:white; padding:16px;
+      text-align:center; font-size:22px; letter-spacing:4px;
+    }
+    .container {padding:20px;}
+    h2 {color:#5c4033; margin-top:30px;}
+
+    /* 主控台按鈕區 */
+    .button-group {
+      display:flex; flex-wrap:wrap; gap:15px; margin-bottom:20px;
+    }
+    .button-group button {
+      flex:1; min-width:140px; padding:14px;
+      border:none; border-radius:6px;
+      background:linear-gradient(to bottom,#bcaea1,#9c8e81);
+      color:white; font-size:16px; letter-spacing:2px;
+      cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    }
+    .button-group button:hover {opacity:0.95;}
+    .button-group button:active {transform:scale(0.98);}
+
+    /* 卡片式顯示 */
+    .card {
+      background:white; border-radius:8px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      padding:15px; margin:15px 0;
+    }
+    .card h3 {margin:0; color:#5c4033;}
+    .card p {margin:6px 0; color:#333;}
+    .card button {
+      margin-top:10px; padding:10px; border:none; border-radius:4px;
+      background:#5c4033; color:white; cursor:pointer;
+    }
+    .card button:hover {background:#3e2a20;}
+
+    /* 表單 */
+    form {margin:15px 0;}
+    form input {padding:8px; margin:5px 0; width:100%; border:1px solid #ccc; border-radius:4px;}
+    form button {padding:10px; width:100%; background:#5c4033; color:white; border:none; border-radius:4px;}
+
+    /* 收據 */
+    .receipt {
+      background:white; border:1px dashed #999; padding:15px; margin:15px 0;
+    }
+    .receipt h3 {margin:0; color:#5c4033;}
+    .receipt p {margin:6px 0;}
+    .signature {margin-top:20px; border-top:1px solid #ccc; padding-top:10px; color:#666;}
+
+    @media (max-width:480px) {
+      .button-group {flex-direction:column;}
+      header {font-size:18px;}
+    }
   </style>
 </head>
 <body>
-  <div class="box">
-    <img src="logo.png" class="logo" alt="系統Logo" style="width:80px;">
-    <h1>物業管理系統</h1>
-    <input id="announcement" placeholder="新增公告">
-    <button onclick="addAnnouncement()">發布</button>
-    <h2>公告列表</h2>
-    <ul id="announcements"></ul>
-    <h2>帳號列表</h2>
-    <ul id="accounts"></ul>
+  <header>物業櫃檯介面</header>
+
+  <div class="container">
+    <div class="button-group">
+      <button onclick="showAddAccount()">新增住戶帳號</button>
+      <button onclick="showChangePassword()">更改密碼</button>
+      <button onclick="showTopUp()">儲值點數</button>
+      <button onclick="viewOrders()">訂單管理</button>
+      <button onclick="showAnnouncements()">公告管理</button>
+    </div>
+
+    <div id="content"></div>
   </div>
-</body>
-</html>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = { /* Firebase 設定 */ };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function showAddAccount(){
+      document.getElementById("content").innerHTML=`
+        <div class="card">
+          <h3>新增住戶帳號</h3>
+          <form onsubmit="addAccount(event)">
+            <input id="newUser" placeholder="帳號">
+            <input id="newPass" type="password" placeholder="密碼">
+            <button type="submit">新增</button>
+          </form>
+        </div>`;
+    }
+
+    async function addAccount(e){
+      e.preventDefault();
+      const name=document.getElementById("newUser").value;
+      const pass=document.getElementById("newPass").value;
+      await db.collection("accounts").add({username:name,password:pass,role:"resident"});
+      alert("住戶帳號已新增！");
+    }
+
+    function showChangePassword(){
+      document.getElementById("content").innerHTML=`
+        <div class="card">
+          <h3>更改密碼</h3>
+          <form onsubmit="changePassword(event)">
+            <input id="userName" placeholder="帳號">
+            <input id="newPassword" type="password" placeholder="新密碼">
+            <button type="submit">更新</button>
+          </form>
+        </div>`;
+    }
+
+    async function changePassword(e){
+      e.preventDefault();
+      const name=document.getElementById("userName").value;
+      const pass=document.getElementById("newPassword").value;
+      const snapshot=await db.collection("accounts").where("username","==",name).get();
+      if(!snapshot.empty){
+        await db.collection("accounts").doc(snapshot.docs[0].id).update({password:pass});
+        alert("密碼已更新！");
+      }
+    }
+
+    function showTopUp(){
+      document.getElementById("content").innerHTML=`
+        <div class="card">
+          <h3>儲值點數</h3>
+          <form onsubmit="topUpPoints(event)">
+            <input id="topUser" placeholder="帳號">
+            <input id="topAmount" type="number" placeholder="儲值點數">
+            <button type="submit">儲值</button>
+          </form>
+        </div>`;
+    }
+
+    async function topUpPoints(e){
+      e.preventDefault();
+      const name=document.getElementById("topUser").value;
+      const amount=parseInt(document.getElementById("topAmount").value);
+      const balanceDoc=await db.collection("balances").doc(name).get();
+      if(balanceDoc.exists){
+        const data=balanceDoc.data();
+        await db.collection("balances").doc(name).update({reservedPoints:data.reservedPoints+amount});
+      } else {
+        await db.collection("balances").doc(name).set({reservedPoints:amount,bonusPoints:0});
+      }
+      document.getElementById("content").innerHTML=`
+        <div class="receipt">
+          <h3>儲值收據</h3>
+          <p>住戶：${name}</p>
+          <p>儲值點數：${amount}</p>
+          <div class="signature">住戶簽名：________________</div>
+          <div class="signature">物業簽名：________________</div>
+        </div>
+        <div class="receipt">
+          <h3>儲值收據（存根聯）</h3>
+          <p>住戶：${name}</p>
+          <p>儲值點數：${amount}</p>
+          <div class="signature">住戶簽名：________________</div>
+          <div class="signature">物業簽名：________________</div>
+        </div>`;
+    }
+
+    async function viewOrders(){
+      document.getElementById("content").innerHTML="";
+      const orders=await db.collection("orders").get();
+      orders.forEach(doc=>{
+        const o=doc.data();
+        const div=document.createElement("div");
+        div.className="card";
+        div.innerHTML=`<h3>住戶：${o.customer}</h
