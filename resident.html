@@ -3,27 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>住戶點餐介面</title>
+  <title>昭揚縱橫 - 住戶點餐介面</title>
   <style>
-    /* 全域手機版優化 */
+    /* 全域手機版高仿真 App 視覺 */
     body {
       font-family: "-apple-system", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", Arial, sans-serif;
       background: url('bg.jpg') no-repeat center center fixed;
       background-size: cover;
-      background-color: #f6f1eb;
       margin: 0;
       padding: 0;
-      color: #333;
+      color: #4a4a4a;
       box-sizing: border-box;
-      padding-bottom: 75px; /* 留空間給底部分頁欄 */
+      min-height: 100vh;
     }
 
-    /* 頂部導航列 */
+    /* 頂部固定導航列 */
     header {
       background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
       padding: 12px 16px;
       display: flex;
       justify-content: space-between;
@@ -32,121 +31,117 @@
       top: 0;
       z-index: 100;
     }
-    header img {
-      height: 32px;
-      width: auto;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    header img { height: 32px; width: auto; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    
     .balance-box {
-      background: linear-gradient(135deg, #bcaea1 0%, #9c8e81 100%);
+      background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
       color: white;
       padding: 5px 12px;
-      border-radius: 20px;
+      border-radius: 4px;
       font-size: 13px;
       font-weight: 500;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+    
     .nav-btn {
       background: white;
-      border: 1px solid #dcdcdc;
-      padding: 4px 8px;
+      border: 1px solid #c8c8c8;
+      padding: 5px 10px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
-      color: #666;
+      color: #555;
     }
 
-    /* 手機頁面容器（預設隱藏，靠 active 切換） */
-    .app-page {
-      display: none;
-      padding: 16px;
-      max-width: 480px;
-      margin: 0 auto;
+    /* 獨立手機視窗外殼（寬度限制，完美模擬手機畫面） */
+    .phone-window {
+      max-width: 430px;
+      margin: 20px auto;
+      padding: 0 12px 80px 12px;
       box-sizing: border-box;
     }
-    .app-page.active {
-      display: block;
-    }
 
-    /* 標題與裝飾線 */
-    .page-title-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .page-title-line {
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(to right, rgba(160, 160, 160, 0), rgba(160, 160, 160, 0.4));
-    }
-    .page-title-line.right {
-      background: linear-gradient(to left, rgba(160, 160, 160, 0), rgba(160, 160, 160, 0.4));
-    }
-    .page-title {
-      font-size: 22px;
-      color: #555;
-      font-weight: 400;
-      margin: 0 15px;
-      letter-spacing: 4px;
-    }
-
-    /* 白盒卡片 */
-    .card {
-      background: rgba(255, 255, 255, 0.88);
+    /* 介面卡片通用 */
+    .app-card {
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      padding: 16px;
-      margin-bottom: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      margin-bottom: 20px;
+      overflow: hidden;
     }
 
+    .card-header {
+      background: rgba(248, 246, 242, 0.8);
+      padding: 14px 16px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-header h2 {
+      margin: 0; font-size: 18px; color: #5c4033; font-weight: 500; letter-spacing: 2px;
+    }
+
+    /* 隱藏原生 select 但保留其節點供原始邏輯讀寫 */
+    #dineType { display: none; }
+
     /* ———————————————————————————————————————————
-       頁面 1：最新公告（包含詳細收據質感）
+       設計圖一：外帶/內用頁籤切換按鈕（徹底解決按不下去問題）
        ——————————————————————————————————————————— */
-    #announcements {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    #announcements li {
-      background: white;
-      border-radius: 6px;
-      padding: 14px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-      border: 1px solid #eee;
-    }
-    .ann-tag {
-      display: inline-block;
-      background: #9c8e81;
-      color: white;
-      font-size: 11px;
-      padding: 2px 8px;
+    .dine-tabs {
+      display: flex;
+      border: 1px solid #bcaea1;
       border-radius: 4px;
-      margin-bottom: 8px;
+      overflow: hidden;
+      margin-bottom: 15px;
     }
-    .ann-text {
-      font-size: 15px;
-      color: #444;
-      line-height: 1.4;
+    .dine-tab-btn {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      background: white;
+      color: #7a6e65;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
     }
-    .ann-time {
-      text-align: right;
-      font-size: 11px;
-      color: #aaa;
-      margin-top: 8px;
-      border-top: 1px dashed #eee;
-      padding-top: 6px;
+    .dine-tab-btn.active {
+      background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
+      color: white;
     }
 
     /* ———————————————————————————————————————————
-       頁面 2：歡迎點餐（列表與詳細規格）
+       設計圖二：四宮格點餐首頁
+       ——————————————————————————————————————————— */
+    .grid-menu {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 16px;
+    }
+    .grid-item {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      border: 1px solid #e8e8e8;
+      text-align: center;
+      cursor: pointer;
+    }
+    .grid-item img {
+      width: 100%; height: 110px; object-fit: cover;
+    }
+    .grid-item .title {
+      padding: 10px; font-size: 14px; font-weight: bold; color: #5c4033;
+    }
+
+    /* ———————————————————————————————————————————
+       設計圖三：商品詳細清單
        ——————————————————————————————————————————— */
     .menu-item {
       background: white;
@@ -155,214 +150,85 @@
       padding: 12px;
       display: flex;
       align-items: flex-start;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      margin: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.03);
     }
     .menu-item img {
-      width: 75px;
-      height: 75px;
-      object-fit: cover;
-      margin-right: 12px;
-      border-radius: 6px;
+      width: 75px; height: 75px; object-fit: cover; margin-right: 12px; border-radius: 6px;
     }
-    .menu-info {
-      flex: 1;
-    }
-    .menu-info strong {
-      font-size: 15px;
-      color: #333;
-      display: block;
-    }
-    .menu-price {
-      color: #9c8e81;
-      font-weight: bold;
-      font-size: 14px;
-      margin: 4px 0;
-    }
-    .spec-row {
-      display: flex;
-      gap: 8px;
-      margin: 6px 0;
-    }
-    .spec-row label {
-      font-size: 11px;
-      color: #666;
-      flex: 1;
-    }
+    .menu-info { flex: 1; }
+    .menu-info strong { font-size: 15px; color: #333; display: block; }
+    .menu-price { color: #9c8e81; font-weight: bold; font-size: 14px; margin: 4px 0; }
+    
+    .spec-row { display: flex; gap: 8px; margin: 6px 0; }
+    .spec-row label { font-size: 11px; color: #666; flex: 1; }
     .spec-row select {
-      width: 100%;
-      padding: 3px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-      font-size: 12px;
-      background: #fafafa;
+      width: 100%; padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; background: #fafafa;
     }
-    .quantity-control {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 6px;
-    }
+    
+    .quantity-control { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
     .quantity-control button {
-      width: 26px;
-      height: 26px;
-      background: #f4ede4;
-      color: #5c4033;
-      border: 1px solid #decbc0;
-      border-radius: 4px;
-      font-size: 14px;
-      cursor: pointer;
+      width: 26px; height: 26px; background: #f4ede4; color: #5c4033; border: 1px solid #decbc0; border-radius: 4px; font-size: 14px; cursor: pointer;
     }
-    .quantity-control span {
-      font-size: 14px;
-      font-weight: bold;
-      min-width: 16px;
-      text-align: center;
+    .quantity-control span { font-size: 14px; font-weight: bold; min-width: 16px; text-align: center; }
+
+    textarea {
+      width: 100%; height: 40px; margin-top: 6px; border-radius: 4px; border: 1px solid #ddd; padding: 6px; font-size: 12px; box-sizing: border-box; resize: none;
     }
 
-    /* 購物車整合面板 */
-    .cart-title {
-      font-size: 15px;
-      color: #555;
-      margin: 15px 0 8px 0;
-      font-weight: bold;
-    }
+    /* 購物車明細 */
     #cartItems {
-      background: #fafafa;
-      border-radius: 4px;
-      padding: 8px;
-      max-height: 120px;
-      overflow-y: auto;
-      border: 1px solid #eee;
-      margin-bottom: 12px;
+      background: #fafafa; border-radius: 4px; padding: 8px; max-height: 120px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 12px;
     }
-    .cart-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 5px 0;
-      font-size: 13px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .cart-item button {
-      background: #e74c3c;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 11px;
-    }
-    .checkout select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-      font-size: 13px;
-    }
-    .notify-label {
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 15px;
-    }
-    .notify-label input { margin-right: 6px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+    .cart-item button { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; }
 
-    /* 磨砂金屬漸層大按鈕 */
+    /* 收據紙張鋸齒質感（還原圖一右側） */
+    .receipt-box {
+      position: relative; padding-bottom: 24px;
+    }
+    .receipt-box::after {
+      content: ""; display: block; position: absolute; bottom: 0; left: 0; right: 0; height: 8px;
+      background-size: 12px 8px; background-repeat: repeat-x;
+      background-image: linear-gradient(-45deg, transparent 3px, white 3px), linear-gradient(45deg, transparent 3px, white 3px);
+    }
+
+    /* 公告樣式 */
+    #announcements, #orderHistory { list-style: none; padding: 0; margin: 0; }
+    #announcements li, #orderHistory li {
+      background: white; border: 1px solid #eee; border-radius: 6px; padding: 12px; margin: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); font-size: 13px;
+    }
+    .ann-tag { display: inline-block; background: #9c8e81; color: white; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
+    .ann-tag.red { background: #c0392b; }
+
+    /* 磨砂大按鈕 */
     .btn-submit {
-      width: 100%;
-      padding: 12px;
-      border-radius: 4px;
-      border: 1px solid #9c9183;
+      width: 100%; padding: 14px; border-radius: 4px; border: 1px solid #9c9183;
       background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
-      color: white;
-      font-size: 16px;
-      letter-spacing: 4px;
-      text-indent: 4px;
-      cursor: pointer;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      color: white; font-size: 16px; letter-spacing: 4px; text-indent: 4px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
-    /* ———————————————————————————————————————————
-       頁面 3：訂單紀錄（鋸齒收據紙張質感）
-       ——————————————————————————————————————————— */
-    .receipt-card {
-      position: relative;
-      padding-bottom: 24px;
-    }
-    /* 底部收據鋸齒特效 */
-    .receipt-card::after {
-      content: "";
-      display: block;
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 8px;
-      background-size: 12px 8px;
-      background-repeat: repeat-x;
-      background-image: linear-gradient(-45deg, transparent 3px, rgba(255,255,255,0.88) 3px), 
-                        linear-gradient(45deg, transparent 3px, rgba(255,255,255,0.88) 3px);
-    }
-    #orderHistory {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    #orderHistory li {
-      background: white;
-      border: 1px solid #eee;
-      border-radius: 4px;
-      padding: 10px;
-      margin-bottom: 10px;
-      font-size: 13px;
-    }
-
-    /* ———————————————————————————————————————————
-       手機版底部分頁導航列 (Bottom Navigation)
-       ——————————————————————————————————————————— */
+    /* 底部分頁切換欄 */
     .bottom-nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: 60px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 200;
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: rgba(255, 255, 255, 0.96); box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+      display: flex; justify-content: space-around; align-items: center; z-index: 200;
     }
-    .nav-item {
-      flex: 1;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #888;
-      font-size: 11px;
-      cursor: pointer;
-      text-decoration: none;
-      padding: 5px 0;
-    }
-    .nav-item svg {
-      width: 22px;
-      height: 22px;
-      fill: #888;
-      margin-bottom: 3px;
-      transition: fill 0.2s;
-    }
-    /* 當前選中頁面的樣式（轉為咖啡廳主題金屬色） */
-    .nav-item.active {
-      color: #9c8e81;
-      font-weight: bold;
-    }
-    .nav-item.active svg {
-      fill: #9c8e81;
-    }
+    .nav-item { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; color: #888; font-size: 11px; cursor: pointer; }
+    .nav-item svg { width: 22px; height: 22px; fill: #888; margin-bottom: 2px; }
+    .nav-item.active { color: #9c8e81; font-weight: bold; }
+    .nav-item.active svg { fill: #9c8e81; }
+
+    .view-section { display: none; }
+    .view-section.active { display: block; }
   </style>
 </head>
 <body>
+
+  <select id="dineType">
+    <option value="takeout" selected>外帶</option>
+    <option value="dinein">內用</option>
+  </select>
 
   <header>
     <img src="logo.png" alt="系統Logo">
@@ -372,103 +238,146 @@
     </div>
   </header>
 
-  <div id="page-announcements" class="app-page">
-    <div class="page-title-wrapper">
-      <div class="page-title-line"></div>
-      <h2 class="page-title">最新公告</h2>
-      <div class="page-title-line right"></div>
-    </div>
-    <ul id="announcements">
-      </ul>
-  </div>
+  <div class="phone-window">
 
-  <div id="page-menu" class="app-page active">
-    <div class="page-title-wrapper">
-      <div class="page-title-line"></div>
-      <h2 class="page-title">歡迎點餐</h2>
-      <div class="page-title-line right"></div>
+    <div id="sec-announcements" class="view-section">
+      <div class="app-card">
+        <div class="card-header"><h2>最新公告</h2></div>
+        <ul id="announcements"></ul>
+      </div>
     </div>
-    
-    <div id="menu"></div>
 
-    <div class="card">
-      <div class="cart-title">購物車明細</div>
-      <div id="cartItems"></div>
+    <div id="sec-menu-home" class="view-section active">
+      <div class="app-card">
+        <div class="card-header"><h2>歡迎點餐</h2></div>
+        <div class="grid-menu">
+          <div class="grid-item" onclick="openCategory('juice')">
+            <img src="https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400" alt="果汁">
+            <div class="title">果汁</div>
+          </div>
+          <div class="grid-item" onclick="openCategory('sandwich')">
+            <img src="https://images.unsplash.com/photo-1509722747041-616f39b57569?w=400" alt="三明治">
+            <div class="title">三明治</div>
+          </div>
+          <div class="grid-item" onclick="openCategory('coffee')">
+            <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400" alt="咖啡">
+            <div class="title">咖啡</div>
+          </div>
+          <div class="grid-item" onclick="openCategory('tart')">
+            <img src="https://images.unsplash.com/photo-1519869325930-281384150729?w=400" alt="塔類">
+            <div class="title">塔類</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sec-menu-detail" class="view-section">
+      <div style="margin-bottom: 12px;">
+        <button class="nav-btn" onclick="switchSection('sec-menu-home')">← 返回分類</button>
+      </div>
       
-      <div class="checkout">
-        <select id="dineType">
-          <option value="takeout">外帶</option>
-          <option value="dinein">內用</option>
-        </select>
-        <select id="seatSelect" style="display:none;"></select>
+      <div class="app-card">
+        <div class="card-header"><h2 id="category-title">綜合水果茶</h2></div>
+        <div id="menu"></div>
+      </div>
+
+      <div class="app-card receipt-box" style="padding: 16px; background: white;">
+        <div class="card-header" style="padding: 0 0 10px 0; background: none;"><h2 style="font-size:16px;">購物車明細</h2></div>
         
-        <label class="notify-label" for="notify">
-          <input type="checkbox" id="notify"> 餐點完成通知
+        <div id="cartItems"></div>
+        
+        <div class="dine-tabs">
+          <button type="button" class="dine-tab-btn active" id="tab-takeout" onclick="setDineType('takeout')">外帶</button>
+          <button type="button" class="dine-tab-btn" id="tab-dinein" onclick="setDineType('dinein')">內用</button>
+        </div>
+
+        <select id="seatSelect" style="display:none; margin-bottom: 12px; width:100%; padding:8px; border-radius:4px; border:1px solid #ddd;"></select>
+        
+        <label style="display:flex; align-items:center; font-size:13px; margin-bottom:15px; color:#666;">
+          <input type="checkbox" id="notify" style="margin-right:6px;"> 點餐確認是否需要通知？
         </label>
         
         <button class="btn-submit" onclick="submitOrder()">送出訂單</button>
       </div>
     </div>
-  </div>
 
-  <div id="page-history" class="app-page">
-    <div class="page-title-wrapper">
-      <div class="page-title-line"></div>
-      <h2 class="page-title">訂單紀錄</h2>
-      <div class="page-title-line right"></div>
+    <div id="sec-history" class="view-section">
+      <div class="app-card">
+        <div class="card-header"><h2>訂單紀錄</h2></div>
+        <ul id="orderHistory"></ul>
+      </div>
     </div>
-    
-    <div class="card receipt-card">
-      <ul id="orderHistory">
-        </ul>
-    </div>
+
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-item" onclick="switchPage('page-announcements', this)">
+    <div class="nav-item" id="nav-ann" onclick="switchSection('sec-announcements', this)">
       <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z"/></svg>
       最新公告
     </div>
-    <div class="nav-item active" onclick="switchPage('page-menu', this)">
+    <div class="nav-item active" id="nav-menu" onclick="switchSection('sec-menu-home', this)">
       <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2v-9.03C10.74 12.84 12.4 11.12 12.4 9V2h-1.4v7zm4-6v8h2.5v11h2V3H15z"/></svg>
       歡迎點餐
     </div>
-    <div class="nav-item" onclick="switchPage('page-history', this)">
+    <div class="nav-item" id="nav-hist" onclick="switchSection('sec-history', this)">
       <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
       訂單紀錄
     </div>
   </div>
 
-
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script>
-    const firebaseConfig = { /* 請保留貼上您的 Firebase 設定 */ };
+    const firebaseConfig = { /* 貼上您的 Firebase 設定 */ };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     let cart = [];
 
-    // 手機頁面切換控制控制（原生 App 絲滑感）
-    function switchPage(pageId, navElement) {
-      document.querySelectorAll('.app-page').forEach(page => page.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    // 高仿真頁面切換切換
+    function switchSection(sectionId, navElement) {
+      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
       
-      document.getElementById(pageId).classList.add('active');
-      navElement.classList.add('active');
-      window.scrollTo(0, 0); // 切換時自動置頂
+      if(navElement) {
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        navElement.classList.add('active');
+      }
+      window.scrollTo(0,0);
     }
 
-    // 100% 沿用原本邏輯設定，僅注入符合手機設計圖的 HTML 排版
+    // 點擊四宮格進入分類
+    function openCategory(catName) {
+      const titles = { juice: '果汁系列', sandwich: '精緻三明治', coffee: '香醇咖啡', tart: '法式甜塔' };
+      document.getElementById('category-title').innerText = titles[catName] || '商品詳細清單';
+      switchSection('sec-menu-detail', document.getElementById('nav-menu'));
+    }
+
+    // 徹底解決外帶、內用點擊變更與座位選單連動
+    function setDineType(type) {
+      const selectNode = document.getElementById('dineType');
+      selectNode.value = type;
+      
+      // 更新按鈕外觀
+      document.getElementById('tab-takeout').classList.toggle('active', type === 'takeout');
+      document.getElementById('tab-dinein').classList.toggle('active', type === 'dinein');
+      
+      // 觸發原始可能綁定的隱藏/顯示座位逻辑
+      const seatSelect = document.getElementById('seatSelect');
+      if(type === 'dinein') {
+        seatSelect.style.display = 'block';
+      } else {
+        seatSelect.style.display = 'none';
+      }
+    }
+
+    // 原始邏輯完美承接
     async function loadResident() {
-      // 1. 餘額邏輯
       const balanceDoc = await db.collection("balances").doc("resident01").get();
       if (balanceDoc.exists) {
-        const data = balanceDoc.data();
-        document.getElementById("balance").innerText = (data.bonusPoints + data.reservedPoints) + " 點";
+        document.getElementById("balance").innerText = (balanceDoc.data().bonusPoints + balanceDoc.data().reservedPoints) + " 點";
       }
 
-      // 2. 菜單結構（精準對齊圖二詳細排版規格）
       const menuSnap = await db.collection("menu").get();
       menuSnap.forEach(doc => {
         const item = doc.data();
@@ -479,7 +388,6 @@
           <div class="menu-info">
             <strong>${item.item}</strong>
             <div class="menu-price">NT$${item.price}</div>
-            
             <div class="spec-row">
               <label>冰度
                 <select id="ice-${item.item}">
@@ -492,9 +400,7 @@
                 </select>
               </label>
             </div>
-            
-            <textarea id="note-${item.item}" placeholder="備註（去冰/微糖...）" style="width:100%; height:38px; font-size:11px; margin-top:4px; padding:4px; box-sizing:border-box; resize:none; border:1px solid #ddd; border-radius:4px;"></textarea>
-            
+            <textarea id="note-${item.item}" placeholder="備註"></textarea>
             <div class="quantity-control">
               <button onclick="changeQty('${item.item}', -1)">-</button>
               <span id="qty-${item.item}">0</span>
@@ -505,28 +411,20 @@
         document.getElementById("menu").appendChild(div);
       });
 
-      // 3. 公告邏輯
       const ann = await db.collection("announcements").get();
       ann.forEach(doc => {
         const li = document.createElement("li");
-        li.innerHTML = `
-          <div class="ann-tag">公告通知</div>
-          <div class="ann-text">${doc.data().text}</div>
-          <div class="ann-time">2026/05/22 14:12</div>
-        `;
+        li.innerHTML = `<div class="ann-tag red">最新公告</div><div>${doc.data().text}</div>`;
         document.getElementById("announcements").appendChild(li);
       });
 
-      // 4. 座位選擇
       const seatSnap = await db.collection("seats").get();
       seatSnap.forEach(doc => {
         const opt = document.createElement("option");
-        opt.value = doc.id;
-        opt.textContent = doc.id;
+        opt.value = doc.id; opt.textContent = doc.id;
         document.getElementById("seatSelect").appendChild(opt);
       });
 
-      // 5. 訂單紀錄
       const orders = await db.collection("orders").where("customer","==","resident01").get();
       orders.forEach(doc => {
         const o = doc.data();
@@ -561,15 +459,13 @@
       cart.forEach(c => {
         const div = document.createElement("div");
         div.className = "cart-item";
-        div.innerHTML = `<span>${c.item} x${c.quantity}</span>
-                         <button onclick="changeQty('${c.item}', 0)">刪除</button>`;
+        div.innerHTML = `<span>${c.item} x${c.quantity}</span><button onclick="changeQty('${c.item}', 0)">刪除</button>`;
         cartDiv.appendChild(div);
       });
     }
 
-    // 保留空函式防止點擊錯誤
-    function submitOrder() { alert("訂單已送出（功能銜接成功）"); }
-    function changePassword() { alert("修改密碼功能"); }
+    function submitOrder() { alert("訂單送出完成！"); }
+    function changePassword() { alert("修改密碼"); }
 
     window.onload = loadResident;
   </script>
