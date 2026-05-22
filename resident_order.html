@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>昭揚縱橫｜開始點餐</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Noto Sans TC',sans-serif;
+}
+
+body{
+background:#f5f1eb;
+padding-bottom:120px;
+}
+
+.header{
+background:#6b4637;
+color:white;
+padding:18px;
+font-size:28px;
+font-weight:700;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.category-bar{
+display:flex;
+overflow-x:auto;
+gap:12px;
+padding:15px;
+background:white;
+position:sticky;
+top:0;
+z-index:10;
+box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+.category-btn{
+border:none;
+padding:10px 18px;
+border-radius:30px;
+background:#e9dfd4;
+color:#6b4637;
+font-size:15px;
+font-weight:700;
+white-space:nowrap;
+}
+
+.category-btn.active{
+background:#6b4637;
+color:white;
+}
+
+.menu-grid{
+padding:15px;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+gap:18px;
+}
+
+.card{
+background:white;
+border-radius:22px;
+overflow:hidden;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+.card img{
+width:100%;
+height:180px;
+object-fit:cover;
+}
+
+.card-body{
+padding:15px;
+}
+
+.name{
+font-size:22px;
+font-weight:700;
+color:#5c4033;
+margin-bottom:8px;
+}
+
+.price{
+font-size:20px;
+font-weight:700;
+color:#b7791f;
+margin-bottom:14px;
+}
+
+.counter{
+display:flex;
+align-items:center;
+justify-content:space-between;
+margin-top:12px;
+}
+
+.counter button{
+width:42px;
+height:42px;
+border:none;
+border-radius:50%;
+background:#6b4637;
+color:white;
+font-size:24px;
+font-weight:700;
+}
+
+.qty{
+font-size:22px;
+font-weight:700;
+}
+
+.bottom-cart{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+background:white;
+padding:16px;
+box-shadow:0 -2px 12px rgba(0,0,0,0.12);
+display:flex;
+justify-content:space-between;
+align-items:center;
+z-index:99;
+}
+
+.cart-btn{
+background:#6b4637;
+color:white;
+border:none;
+padding:16px 28px;
+border-radius:16px;
+font-size:18px;
+font-weight:700;
+}
+
+.total{
+font-size:22px;
+font-weight:700;
+color:#6b4637;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<div>開始點餐</div>
+<div>🛒</div>
+</div>
+
+<div class="category-bar" id="categoryBar"></div>
+
+<div class="menu-grid" id="menuGrid"></div>
+
+<div class="bottom-cart">
+<div class="total" id="totalPrice">NT$ 0</div>
+<button class="cart-btn">
+查看購物車
+</button>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+authDomain: "zonghengcafe.firebaseapp.com",
+projectId: "zonghengcafe",
+storageBucket: "zonghengcafe.firebasestorage.app",
+messagingSenderId: "207027108121",
+appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+measurementId: "G-8ZE4SE2T7T"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const menuGrid = document.getElementById("menuGrid");
+const categoryBar = document.getElementById("categoryBar");
+
+let allMenu = [];
+let cart = [];
+
+async function loadMenu(){
+
+const snapshot = await getDocs(collection(db,"menu"));
+
+allMenu = [];
+
+snapshot.forEach(doc=>{
+
+const data = doc.data();
+
+if(data.enabled){
+
+allMenu.push({
+id:doc.id,
+...data,
+qty:0
+});
+
+}
+
+});
+
+renderCategories();
+renderMenu("全部");
+
+}
+
+function renderCategories(){
+
+const categories = ["全部",...new Set(allMenu.map(i=>i.category))];
+
+categoryBar.innerHTML = "";
+
+categories.forEach(category=>{
+
+const btn = document.createElement("button");
+
+btn.className = "category-btn";
+
+if(category==="全部"){
+btn.classList.add("active");
+}
+
+btn.innerText = category;
+
+btn.onclick = ()=>{
+
+document.querySelectorAll(".category-btn")
+.forEach(b=>b.classList.remove("active"));
+
+btn.classList.add("active");
+
+renderMenu(category);
+
+};
+
+categoryBar.appendChild(btn);
+
+});
+
+}
+
+function renderMenu(category){
+
+menuGrid.innerHTML = "";
+
+const filtered = category==="全部"
+? allMenu
+: allMenu.filter(i=>i.category===category);
+
+filtered.forEach(item=>{
+
+const card = document.createElement("div");
+
+card.className = "card";
+
+card.innerHTML = `
+<img src="${item.image}">
+<div class="card-body">
+
+<div class="name">${item.name}</div>
+
+<div class="price">
+NT$ ${item.price}
+</div>
+
+<div class="counter">
+
+<button onclick="minusQty('${item.id}')">
+−
+</button>
+
+<div class="qty" id="qty-${item.id}">
+${item.qty}
+</div>
+
+<button onclick="plusQty('${item.id}')">
++
+</button>
+
+</div>
+
+</div>
+`;
+
+menuGrid.appendChild(card);
+
+});
+
+}
+
+window.plusQty = function(id){
+
+const item = allMenu.find(i=>i.id===id);
+
+item.qty++;
+
+document.getElementById(`qty-${id}`).innerText = item.qty;
+
+updateTotal();
+
+}
+
+window.minusQty = function(id){
+
+const item = allMenu.find(i=>i.id===id);
+
+if(item.qty>0){
+item.qty--;
+}
+
+document.getElementById(`qty-${id}`).innerText = item.qty;
+
+updateTotal();
+
+}
+
+function updateTotal(){
+
+let total = 0;
+
+allMenu.forEach(item=>{
+
+total += item.price * item.qty;
+
+});
+
+document.getElementById("totalPrice")
+.innerText = `NT$ ${total}`;
+
+}
+
+loadMenu();
+
+</script>
+
+</body>
+</html>
