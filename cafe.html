@@ -1,34 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>咖啡廳櫃檯</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>咖啡廳櫃檯介面</title>
   <style>
-    body {font-family:"Microsoft JhengHei"; background:#fdf6e3; display:flex; justify-content:center; align-items:center; height:100vh;}
-    .box {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2); width:500px;}
-    h1 {text-align:center; margin-bottom:20px; color:#5c4033;}
-    h2 {color:#5c4033;}
+    body {font-family:"Microsoft JhengHei"; background:#fdf6e3; margin:0;}
+    header {
+      background:#5c4033; color:white; padding:16px;
+      text-align:center; font-size:22px; letter-spacing:4px;
+    }
+    .container {padding:20px;}
+    h2 {color:#5c4033; margin-top:30px;}
+
+    /* 主控台按鈕區 */
+    .button-group {
+      display:flex; flex-wrap:wrap; gap:15px; margin-bottom:20px;
+    }
+    .button-group button {
+      flex:1; min-width:140px; padding:14px;
+      border:none; border-radius:6px;
+      background:linear-gradient(to bottom,#bcaea1,#9c8e81);
+      color:white; font-size:16px; letter-spacing:2px;
+      cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    }
+    .button-group button:hover {opacity:0.95;}
+    .button-group button:active {transform:scale(0.98);}
+
+    /* 訂單卡片 */
+    .order {
+      background:white; border-radius:8px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      padding:15px; margin:15px 0;
+    }
+    .order h3 {margin:0; color:#5c4033;}
+    .order p {margin:6px 0; color:#333;}
+    .order button {
+      margin-top:10px; padding:10px; border:none; border-radius:4px;
+      background:#5c4033; color:white; cursor:pointer;
+    }
+    .order button:hover {background:#3e2a20;}
+
+    /* RWD 響應式 */
+    @media (max-width:480px) {
+      .button-group {flex-direction:column;}
+      header {font-size:18px;}
+    }
   </style>
 </head>
 <body>
-  <div class="box">
-    <img src="logo.png" class="logo" alt="系統Logo" style="width:80px;">
-    <h1>咖啡廳櫃檯</h1>
-    <input id="menuItem" placeholder="新增菜單項目">
-    <button onclick="addMenu()">新增</button>
-    <h2>菜單</h2>
-    <ul id="menu"></ul>
-    <h2>訂單</h2>
-    <ul id="orders"></ul>
+  <header>咖啡廳櫃檯介面</header>
+
+  <div class="container">
+    <div class="button-group">
+      <button onclick="editMenu()">編輯菜單</button>
+      <button onclick="toggleSystem()">開關點餐系統</button>
+      <button onclick="setHoliday()">設定公休日</button>
+      <button onclick="assistOrder()">幫住戶點餐</button>
+      <button onclick="viewFinance()">收支管理</button>
+      <button onclick="sendAnnouncement()">發送公告</button>
+    </div>
+
+    <h2>新訂單</h2>
+    <div id="orders"></div>
   </div>
 
+  <audio id="notifySound" src="notify.mp3" preload="auto"></audio>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script>
-    // 播放音效
-    function playSound() {
-      const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-      audio.play();
+    const firebaseConfig = { /* Firebase 設定 */ };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 監聽新訂單
+    db.collection("orders").where("status","==","待接單").onSnapshot(snapshot => {
+      snapshot.docChanges().forEach(change => {
+        if (change.type === "added") {
+          document.getElementById("notifySound").play();
+          renderOrder(change.doc.id, change.doc.data());
+        }
+      });
+    });
+
+    function renderOrder(id, data) {
+      const div = document.createElement("div");
+      div.className = "order";
+      div.innerHTML = `
+        <h3>住戶：${data.customer}</h3>
+        <p>品項：${data.item} x${data.quantity}</p>
+        <p>冰度：${data.ice} / 甜度：${data.sugar}</p>
+        <p>備註：${data.note || "無"}</p>
+        <button onclick="acceptOrder('${id}')">接單並印單</button>
+        <button onclick="finishOrder('${id}', ${data.notify})">完成訂單</button>
+      `;
+      document.getElementById("orders").appendChild(div);
     }
-    // Firestore onSnapshot 監聽新訂單 → 播放音效
+
+    async function acceptOrder(id) {
+      await db.collection("orders").doc(id).update({status:"準備中"});
+      alert("已接單並印單！");
+    }
+
+    async function finishOrder(id, notify) {
+      await db.collection("orders").doc(id).update({status:"完成"});
+      if (notify) alert("已通知住戶餐點完成！");
+    }
+
+    function editMenu(){alert("進入菜單編輯介面");}
+    function toggleSystem(){alert("點餐系統已切換狀態");}
+    function setHoliday(){alert("設定公休日完成");}
+    function assistOrder(){alert("幫住戶點餐功能");}
+    function viewFinance(){alert("收支管理介面");}
+    function sendAnnouncement(){alert("公告已發送");}
   </script>
 </body>
 </html>
