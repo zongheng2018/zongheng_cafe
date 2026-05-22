@@ -1,353 +1,375 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工程師介面｜昭揚縱橫 咖啡廳點餐系統</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工程師後台｜昭揚縱橫</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: #f5f1eb;
-      color: #5d534a;
-    }
-
-    .loading {
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      color: #7b7268;
-    }
-
-    .topbar {
-      height: 60px;
-      background: linear-gradient(to right,#9f8f80,#7e6e61);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      box-shadow: 0 3px 10px rgba(0,0,0,.12);
-    }
-
-    .title {
-      font-size: 22px;
-      letter-spacing: 3px;
-    }
-
-    .logout-btn {
-      border: none;
-      background: white;
-      color: #7d6e60;
-      padding: 8px 14px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .container {
-      padding: 20px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 10px;
-      padding: 24px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
-      margin-bottom: 20px;
-    }
-
-    .card-title {
-      font-size: 24px;
-      color: #746659;
-      margin-bottom: 18px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #d7d0c9;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-
-    .add-btn, .save-btn {
-      border: none;
-      background: #9c8e81;
-      color: white;
-      padding: 10px 14px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th {
-      background: #f0ebe4;
-      color: #6d6156;
-      padding: 14px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-
-    td {
-      padding: 14px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .role-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #eee7df;
-      color: #6d6156;
-      font-size: 13px;
-    }
-
-    .note {
-      margin-top: 12px;
-      font-size: 14px;
-      line-height: 1.7;
-      color: #8a8076;
-    }
-
-    @media(max-width:900px) {
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      table {
-        font-size: 13px;
-      }
-    }
-  </style>
+<style>
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
+body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f}
+body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);backdrop-filter:blur(5px);z-index:-1}
+.header{height:72px;background:rgba(255,255,255,.88);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:72px;opacity:.82}
+.title{font-size:22px;letter-spacing:2px;font-weight:700;color:#6d6258}
+.logout{border:1px solid #c9c0b7;background:rgba(255,255,255,.88);color:#6d6258;border-radius:10px;padding:9px 16px}
+.container{max-width:1180px;margin:22px auto;padding:0 16px 40px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.tab{border:none;background:rgba(255,255,255,.88);color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
+.card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
+.section-title{font-size:26px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.stat{background:#f8f5f1;border-radius:18px;padding:20px;text-align:center}
+.stat-label{font-size:14px;color:#8b8178}
+.stat-value{font-size:34px;font-weight:900;color:#6f4f40;margin-top:8px}
+.form-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+input,select,textarea{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
+textarea{height:100px;resize:none}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btn{border:none;border-radius:13px;padding:10px 16px;font-weight:800;color:white;background:#9c8e81;cursor:pointer}
+.btn.primary{background:#6d6258}
+.btn.done{background:#6b8b61}
+.btn.danger{background:#c86b62}
+.list-card{background:rgba(255,255,255,.96);border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
+.item-title{font-size:20px;font-weight:900;color:#5f574f;margin-bottom:8px}
+.meta{font-size:14px;color:#777;line-height:1.7}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#eee3d8;color:#6d6258;font-weight:800;font-size:13px}
+.small-form{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}
+.hidden{display:none}
+.empty{text-align:center;color:#999;padding:40px}
+.seat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px}
+.seat-card{background:#f8f5f1;border-radius:16px;padding:14px;text-align:center;font-weight:900;color:#6d6258}
+.seat-card.off{opacity:.45;text-decoration:line-through}
+@media(max-width:900px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.title{font-size:18px}.brand img{width:60px}}
+</style>
 </head>
 
 <body>
+<div class="header">
+  <div class="brand">
+    <img src="logo.png">
+    <div class="title">工程師後台</div>
+  </div>
+  <button class="logout" id="logoutBtn">登出</button>
+</div>
 
-<div id="loading" class="loading">驗證登入狀態中...</div>
-
-<div id="app" style="display:none;">
-
-  <div class="topbar">
-    <div class="title">工程師介面</div>
-    <button id="logoutBtn" class="logout-btn">登出</button>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard',this)">系統總覽</button>
+    <button class="tab" onclick="showTab('accounts',this)">帳號管理</button>
+    <button class="tab" onclick="showTab('announcements',this)">公告管理</button>
+    <button class="tab" onclick="showTab('seats',this)">座位管理</button>
   </div>
 
-  <div class="container">
-
+  <section id="dashboardTab">
     <div class="card">
-      <div class="card-title">新增帳號</div>
+      <div class="section-title">系統總覽</div>
+      <div class="grid">
+        <div class="stat"><div class="stat-label">帳號數</div><div class="stat-value" id="statAccounts">0</div></div>
+        <div class="stat"><div class="stat-label">住戶數</div><div class="stat-value" id="statResidents">0</div></div>
+        <div class="stat"><div class="stat-label">菜單品項</div><div class="stat-value" id="statMenu">0</div></div>
+        <div class="stat"><div class="stat-label">訂單數</div><div class="stat-value" id="statOrders">0</div></div>
+      </div>
+    </div>
+  </section>
 
+  <section id="accountsTab" class="hidden">
+    <div class="card">
+      <div class="section-title">新增帳號</div>
       <div class="form-grid">
-        <input id="newUsername" placeholder="帳號，例如 A102">
-        <input id="newPassword" placeholder="密碼，例如 123456">
+        <input id="newUsername" placeholder="帳號">
+        <input id="newPassword" placeholder="密碼">
         <select id="newRole">
           <option value="resident">住戶 resident</option>
           <option value="cafe">咖啡廳 cafe</option>
           <option value="property">物業 property</option>
           <option value="engineer">工程師 engineer</option>
         </select>
-        <input id="newEmail" placeholder="Auth Email，例如 a102@zongheng.local">
+        <input id="newEmail" placeholder="Auth Email">
         <input id="newUnit" placeholder="戶號，可空白">
       </div>
-
-      <br>
-
-      <button class="add-btn" id="addAccountBtn">新增帳號</button>
-
-      <div class="note">
-        新增後請到 Firebase Authentication → Users → Add user，新增相同的 Email 與 Password。<br>
-        例如：auth_email = a102@zongheng.local，password = 123456。
+      <div class="btn-row">
+        <button class="btn primary" onclick="addAccount()">新增帳號</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">帳號管理系統</div>
+      <div class="section-title">所有帳號</div>
+      <div id="accountList" class="grid"></div>
+    </div>
+  </section>
 
-      <table>
-        <thead>
-          <tr>
-            <th>帳號</th>
-            <th>角色</th>
-            <th>Auth Email</th>
-            <th>戶號</th>
-            <th>密碼</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-
-        <tbody id="accountTable"></tbody>
-      </table>
+  <section id="announcementsTab" class="hidden">
+    <div class="card">
+      <div class="section-title">發布公告</div>
+      <input id="annTitle" placeholder="公告標題">
+      <br><br>
+      <textarea id="annContent" placeholder="公告內容"></textarea>
+      <div class="btn-row">
+        <button class="btn primary" onclick="addAnnouncement()">發布公告</button>
+      </div>
     </div>
 
-  </div>
+    <div class="card">
+      <div class="section-title">公告列表</div>
+      <div id="announcementList" class="grid"></div>
+    </div>
+  </section>
 
+  <section id="seatsTab" class="hidden">
+    <div class="card">
+      <div class="section-title">新增座位</div>
+      <div class="form-grid">
+        <input id="newSeat" placeholder="座位代號，例如 A1">
+        <select id="newSeatAvailable">
+          <option value="true">可用</option>
+          <option value="false">停用</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="addSeat()">新增座位</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">座位清單</div>
+      <div id="seatList" class="seat-grid"></div>
+    </div>
+  </section>
 </div>
 
 <script type="module">
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore,collection,getDocs,addDoc,doc,updateDoc,deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut
-}
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  addDoc
-}
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-  authDomain: "zonghengcafe.firebaseapp.com",
-  projectId: "zonghengcafe",
-  storageBucket: "zonghengcafe.firebasestorage.app",
-  messagingSenderId: "207027108121",
-  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-  measurementId: "G-8ZE4SE2T7T"
-};
+let accounts=[];
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-onAuthStateChanged(auth, async(user) => {
-  if (!user) {
-    alert("請先登入");
-    window.location.href = "index.html";
-    return;
-  }
-
-  const raw = localStorage.getItem("zh_user");
-
-  if (!raw) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  const profile = JSON.parse(raw);
-
-  if (profile.role !== "engineer") {
-    alert("您沒有權限進入此頁面");
-    window.location.href = "index.html";
-    return;
-  }
-
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("app").style.display = "block";
-
-  loadAccounts();
+onAuthStateChanged(auth,async user=>{
+  if(!user){location.href="index.html";return}
+  const raw=localStorage.getItem("zh_user");
+  if(!raw){location.href="index.html";return}
+  const profile=JSON.parse(raw);
+  if(profile.role!=="engineer"){alert("沒有權限");location.href="index.html";return}
+  await loadAll();
 });
 
-async function loadAccounts() {
-  const table = document.getElementById("accountTable");
-  table.innerHTML = "";
+window.showTab=(tab,btn)=>{
+  dashboardTab.classList.add("hidden");
+  accountsTab.classList.add("hidden");
+  announcementsTab.classList.add("hidden");
+  seatsTab.classList.add("hidden");
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById(tab+"Tab").classList.remove("hidden");
+};
 
-  const snapshot = await getDocs(collection(db, "accounts"));
+async function loadAll(){
+  await loadStats();
+  await loadAccounts();
+  await loadAnnouncements();
+  await loadSeats();
+}
 
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
+async function loadStats(){
+  const acc=await getDocs(collection(db,"accounts"));
+  const menu=await getDocs(collection(db,"menu"));
+  const orders=await getDocs(collection(db,"orders"));
 
-    const tr = document.createElement("tr");
+  let residents=0;
+  acc.forEach(d=>{if(d.data().role==="resident")residents++});
 
-    tr.innerHTML = `
-      <td>${data.username || ""}</td>
-      <td><span class="role-badge">${data.role || ""}</span></td>
-      <td>${data.auth_email || ""}</td>
-      <td>${data.unit_number || ""}</td>
-      <td>
-        <input type="text" id="pw-${docSnap.id}" value="${data.password || ""}">
-      </td>
-      <td>
-        <button class="save-btn" onclick="savePassword('${docSnap.id}')">儲存</button>
-      </td>
+  statAccounts.innerText=acc.size;
+  statResidents.innerText=residents;
+  statMenu.innerText=menu.size;
+  statOrders.innerText=orders.size;
+}
+
+async function loadAccounts(){
+  const snap=await getDocs(collection(db,"accounts"));
+  accounts=[];
+  accountList.innerHTML="";
+
+  if(snap.empty){
+    accountList.innerHTML='<div class="empty">目前沒有帳號</div>';
+    return;
+  }
+
+  snap.forEach(d=>{
+    const x={docId:d.id,...d.data()};
+    accounts.push(x);
+
+    const div=document.createElement("div");
+    div.className="list-card";
+    div.innerHTML=`
+      <div class="item-title">${x.username||""}</div>
+      <div class="meta">角色：<span class="badge">${x.role||""}</span></div>
+      <div class="meta">Auth Email：${x.auth_email||"未設定"}</div>
+      <div class="meta">戶號：${x.unit_number||""}</div>
+      <div class="small-form">
+        <input id="pw-${x.docId}" value="${x.password||""}">
+        <button class="btn primary" onclick="savePassword('${x.docId}')">儲存</button>
+      </div>
     `;
-
-    table.appendChild(tr);
+    accountList.appendChild(div);
   });
 }
 
-window.savePassword = async function(docId) {
-  const value = document.getElementById(`pw-${docId}`).value;
+window.addAccount=async()=>{
+  const username=newUsername.value.trim();
+  const password=newPassword.value.trim();
+  const role=newRole.value;
+  const auth_email=newEmail.value.trim();
+  const unit_number=newUnit.value.trim();
 
-  try {
-    await updateDoc(doc(db, "accounts", docId), {
-      password: value
-    });
-
-    alert("已更新 Firestore 密碼欄位。Firebase Authentication 密碼仍需手動同步。");
-
-  } catch(error) {
-    console.error(error);
-    alert("更新失敗");
-  }
-};
-
-document.getElementById("addAccountBtn").addEventListener("click", async () => {
-  const username = document.getElementById("newUsername").value.trim();
-  const password = document.getElementById("newPassword").value.trim();
-  const role = document.getElementById("newRole").value;
-  const auth_email = document.getElementById("newEmail").value.trim();
-  const unit_number = document.getElementById("newUnit").value.trim();
-
-  if (!username || !password || !role || !auth_email) {
-    alert("請至少填寫帳號、密碼、角色、Auth Email");
+  if(!username||!password||!role||!auth_email){
+    alert("請填帳號、密碼、角色、Auth Email");
     return;
   }
 
-  try {
-    await addDoc(collection(db, "accounts"), {
-      username,
-      password,
-      role,
-      auth_email,
-      unit_number,
-      created_at: new Date().toISOString()
+  await addDoc(collection(db,"accounts"),{
+    username,password,role,auth_email,unit_number,created_at:new Date().toISOString()
+  });
+
+  if(role==="resident"){
+    await addDoc(collection(db,"balances"),{
+      uid:username,
+      unit_number:unit_number||username,
+      granted_amount:0,
+      stored_amount:0
     });
-
-    alert("Firestore 帳號已新增。請記得到 Firebase Authentication 新增同一組 Email / Password。");
-
-    document.getElementById("newUsername").value = "";
-    document.getElementById("newPassword").value = "";
-    document.getElementById("newEmail").value = "";
-    document.getElementById("newUnit").value = "";
-
-    loadAccounts();
-
-  } catch(error) {
-    console.error(error);
-    alert("新增失敗");
   }
-});
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
+  alert("Firestore 帳號已新增。Authentication 請手動新增同一組 Email / Password。");
+
+  newUsername.value="";
+  newPassword.value="";
+  newEmail.value="";
+  newUnit.value="";
+
+  await loadAll();
+};
+
+window.savePassword=async(id)=>{
+  const value=document.getElementById(`pw-${id}`).value.trim();
+  await updateDoc(doc(db,"accounts",id),{password:value});
+  alert("已更新 Firestore 密碼欄位，Authentication 密碼需手動同步。");
+  await loadAccounts();
+};
+
+async function loadAnnouncements(){
+  const snap=await getDocs(collection(db,"announcements"));
+  announcementList.innerHTML="";
+
+  if(snap.empty){
+    announcementList.innerHTML='<div class="empty">目前沒有公告</div>';
+    return;
+  }
+
+  snap.forEach(d=>{
+    const x=d.data();
+    const div=document.createElement("div");
+    div.className="list-card";
+    div.innerHTML=`
+      <div class="item-title">${x.title||"通知"}</div>
+      <div class="meta">${x.content||""}</div>
+      <div class="btn-row">
+        <button class="btn danger" onclick="deleteAnnouncement('${d.id}')">刪除</button>
+      </div>
+    `;
+    announcementList.appendChild(div);
+  });
+}
+
+window.addAnnouncement=async()=>{
+  const title=annTitle.value.trim();
+  const content=annContent.value.trim();
+
+  if(!content){
+    alert("請輸入公告內容");
+    return;
+  }
+
+  await addDoc(collection(db,"announcements"),{
+    title:title||"通知",
+    content,
+    created_at:new Date().toISOString()
+  });
+
+  annTitle.value="";
+  annContent.value="";
+
+  await loadAnnouncements();
+};
+
+window.deleteAnnouncement=async(id)=>{
+  if(!confirm("確定刪除此公告？"))return;
+  await deleteDoc(doc(db,"announcements",id));
+  await loadAnnouncements();
+};
+
+async function loadSeats(){
+  const snap=await getDocs(collection(db,"seats"));
+  seatList.innerHTML="";
+
+  if(snap.empty){
+    seatList.innerHTML='<div class="empty">目前沒有座位，住戶端會使用預設 A1-A4 / B1-B4</div>';
+    return;
+  }
+
+  snap.forEach(d=>{
+    const x=d.data();
+    const div=document.createElement("div");
+    div.className="seat-card "+(x.available===false?"off":"");
+    div.innerHTML=`
+      ${x.seatId||d.id}
+      <div class="meta">${x.available===false?"停用":"可用"}</div>
+      <div class="btn-row" style="justify-content:center">
+        <button class="btn ${x.available===false?"done":"danger"}" onclick="toggleSeat('${d.id}',${x.available!==false})">
+          ${x.available===false?"啟用":"停用"}
+        </button>
+      </div>
+    `;
+    seatList.appendChild(div);
+  });
+}
+
+window.addSeat=async()=>{
+  const seatId=newSeat.value.trim();
+  const available=newSeatAvailable.value==="true";
+
+  if(!seatId){
+    alert("請輸入座位代號");
+    return;
+  }
+
+  await addDoc(collection(db,"seats"),{
+    seatId,
+    available,
+    created_at:new Date().toISOString()
+  });
+
+  newSeat.value="";
+  await loadSeats();
+};
+
+window.toggleSeat=async(id,currentAvailable)=>{
+  await updateDoc(doc(db,"seats",id),{available:!currentAvailable});
+  await loadSeats();
+};
+
+logoutBtn.addEventListener("click",async()=>{
   await signOut(auth);
   localStorage.removeItem("zh_user");
-  window.location.href = "index.html";
+  location.href="index.html";
 });
 </script>
 
