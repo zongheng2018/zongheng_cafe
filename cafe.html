@@ -7,86 +7,106 @@
 
 <style>
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
-body{margin:0;background:#f5f1eb;color:#5c4033}
-.header{height:68px;background:#6b4637;color:white;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:22px;font-weight:700}
-.logout{border:0;background:white;color:#6b4637;border-radius:10px;padding:9px 15px}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px;background:white;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.tab{border:0;background:#e9dfd4;color:#6b4637;border-radius:14px;padding:12px;font-weight:700}
-.tab.active{background:#6b4637;color:white}
-.container{padding:16px}
-.card{background:white;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 6px 16px rgba(0,0,0,.08)}
-.order-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-.order-id{font-size:20px;font-weight:800}
-.status{padding:6px 12px;border-radius:999px;background:#eee3d8;font-weight:700}
-.detail{margin-top:8px;color:#666;line-height:1.7}
-.item{padding:10px 0;border-bottom:1px solid #eee}
-.item-name{font-weight:800;font-size:18px}
-.btns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-.btn{border:0;background:#6b4637;color:white;border-radius:12px;padding:10px 16px;font-weight:700}
-.btn.secondary{background:#9c8e81}
-.btn.danger{background:#d65b55}
-.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-input,select,textarea{width:100%;border:1px solid #ddd;border-radius:12px;padding:12px;font-size:15px}
-textarea{grid-column:1/-1;height:80px}
-.menu-img{width:72px;height:72px;object-fit:cover;border-radius:12px}
-.menu-row{display:grid;grid-template-columns:78px 1fr auto;gap:12px;align-items:center;border-bottom:1px solid #eee;padding:12px 0}
-.hidden{display:none}
+body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f}
+body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);backdrop-filter:blur(5px);z-index:-1}
+.header{height:72px;background:rgba(255,255,255,.88);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:72px;opacity:.82}
+.title{font-size:22px;letter-spacing:2px;font-weight:700;color:#6d6258}
+.logout{border:1px solid #c9c0b7;background:rgba(255,255,255,.88);color:#6d6258;border-radius:10px;padding:9px 16px;cursor:pointer}
+.container{max-width:1120px;margin:22px auto;padding:0 16px 40px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.tab{border:none;background:rgba(255,255,255,.88);color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
+.card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
+.section-title{font-size:26px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
+.order-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.order-card{background:rgba(255,255,255,.95);border-radius:18px;padding:18px;box-shadow:0 8px 22px rgba(0,0,0,.07);border:1px solid #eee5dd}
+.order-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}
+.order-id{font-size:19px;font-weight:900;color:#5f574f}
+.meta{font-size:14px;color:#777;line-height:1.7}
+.badge{display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:800;background:#eee3d8;color:#6d6258}
+.badge.wait{background:#fff1d9;color:#9b681f}
+.badge.making{background:#e6f0ff;color:#426f9c}
+.badge.done{background:#e8f5e9;color:#3f7f47}
+.badge.cancel{background:#fde8e6;color:#b3514a}
+.order-item{padding:10px 0;border-bottom:1px solid #eee}
+.item-name{font-weight:900;color:#5f574f}
+.item-detail{font-size:14px;color:#777;line-height:1.6}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81;cursor:pointer}
+.btn.primary{background:#6d6258}
+.btn.done{background:#6b8b61}
+.btn.danger{background:#c86b62}
+.btn.light{background:#f0e8df;color:#7a6b60}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input,textarea{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
+textarea{grid-column:1/-1;height:86px;resize:none}
+.menu-row{display:grid;grid-template-columns:76px 1fr auto;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #eee5dd}
+.menu-img{width:76px;height:76px;object-fit:cover;border-radius:15px;background:#eee}
+.menu-name{font-size:18px;font-weight:900;color:#5f574f}
+.menu-meta{font-size:14px;color:#777;margin-top:4px}
 .empty{text-align:center;color:#999;padding:40px}
-@media(max-width:700px){.form{grid-template-columns:1fr}.tabs{grid-template-columns:1fr 1fr 1fr}}
+.setting-status{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8;color:#6d6258}
+.hidden{display:none}
+@media(max-width:700px){.tabs{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.menu-row{grid-template-columns:62px 1fr}.menu-row .btn{grid-column:1/-1}.title{font-size:18px}.brand img{width:60px}}
 </style>
 </head>
 
 <body>
 <div class="header">
-  <div>咖啡廳櫃台</div>
+  <div class="brand">
+    <img src="logo.png">
+    <div class="title">咖啡廳櫃台</div>
+  </div>
   <button class="logout" id="logoutBtn">登出</button>
 </div>
 
-<div class="tabs">
-  <button class="tab active" onclick="showTab('orders',this)">訂單管理</button>
-  <button class="tab" onclick="showTab('menu',this)">菜單管理</button>
-  <button class="tab" onclick="showTab('settings',this)">系統設定</button>
-</div>
-
 <div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('orders',this)">訂單管理</button>
+    <button class="tab" onclick="showTab('menu',this)">菜單管理</button>
+    <button class="tab" onclick="showTab('settings',this)">系統設定</button>
+  </div>
 
   <section id="ordersTab">
-    <div id="ordersList"></div>
+    <div class="card">
+      <div class="section-title">即時訂單</div>
+      <div id="ordersList" class="order-grid"></div>
+    </div>
   </section>
 
   <section id="menuTab" class="hidden">
     <div class="card">
-      <h2>新增菜單品項</h2>
-      <div class="form">
+      <div class="section-title">新增菜單品項</div>
+      <div class="form-grid">
         <input id="mName" placeholder="品項名稱">
         <input id="mPrice" type="number" placeholder="價格">
         <input id="mCategory" placeholder="分類，例如 咖啡">
         <input id="mImage" placeholder="圖片網址">
         <textarea id="mNote" placeholder="備註，可空白"></textarea>
       </div>
-      <div class="btns">
-        <button class="btn" onclick="addMenu()">新增品項</button>
+      <div class="btn-row">
+        <button class="btn primary" onclick="addMenu()">新增品項</button>
       </div>
     </div>
 
     <div class="card">
-      <h2>現有菜單</h2>
+      <div class="section-title">現有菜單</div>
       <div id="menuList"></div>
     </div>
   </section>
 
   <section id="settingsTab" class="hidden">
     <div class="card">
-      <h2>點餐系統設定</h2>
-      <div class="detail">目前先提供基本開關。下一版會加入公休日設定與營業時間。</div>
-      <div class="btns">
-        <button class="btn secondary" onclick="setCafeOpen(true)">開放點餐</button>
+      <div class="section-title">點餐系統設定</div>
+      <div class="setting-status" id="systemStatus">讀取中...</div>
+      <div class="btn-row">
+        <button class="btn done" onclick="setCafeOpen(true)">開放點餐</button>
         <button class="btn danger" onclick="setCafeOpen(false)">關閉點餐</button>
       </div>
-      <div class="detail" id="systemStatus">讀取中...</div>
     </div>
   </section>
-
 </div>
 
 <script type="module">
@@ -120,6 +140,14 @@ window.showTab=(tab,btn)=>{
   document.getElementById(tab+"Tab").classList.remove("hidden");
 };
 
+function statusClass(status){
+  if(status==="等待接單")return "wait";
+  if(status==="製作中")return "making";
+  if(status==="已完成")return "done";
+  if(status==="已取消")return "cancel";
+  return "";
+}
+
 function listenOrders(){
   const q=query(collection(db,"orders"),orderBy("created_at","desc"));
   onSnapshot(q,snap=>{
@@ -128,20 +156,21 @@ function listenOrders(){
     snap.forEach(d=>{
       const o=d.data();
       const div=document.createElement("div");
-      div.className="card";
+      div.className="order-card";
       div.innerHTML=`
-        <div class="order-top">
+        <div class="order-head">
           <div>
             <div class="order-id">${o.order_id||d.id}</div>
-            <div class="detail">住戶：${o.uid||""}｜${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
-            <div class="detail">金額：NT$ ${o.total||0}</div>
+            <div class="meta">住戶：${o.uid||""}</div>
+            <div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
+            <div class="meta">金額：NT$ ${o.total||0}</div>
           </div>
-          <div class="status">${o.status||"等待接單"}</div>
+          <div class="badge ${statusClass(o.status)}">${o.status||"等待接單"}</div>
         </div>
-        <div class="detail">${formatItems(o.items||[])}</div>
-        <div class="btns">
-          <button class="btn" onclick="updateOrder('${d.id}','製作中')">接單 / 製作中</button>
-          <button class="btn secondary" onclick="updateOrder('${d.id}','已完成')">完成訂單</button>
+        <div>${formatItems(o.items||[])}</div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button>
+          <button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button>
           <button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button>
         </div>
       `;
@@ -151,12 +180,12 @@ function listenOrders(){
 }
 
 function formatItems(items){
-  if(!items.length)return "無品項";
+  if(!items.length)return `<div class="meta">無品項</div>`;
   return items.map(x=>`
-    <div class="item">
+    <div class="order-item">
       <div class="item-name">${x.name} × ${x.qty}</div>
-      <div>冰度：${x.ice||"無"}｜糖度：${x.sugar||"無"}</div>
-      <div>備註：${x.note||"無"}</div>
+      <div class="item-detail">冰度：${x.ice||"無"}｜糖度：${x.sugar||"無"}</div>
+      <div class="item-detail">備註：${x.note||"無"}</div>
     </div>
   `).join("");
 }
@@ -166,7 +195,6 @@ window.updateOrder=async(id,status)=>{
     status,
     updated_at:new Date().toISOString()
   });
-  alert("訂單狀態已更新");
 };
 
 window.addMenu=async()=>{
@@ -175,11 +203,21 @@ window.addMenu=async()=>{
   const category=mCategory.value.trim();
   const image=mImage.value.trim();
   const note=mNote.value.trim();
-  if(!name||!price||!category){alert("請填名稱、價格、分類");return}
+
+  if(!name||!price||!category){
+    alert("請填名稱、價格、分類");
+    return;
+  }
+
   await addDoc(collection(db,"menu"),{
     name,price,category,image,note,enabled:true,created_at:new Date().toISOString()
   });
-  mName.value="";mPrice.value="";mCategory.value="";mImage.value="";mNote.value="";
+
+  mName.value="";
+  mPrice.value="";
+  mCategory.value="";
+  mImage.value="";
+  mNote.value="";
   alert("菜單已新增");
   loadMenu();
 };
@@ -188,6 +226,7 @@ async function loadMenu(){
   const snap=await getDocs(collection(db,"menu"));
   menuList.innerHTML="";
   if(snap.empty){menuList.innerHTML='<div class="empty">目前沒有菜單</div>';return}
+
   snap.forEach(d=>{
     const m=d.data();
     const row=document.createElement("div");
@@ -195,11 +234,11 @@ async function loadMenu(){
     row.innerHTML=`
       <img class="menu-img" src="${m.image||""}">
       <div>
-        <b>${m.name||""}</b>
-        <div class="detail">${m.category||""}｜NT$ ${m.price||0}｜${m.enabled===false?"暫停供應":"供應中"}</div>
+        <div class="menu-name">${m.name||""}</div>
+        <div class="menu-meta">${m.category||""}｜NT$ ${m.price||0}｜${m.enabled===false?"暫停供應":"供應中"}</div>
       </div>
-      <button class="btn ${m.enabled===false?"secondary":"danger"}" onclick="toggleMenu('${d.id}',${m.enabled!==false})">
-        ${m.enabled===false?"恢復":"暫停"}
+      <button class="btn ${m.enabled===false?"done":"danger"}" onclick="toggleMenu('${d.id}',${m.enabled!==false})">
+        ${m.enabled===false?"恢復供應":"暫停供應"}
       </button>
     `;
     menuList.appendChild(row);
@@ -214,6 +253,7 @@ window.toggleMenu=async(id,enabled)=>{
 async function loadSettings(){
   const ref=doc(db,"settings","cafe");
   const s=await getDoc(ref);
+
   if(!s.exists()){
     await setDoc(ref,{open:true});
     systemStatus.innerText="目前狀態：開放點餐";
@@ -225,7 +265,6 @@ async function loadSettings(){
 window.setCafeOpen=async(open)=>{
   await setDoc(doc(db,"settings","cafe"),{open},{merge:true});
   systemStatus.innerText="目前狀態："+(open?"開放點餐":"關閉點餐");
-  alert(open?"已開放點餐":"已關閉點餐");
 };
 
 logoutBtn.addEventListener("click",async()=>{
