@@ -1,187 +1,236 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>昭揚縱橫 咖啡廳點餐系統</title>
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#9c8e81">
-<link rel="apple-touch-icon" href="logo.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <style>
+    body {
+      font-family: "-apple-system", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", Arial, sans-serif;
+      background: url('bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      padding: 20px;
+    }
 
-<title>昭揚縱橫 咖啡廳點餐系統</title>
+    .top-banner {
+      text-align: center;
+      margin-bottom: 25px;
+    }
 
-<style>
-body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;
-  background:url("bg.jpg") no-repeat center center fixed;
-  background-size:cover;
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
+    .top-banner img.logo {
+      width: 180px;
+      height: auto;
+      margin-bottom: 8px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  background:rgba(255,255,255,.35);
-  backdrop-filter:blur(4px);
-  z-index:-1;
-}
+    .top-banner h1 {
+      font-size: 20px;
+      color: #656565;
+      font-weight: 500;
+      margin: 0;
+      letter-spacing: 2px;
+    }
 
-.wrapper{
-  width:100%;
-  max-width:420px;
-  text-align:center;
-}
+    .login-container {
+      width: 100%;
+      max-width: 380px;
+    }
 
-.logo{
-  width:170px;
-  margin-bottom:10px;
-  opacity:.88;
-}
+    .login-title-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
 
-.system-title{
-  font-size:20px;
-  color:#666;
-  letter-spacing:2px;
-  margin-bottom:46px;
-}
+    .login-title-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to var(--direction, right), rgba(160, 160, 160, 0), rgba(160, 160, 160, 0.5));
+    }
 
-.login-title{
-  font-size:30px;
-  color:#666;
-  font-weight:400;
-  letter-spacing:8px;
-  margin-bottom:24px;
-}
+    .login-title-line.right {
+      --direction: left;
+    }
 
-.login-box{
-  background:rgba(255,255,255,.82);
-  backdrop-filter:blur(10px);
-  border-radius:10px;
-  padding:28px;
-  box-shadow:0 12px 28px rgba(0,0,0,.12);
-}
+    .login-title {
+      font-size: 24px;
+      color: #555;
+      font-weight: 400;
+      margin: 0 20px;
+      letter-spacing: 6px;
+    }
 
-.input-group{
-  margin-bottom:16px;
-}
+    .login-box {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 30px 25px;
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      box-sizing: border-box;
+    }
 
-input{
-  width:100%;
-  height:54px;
-  border:1px solid #ddd;
-  border-radius:6px;
-  padding:0 16px;
-  font-size:18px;
-  box-sizing:border-box;
-  outline:none;
-  background:white;
-}
+    .input-group {
+      position: relative;
+      margin-bottom: 16px;
+      width: 100%;
+    }
 
-input:focus{
-  border-color:#9c8e81;
-}
+    .input-group svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      fill: #8c8c8c;
+    }
 
-.remember{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:#666;
-  font-size:15px;
-  margin:8px 0 24px;
-  text-align:left;
-}
+    .input-group input {
+      width: 100%;
+      padding: 14px 14px 14px 46px;
+      border-radius: 4px;
+      border: 1px solid #dcdcdc;
+      font-size: 16px;
+      color: #333;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.2s;
+    }
 
-.remember input{
-  width:18px;
-  height:18px;
-}
+    .input-group input:focus {
+      border-color: #a39485;
+    }
 
-button{
-  width:100%;
-  height:56px;
-  border:none;
-  border-radius:6px;
-  background:linear-gradient(to bottom,#bcaea1,#9c8e81);
-  color:white;
-  font-size:22px;
-  letter-spacing:8px;
-  font-weight:500;
-  cursor:pointer;
-  transition:.2s;
-}
+    .input-group input::placeholder {
+      color: #a0a0a0;
+    }
 
-button:hover{
-  opacity:.95;
-}
+    .remember {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 24px;
+      user-select: none;
+      cursor: pointer;
+    }
 
-button:disabled{
-  opacity:.7;
-}
+    .remember input {
+      margin: 0 8px 0 2px;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
 
-@media(max-width:520px){
+    button.btn-login {
+      width: 100%;
+      padding: 14px;
+      border-radius: 4px;
+      border: 1px solid #9c9183;
+      background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
+      color: white;
+      font-size: 18px;
+      letter-spacing: 6px;
+      text-indent: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      transition: opacity 0.2s, transform 0.1s;
+    }
 
-  .logo{
-    width:140px;
-  }
+    button.btn-login:hover {
+      opacity: 0.95;
+    }
 
-  .login-box{
-    padding:24px;
-  }
+    button.btn-login:active {
+      transform: scale(0.99);
+    }
 
-}
-</style>
+    @media (max-width: 480px) {
+      .top-banner img.logo {
+        width: 150px;
+      }
+
+      .top-banner h1 {
+        font-size: 18px;
+      }
+
+      .login-title {
+        font-size: 22px;
+      }
+
+      .login-box {
+        padding: 25px 20px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="wrapper">
-
-  <img src="logo.png" class="logo">
-
-  <div class="system-title">
-    昭揚縱橫 咖啡廳點餐系統
+  <div class="top-banner">
+    <img src="logo.png" class="logo" alt="縱橫Logo">
+    <h1>昭揚縱橫 咖啡廳點餐系統</h1>
   </div>
 
-  <div class="login-title">
-    登入
-  </div>
+  <div class="login-container">
 
-  <div class="login-box">
-
-    <div class="input-group">
-      <input id="username" placeholder="username">
+    <div class="login-title-wrapper">
+      <div class="login-title-line"></div>
+      <h2 class="login-title">登入</h2>
+      <div class="login-title-line right"></div>
     </div>
 
-    <div class="input-group">
-      <input id="password" type="password" placeholder="password">
+    <div class="login-box">
+
+      <div class="input-group">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/>
+        </svg>
+        <input id="username" type="text" placeholder="username" autocomplete="username">
+      </div>
+
+      <div class="input-group">
+        <svg viewBox="0 0 24 24">
+          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+        </svg>
+        <input id="password" type="password" placeholder="password" autocomplete="current-password">
+      </div>
+
+      <label class="remember" for="rememberMe">
+        <input type="checkbox" id="rememberMe">
+        保持登入狀態
+      </label>
+
+      <button class="btn-login" id="loginBtn">登入</button>
+
     </div>
 
-    <label class="remember">
-      <input type="checkbox" id="rememberMe">
-      保持登入狀態
-    </label>
-
-    <button id="loginBtn">
-      登入
-    </button>
-
   </div>
-
-</div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
   getFirestore,
@@ -189,186 +238,127 @@ import {
   query,
   where,
   getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-  authDomain:"zonghengcafe.firebaseapp.com",
-  projectId:"zonghengcafe",
-  storageBucket:"zonghengcafe.firebasestorage.app",
-  messagingSenderId:"207027108121",
-  appId:"1:207027108121:web:e7a39e19982ed77f9aed88",
-  measurementId:"G-8ZE4SE2T7T"
+  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+  authDomain: "zonghengcafe.firebaseapp.com",
+  projectId: "zonghengcafe",
+  storageBucket: "zonghengcafe.firebasestorage.app",
+  messagingSenderId: "207027108121",
+  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+  measurementId: "G-8ZE4SE2T7T"
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
 
-const usernameInput =
-document.getElementById("username");
+const loginBtn = document.getElementById("loginBtn");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const rememberInput = document.getElementById("rememberMe");
 
-const passwordInput =
-document.getElementById("password");
+const rememberedUser = localStorage.getItem("rememberUser");
 
-const rememberMe =
-document.getElementById("rememberMe");
-
-const loginBtn =
-document.getElementById("loginBtn");
-
-const remembered =
-localStorage.getItem("rememberUser");
-
-if(remembered){
-
-  usernameInput.value = remembered;
-
-  rememberMe.checked = true;
-
+if (rememberedUser) {
+  usernameInput.value = rememberedUser;
+  rememberInput.checked = true;
 }
 
-async function login(){
+async function login() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  const remember = rememberInput.checked;
 
-  const username =
-  usernameInput.value.trim();
-
-  const password =
-  passwordInput.value.trim();
-
-  if(!username || !password){
-
+  if (!username || !password) {
     alert("請輸入帳號密碼");
-
     return;
-
   }
 
   loginBtn.disabled = true;
-
   loginBtn.innerText = "登入中";
 
-  try{
-
+  try {
     const q = query(
-      collection(db,"accounts"),
-      where("username","==",username)
+      collection(db, "accounts"),
+      where("username", "==", username)
     );
 
-    const snap =
-    await getDocs(q);
+    const snapshot = await getDocs(q);
 
-    if(snap.empty){
-
+    if (snapshot.empty) {
       alert("帳號不存在");
-
       return;
-
     }
 
-    const account =
-    snap.docs[0].data();
+    const accountDoc = snapshot.docs[0];
+    const account = {
+      id: accountDoc.id,
+      ...accountDoc.data()
+    };
 
-    if(String(account.password).trim() !== password.trim()){
-
-      alert("請確認帳號密碼");
-
+    if (!account.auth_email) {
+      alert("此帳號尚未設定 auth_email");
       return;
-
     }
+
+    await setPersistence(
+      auth,
+      remember ? browserLocalPersistence : browserSessionPersistence
+    );
+
+    await signInWithEmailAndPassword(
+      auth,
+      account.auth_email,
+      password
+    );
 
     localStorage.setItem(
       "zh_user",
-      JSON.stringify(account)
+      JSON.stringify({
+        id: account.id,
+        username: account.username,
+        role: account.role,
+        auth_email: account.auth_email,
+        unit_number: account.unit_number || ""
+      })
     );
 
-    if(rememberMe.checked){
-
-      localStorage.setItem(
-        "rememberUser",
-        username
-      );
-
-    }else{
-
-      localStorage.removeItem(
-        "rememberUser"
-      );
-
+    if (remember) {
+      localStorage.setItem("rememberUser", username);
+    } else {
+      localStorage.removeItem("rememberUser");
     }
 
-    // 角色跳轉
-
-    if(account.role === "resident"){
-
-      location.href =
-      "resident.html";
-
-    }
-    else if(account.role === "cafe"){
-
-      location.href =
-      "cafe.html";
-
-    }
-    else if(account.role === "property"){
-
-      location.href =
-      "property.html";
-
-    }
-    else if(account.role === "engineer"){
-
-      location.href =
-      "engineer.html";
-
-    }
-    else{
-
-      alert("未知角色");
-
+    if (account.role === "engineer") {
+      location.href = "engineer.html";
+    } else if (account.role === "cafe") {
+      location.href = "cafe.html";
+    } else if (account.role === "property") {
+      location.href = "property.html";
+    } else if (account.role === "resident") {
+      location.href = "resident.html";
+    } else {
+      alert("未知角色，請聯絡工程師");
     }
 
-  }
-  catch(e){
-
-    console.error(e);
-
-    alert("登入失敗");
-
-  }
-  finally{
-
+  } catch (error) {
+    console.error(error);
+    alert("登入失敗，請確認帳號密碼");
+  } finally {
     loginBtn.disabled = false;
-
     loginBtn.innerText = "登入";
-
   }
-
 }
 
-loginBtn.addEventListener(
-  "click",
-  login
-);
+loginBtn.addEventListener("click", login);
 
-passwordInput.addEventListener(
-  "keydown",
-  e=>{
-    if(e.key==="Enter"){
-      login();
-    }
+passwordInput.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    login();
   }
-);
-
-// PWA
-if ("serviceWorker" in navigator) {
-
-  navigator.serviceWorker
-  .register("./sw.js");
-
-}
-
+});
 </script>
 
 </body>
