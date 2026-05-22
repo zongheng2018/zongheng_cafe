@@ -7,7 +7,7 @@
 
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", Arial, sans-serif;
+      font-family: "-apple-system", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", Arial, sans-serif;
       background: url('bg.jpg') no-repeat center center fixed;
       background-size: cover;
       margin: 0;
@@ -32,7 +32,6 @@
       display: block;
       margin-left: auto;
       margin-right: auto;
-      opacity: 0.88;
     }
 
     .top-banner h1 {
@@ -109,7 +108,6 @@
       box-sizing: border-box;
       outline: none;
       transition: border-color 0.2s;
-      background: rgba(255,255,255,0.88);
     }
 
     .input-group input:focus {
@@ -136,7 +134,6 @@
       width: 16px;
       height: 16px;
       cursor: pointer;
-      accent-color: #9c8e81;
     }
 
     button.btn-login {
@@ -162,25 +159,7 @@
       transform: scale(0.99);
     }
 
-    button.btn-login:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-    }
-
-    .message {
-      margin-top: 14px;
-      min-height: 20px;
-      text-align: center;
-      font-size: 14px;
-      color: #b84236;
-    }
-
     @media (max-width: 480px) {
-      body {
-        justify-content: flex-start;
-        padding-top: 56px;
-      }
-
       .top-banner img.logo {
         width: 150px;
       }
@@ -204,200 +183,227 @@
 
   <div class="top-banner">
     <img src="logo.png" class="logo" alt="縱橫Logo">
-    <h1>昭揚縱橫 咖啡廳點餐系統</h1>
+
+    <h1>
+      昭揚縱橫 咖啡廳點餐系統
+    </h1>
   </div>
 
   <div class="login-container">
+
     <div class="login-title-wrapper">
       <div class="login-title-line"></div>
-      <h2 class="login-title">登入</h2>
+
+      <h2 class="login-title">
+        登入
+      </h2>
+
       <div class="login-title-line right"></div>
     </div>
 
     <div class="login-box">
+
       <div class="input-group">
         <svg viewBox="0 0 24 24">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/>
         </svg>
-        <input id="username" type="text" placeholder="admin" autocomplete="username">
+
+        <input
+          id="username"
+          type="text"
+          placeholder="username"
+          autocomplete="username">
       </div>
 
       <div class="input-group">
         <svg viewBox="0 0 24 24">
-          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/>
+          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
         </svg>
-        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+
+        <input
+          id="password"
+          type="password"
+          placeholder="password"
+          autocomplete="current-password">
       </div>
 
       <label class="remember" for="rememberMe">
-        <input type="checkbox" id="rememberMe"> 記住我的帳號
+        <input type="checkbox" id="rememberMe">
+        保持登入狀態
       </label>
 
-      <button id="loginBtn" class="btn-login">登入</button>
-      <div id="message" class="message"></div>
+      <button
+        class="btn-login"
+        id="loginBtn">
+        登入
+      </button>
+
     </div>
+
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+<script type="module">
 
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      setPersistence,
-      browserLocalPersistence,
-      browserSessionPersistence,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
-    import {
-      getFirestore,
-      collection,
-      query,
-      where,
-      getDocs
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+getAuth,
+signInWithEmailAndPassword,
+setPersistence,
+browserLocalPersistence,
+browserSessionPersistence
+}
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-      authDomain: "zonghengcafe.firebaseapp.com",
-      projectId: "zonghengcafe",
-      storageBucket: "zonghengcafe.firebasestorage.app",
-      messagingSenderId: "207027108121",
-      appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-      measurementId: "G-8ZE4SE2T7T"
-    };
+import {
+getFirestore,
+collection,
+query,
+where,
+getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+const firebaseConfig = {
 
-    const usernameInput = document.getElementById("username");
-    const passwordInput = document.getElementById("password");
-    const rememberInput = document.getElementById("rememberMe");
-    const loginBtn = document.getElementById("loginBtn");
-    const message = document.getElementById("message");
+apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+authDomain: "zonghengcafe.firebaseapp.com",
+projectId: "zonghengcafe",
+storageBucket: "zonghengcafe.firebasestorage.app",
+messagingSenderId: "207027108121",
+appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+measurementId: "G-8ZE4SE2T7T"
 
-    const savedUsername = localStorage.getItem("zh_saved_username");
+};
 
-    if (savedUsername) {
-      usernameInput.value = savedUsername;
-      rememberInput.checked = true;
-    }
+const app = initializeApp(firebaseConfig);
 
-    function roleToPage(role) {
-      if (role === "engineer") return "engineer.html";
-      if (role === "cafe") return "cafe.html";
-      if (role === "property") return "property.html";
-      if (role === "resident") return "resident.html";
-      return "index.html";
-    }
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    async function getAccountByUsername(username) {
-      const q = query(
-        collection(db, "accounts"),
-        where("username", "==", username)
-      );
+const loginBtn =
+document.getElementById("loginBtn");
 
-      const snap = await getDocs(q);
+const rememberedUser =
+localStorage.getItem("rememberUser");
 
-      if (snap.empty) {
-        return null;
-      }
+if(rememberedUser){
 
-      return {
-        id: snap.docs[0].id,
-        ...snap.docs[0].data()
-      };
-    }
+document.getElementById("username").value =
+rememberedUser;
 
-    async function login() {
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value.trim();
+document.getElementById("rememberMe").checked = true;
 
-      message.textContent = "";
+}
 
-      if (!username || !password) {
-        message.textContent = "請輸入帳號與密碼";
-        return;
-      }
+loginBtn.addEventListener("click", async ()=>{
 
-      loginBtn.disabled = true;
-      loginBtn.textContent = "登入中";
+const username =
+document.getElementById("username").value.trim();
 
-      try {
-        const account = await getAccountByUsername(username);
+const password =
+document.getElementById("password").value.trim();
 
-        if (!account) {
-          throw new Error("帳號不存在");
-        }
+const remember =
+document.getElementById("rememberMe").checked;
 
-        if (!account.auth_email) {
-          throw new Error("此帳號尚未設定 auth_email");
-        }
+if(!username || !password){
 
-        await setPersistence(
-          auth,
-          rememberInput.checked ? browserLocalPersistence : browserSessionPersistence
-        );
+alert("請輸入帳號密碼");
+return;
 
-        await signInWithEmailAndPassword(
-          auth,
-          account.auth_email,
-          password
-        );
+}
 
-        localStorage.setItem("zh_user", JSON.stringify({
-          accountId: account.id,
-          username: account.username,
-          role: account.role,
-          unit_number: account.unit_number || "",
-          auth_email: account.auth_email
-        }));
+try{
 
-        if (rememberInput.checked) {
-          localStorage.setItem("zh_saved_username", username);
-        } else {
-          localStorage.removeItem("zh_saved_username");
-        }
+const q = query(
+collection(db,"accounts"),
+where("username","==",username)
+);
 
-        window.location.href = roleToPage(account.role);
+const snapshot = await getDocs(q);
 
-      } catch (e) {
-        console.error(e);
-        message.textContent = "登入失敗，請確認帳號密碼";
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = "登入";
-      }
-    }
+if(snapshot.empty){
 
-    loginBtn.addEventListener("click", login);
+alert("帳號不存在");
+return;
 
-    passwordInput.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-        login();
-      }
-    });
+}
 
-    onAuthStateChanged(auth, function(user) {
-      if (!user) return;
+const userData =
+snapshot.docs[0].data();
 
-      const raw = localStorage.getItem("zh_user");
+await setPersistence(
+auth,
+remember
+? browserLocalPersistence
+: browserSessionPersistence
+);
 
-      if (!raw) return;
+await signInWithEmailAndPassword(
+auth,
+userData.auth_email,
+password
+);
 
-      try {
-        const profile = JSON.parse(raw);
+localStorage.setItem(
+"zh_user",
+JSON.stringify({
+username: username,
+role: userData.role
+})
+);
 
-        if (profile && profile.role) {
-          window.location.href = roleToPage(profile.role);
-        }
-      } catch (e) {
-        localStorage.removeItem("zh_user");
-      }
-    });
-  </script>
+if(remember){
+
+localStorage.setItem(
+"rememberUser",
+username
+);
+
+}else{
+
+localStorage.removeItem(
+"rememberUser"
+);
+
+}
+
+switch(userData.role){
+
+case "engineer":
+window.location.href = "engineer.html";
+break;
+
+case "cafe":
+window.location.href = "cafe.html";
+break;
+
+case "property":
+window.location.href = "property.html";
+break;
+
+case "resident":
+window.location.href = "resident.html";
+break;
+
+default:
+alert("未知角色");
+
+}
+
+}catch(error){
+
+console.error(error);
+
+alert("登入失敗");
+
+}
+
+});
+
+</script>
 
 </body>
 </html>
