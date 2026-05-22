@@ -4,13 +4,15 @@
   <meta charset="UTF-8">
   <title>咖啡廳櫃檯</title>
   <style>
-    body {font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh;}
+    body {font-family:"Microsoft JhengHei"; background:#fdf6e3; display:flex; justify-content:center; align-items:center; height:100vh;}
     .box {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2); width:500px;}
-    h1 {text-align:center; margin-bottom:20px;}
+    h1 {text-align:center; margin-bottom:20px; color:#5c4033;}
+    h2 {color:#5c4033;}
   </style>
 </head>
 <body>
   <div class="box">
+    <img src="logo.png" class="logo" alt="系統Logo" style="width:80px;">
     <h1>咖啡廳櫃檯</h1>
     <input id="menuItem" placeholder="新增菜單項目">
     <button onclick="addMenu()">新增</button>
@@ -20,12 +22,13 @@
     <ul id="orders"></ul>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
   <script>
-    const firebaseConfig = { /* Firebase 設定 */ };
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    async function addMenu() {
-      const item = document.getElementById
+    // 播放音效
+    function playSound() {
+      const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+      audio.play();
+    }
+    // Firestore onSnapshot 監聽新訂單 → 播放音效
+  </script>
+</body>
+</html>
