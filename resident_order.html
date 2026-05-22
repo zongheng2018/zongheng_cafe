@@ -1,903 +1,301 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>昭揚縱橫｜開始點餐</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Noto Sans TC',sans-serif;
-}
-
-body{
-background:#f5f1eb;
-padding-bottom:120px;
-}
-
-/* header */
-
-.header{
-height:72px;
-background:#6b4637;
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:0 18px;
-color:white;
-font-size:26px;
-font-weight:700;
-position:sticky;
-top:0;
-z-index:100;
-}
-
-.cart-icon{
-position:relative;
-font-size:28px;
-cursor:pointer;
-}
-
-.cart-badge{
-position:absolute;
-top:-8px;
-right:-10px;
-background:#d64545;
-color:white;
-width:22px;
-height:22px;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:12px;
-font-weight:700;
-}
-
-/* category */
-
-.category-bar{
-display:flex;
-gap:12px;
-overflow-x:auto;
-padding:14px;
-background:white;
-position:sticky;
-top:72px;
-z-index:99;
-box-shadow:0 2px 10px rgba(0,0,0,0.08);
-}
-
-.category-btn{
-border:none;
-background:#e9dfd4;
-padding:10px 18px;
-border-radius:30px;
-font-size:15px;
-font-weight:700;
-color:#6b4637;
-white-space:nowrap;
-}
-
-.category-btn.active{
-background:#6b4637;
-color:white;
-}
-
-/* menu */
-
-.menu-grid{
-padding:16px;
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-gap:18px;
-}
-
-.card{
-background:white;
-border-radius:24px;
-overflow:hidden;
-box-shadow:0 6px 16px rgba(0,0,0,0.08);
-cursor:pointer;
-transition:.2s;
-}
-
-.card:hover{
-transform:translateY(-2px);
-}
-
-.card img{
-width:100%;
-height:150px;
-object-fit:cover;
-}
-
-.card-body{
-padding:14px;
-}
-
-.name{
-font-size:22px;
-font-weight:700;
-color:#5c4033;
-margin-bottom:10px;
-}
-
-.price{
-font-size:20px;
-font-weight:700;
-color:#b7791f;
-}
-
-/* popup */
-
-.popup-bg,
-.cart-bg{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.45);
-backdrop-filter:blur(6px);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:999;
-padding:20px;
-}
-
-.popup,
-.cart-popup{
-background:white;
-width:100%;
-max-width:520px;
-border-radius:28px;
-overflow:hidden;
-max-height:90vh;
-overflow-y:auto;
-animation:popup .2s ease;
-}
-
-@keyframes popup{
-from{
-opacity:0;
-transform:translateY(20px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
-}
-
-.popup img{
-width:100%;
-height:240px;
-object-fit:cover;
-}
-
-.popup-body{
-padding:22px;
-}
-
-.popup-name{
-font-size:30px;
-font-weight:700;
-color:#5c4033;
-margin-bottom:10px;
-}
-
-.popup-price{
-font-size:24px;
-font-weight:700;
-color:#b7791f;
-margin-bottom:24px;
-}
-
-.option-title{
-font-size:18px;
-font-weight:700;
-margin-bottom:12px;
-color:#5c4033;
-}
-
-.option-group{
-margin-bottom:24px;
-}
-
-.choice-btn{
-border:none;
-background:#ece3da;
-padding:10px 16px;
-border-radius:14px;
-margin-right:10px;
-margin-bottom:10px;
-font-size:15px;
-font-weight:700;
-color:#6b4637;
-}
-
-.choice-btn.active{
-background:#6b4637;
-color:white;
-}
-
-.note{
-width:100%;
-height:110px;
-border:none;
-background:#f3f0eb;
-border-radius:18px;
-padding:16px;
-font-size:16px;
-resize:none;
-outline:none;
-}
-
-.popup-bottom{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-top:24px;
-}
-
-.qty-box{
-display:flex;
-align-items:center;
-gap:16px;
-}
-
-.qty-btn{
-width:42px;
-height:42px;
-border:none;
-border-radius:50%;
-background:#6b4637;
-color:white;
-font-size:24px;
-font-weight:700;
-}
-
-.popup-add{
-border:none;
-background:#6b4637;
-color:white;
-padding:16px 28px;
-border-radius:18px;
-font-size:18px;
-font-weight:700;
-}
-
-/* bottom */
-
-.bottom-cart{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-height:88px;
-background:white;
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:0 18px;
-box-shadow:0 -2px 12px rgba(0,0,0,0.12);
-z-index:100;
-}
-
-.total{
-font-size:24px;
-font-weight:700;
-color:#6b4637;
-}
-
-.cart-btn{
-border:none;
-background:#6b4637;
-color:white;
-padding:16px 26px;
-border-radius:18px;
-font-size:18px;
-font-weight:700;
-}
-
-/* cart popup */
-
-.cart-header{
-padding:20px;
-font-size:28px;
-font-weight:700;
-color:#5c4033;
-border-bottom:1px solid #eee;
-}
-
-.cart-list{
-padding:20px;
-}
-
-.cart-item{
-padding:18px 0;
-border-bottom:1px solid #eee;
-}
-
-.cart-name{
-font-size:20px;
-font-weight:700;
-color:#5c4033;
-margin-bottom:8px;
-}
-
-.cart-detail{
-font-size:14px;
-color:#666;
-margin-bottom:6px;
-}
-
-.delete-btn{
-margin-top:10px;
-border:none;
-background:#e85b5b;
-color:white;
-padding:8px 14px;
-border-radius:10px;
-font-size:14px;
-}
-
-.empty{
-padding:50px;
-text-align:center;
-color:#999;
-}
-
-.checkout{
-margin:20px;
-width:calc(100% - 40px);
-height:56px;
-border:none;
-background:#6b4637;
-color:white;
-border-radius:18px;
-font-size:20px;
-font-weight:700;
-}
-
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
+body{margin:0;background:#f5f1eb;color:#5c4033;padding-bottom:92px}
+.header{height:68px;background:#6b4637;color:white;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:22px;font-weight:700;position:sticky;top:0;z-index:20}
+.back{border:0;background:rgba(255,255,255,.18);color:white;border-radius:10px;padding:8px 12px}
+.cart{position:relative;font-size:26px;cursor:pointer}.badge{position:absolute;top:-8px;right:-10px;background:#d64545;color:white;border-radius:50%;width:22px;height:22px;font-size:12px;display:flex;align-items:center;justify-content:center}
+.category{display:flex;gap:10px;overflow-x:auto;background:white;padding:12px;position:sticky;top:68px;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.cat{border:0;border-radius:999px;background:#e9dfd4;color:#6b4637;padding:9px 16px;font-weight:700;white-space:nowrap}.cat.active{background:#6b4637;color:white}
+.grid{padding:15px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:15px}
+.item{background:white;border-radius:20px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.item img{width:100%;height:140px;object-fit:cover}.body{padding:13px}.name{font-size:20px;font-weight:700}.price{color:#b7791f;font-weight:700;font-size:18px;margin-top:6px}
+.bottom{position:fixed;bottom:0;left:0;right:0;height:82px;background:white;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 -3px 14px rgba(0,0,0,.12);z-index:30}
+.total{font-size:22px;font-weight:800}.btn{border:0;background:#6b4637;color:white;border-radius:16px;padding:14px 22px;font-size:17px;font-weight:700}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:99;padding:18px}
+.modal{background:white;width:100%;max-width:520px;border-radius:24px;max-height:90vh;overflow:auto}
+.modal img{width:100%;height:220px;object-fit:cover}.modal-body{padding:20px}
+.m-title{font-size:26px;font-weight:800}.m-price{font-size:22px;color:#b7791f;font-weight:800;margin:8px 0 18px}
+.label{font-weight:800;margin:16px 0 8px}.choice{border:0;background:#ece3da;color:#6b4637;border-radius:13px;padding:9px 14px;margin:0 8px 8px 0;font-weight:700}.choice.active{background:#6b4637;color:white}
+textarea,input,select{width:100%;border:0;background:#f3f0eb;border-radius:14px;padding:14px;font-size:16px;outline:none}textarea{height:95px;resize:none}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}.qty{display:flex;align-items:center;gap:14px}.round{width:40px;height:40px;border:0;border-radius:50%;background:#6b4637;color:white;font-size:22px}
+.cart-item{padding:15px 0;border-bottom:1px solid #eee}.cart-name{font-size:18px;font-weight:800}.detail{font-size:14px;color:#666;margin-top:4px}.danger{border:0;background:#d65b55;color:white;border-radius:10px;padding:8px 12px;margin-top:8px}
+.hidden{display:none}
+.notice{background:#f8f5f1;border-radius:14px;padding:14px;line-height:1.7;margin:12px 0;color:#6b635b}
 </style>
 </head>
 
 <body>
-
 <div class="header">
-
-<div>開始點餐</div>
-
-<div class="cart-icon" onclick="openCart()">
-🛒
-<div class="cart-badge" id="cartCount">0</div>
+  <button class="back" onclick="location.href='resident.html'">返回</button>
+  <div>開始點餐</div>
+  <div class="cart" onclick="openCart()">🛒<div class="badge" id="count">0</div></div>
 </div>
 
+<div class="category" id="category"></div>
+<div class="grid" id="grid"></div>
+
+<div class="bottom">
+  <div class="total" id="total">NT$ 0</div>
+  <button class="btn" onclick="openCart()">查看購物車</button>
 </div>
 
-<div class="category-bar" id="categoryBar"></div>
+<div class="overlay" id="itemOverlay">
+  <div class="modal">
+    <img id="mImg">
+    <div class="modal-body">
+      <div class="m-title" id="mName"></div>
+      <div class="m-price" id="mPrice"></div>
 
-<div class="menu-grid" id="menuGrid"></div>
+      <div class="label">冰度</div>
+      <div id="iceBox"></div>
 
-<!-- 商品 popup -->
+      <div class="label">糖度</div>
+      <div id="sugarBox"></div>
 
-<div class="popup-bg" id="popupBg">
+      <div class="label">備註</div>
+      <textarea id="note" placeholder="例如：少冰、不要太燙、餐後上"></textarea>
 
-<div class="popup">
-
-<img id="popupImage">
-
-<div class="popup-body">
-
-<div class="popup-name" id="popupName"></div>
-
-<div class="popup-price" id="popupPrice"></div>
-
-<div class="option-group">
-<div class="option-title">冰度</div>
-<div id="iceOptions"></div>
+      <div class="row">
+        <div class="qty">
+          <button class="round" onclick="changeQty(-1)">−</button>
+          <b id="qty">1</b>
+          <button class="round" onclick="changeQty(1)">＋</button>
+        </div>
+        <button class="btn" onclick="addCart()">加入購物車</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="option-group">
-<div class="option-title">糖度</div>
-<div id="sugarOptions"></div>
+<div class="overlay" id="cartOverlay">
+  <div class="modal">
+    <div class="modal-body">
+      <div class="m-title">購物車</div>
+      <div id="cartList"></div>
+      <button class="btn" style="width:100%;margin-top:16px" onclick="openCheckout()">下一步</button>
+    </div>
+  </div>
 </div>
 
-<div class="option-group">
-<div class="option-title">備註</div>
+<div class="overlay" id="checkoutOverlay">
+  <div class="modal">
+    <div class="modal-body">
+      <div class="m-title">確認訂單</div>
 
-<textarea
-class="note"
-id="noteInput"
-placeholder="例如：不要太燙"></textarea>
+      <div class="label">用餐方式</div>
+      <button class="choice active" id="dineInBtn" onclick="setDining('內用')">內用</button>
+      <button class="choice" id="takeOutBtn" onclick="setDining('外帶')">外帶</button>
 
-</div>
+      <div id="seatArea">
+        <div class="label">座位</div>
+        <select id="seatSelect"></select>
+      </div>
 
-<div class="popup-bottom">
+      <div class="label">餐點完成是否需要通知？</div>
+      <label><input type="checkbox" id="needNotify" checked style="width:auto"> 需要通知</label>
 
-<div class="qty-box">
+      <div class="notice" id="pointInfo">讀取點數中...</div>
 
-<button class="qty-btn" onclick="minusPopupQty()">
-−
-</button>
-
-<div id="popupQty">1</div>
-
-<button class="qty-btn" onclick="plusPopupQty()">
-+
-</button>
-
-</div>
-
-<button class="popup-add" onclick="addToCart()">
-加入購物車
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- 購物車 popup -->
-
-<div class="cart-bg" id="cartBg">
-
-<div class="cart-popup">
-
-<div class="cart-header">
-購物車
-</div>
-
-<div class="cart-list" id="cartList"></div>
-
-<button class="checkout">
-下一步
-</button>
-
-</div>
-
-</div>
-
-<div class="bottom-cart">
-
-<div class="total" id="totalPrice">
-NT$ 0
-</div>
-
-<button class="cart-btn" onclick="openCart()">
-查看購物車
-</button>
-
+      <button class="btn" style="width:100%;margin-top:16px" onclick="submitOrder()">送出訂單</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore,collection,getDocs,query,where,addDoc,doc,updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 
-import {
-getFirestore,
-collection,
-getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-const firebaseConfig = {
-apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-authDomain: "zonghengcafe.firebaseapp.com",
-projectId: "zonghengcafe",
-storageBucket: "zonghengcafe.firebasestorage.app",
-messagingSenderId: "207027108121",
-appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-measurementId: "G-8ZE4SE2T7T"
-};
+let profile=null, menu=[], cart=[], current=null, qty=1, ice="正常冰", sugar="全糖", dining="內用";
+let balanceDocId=null, granted=0, stored=0;
 
-const app = initializeApp(firebaseConfig);
-
-const db = getFirestore(app);
-
-const menuGrid = document.getElementById("menuGrid");
-
-const categoryBar = document.getElementById("categoryBar");
-
-let allMenu = [];
-
-let cart = [];
-
-let currentItem = null;
-
-let popupQty = 1;
-
-let selectedIce = "正常冰";
-
-let selectedSugar = "全糖";
+onAuthStateChanged(auth, async user=>{
+  if(!user){location.href="index.html";return}
+  const raw=localStorage.getItem("zh_user");
+  if(!raw){location.href="index.html";return}
+  profile=JSON.parse(raw);
+  if(profile.role!=="resident"){alert("沒有權限");location.href="index.html";return}
+  await loadMenu();
+  await loadSeats();
+});
 
 async function loadMenu(){
-
-const snapshot =
-await getDocs(collection(db,"menu"));
-
-allMenu = [];
-
-snapshot.forEach(doc=>{
-
-const data = doc.data();
-
-if(data.enabled){
-
-allMenu.push({
-id:doc.id,
-...data
-});
-
-}
-
-});
-
-renderCategories();
-
-renderMenu("全部");
-
+  const snap=await getDocs(collection(db,"menu"));
+  menu=[];
+  snap.forEach(d=>{
+    const x=d.data();
+    if(x.enabled) menu.push({id:d.id,...x});
+  });
+  renderCategories();
+  renderMenu("全部");
 }
 
 function renderCategories(){
-
-const categories = [
-"全部",
-...new Set(allMenu.map(i=>i.category))
-];
-
-categoryBar.innerHTML = "";
-
-categories.forEach(category=>{
-
-const btn = document.createElement("button");
-
-btn.className = "category-btn";
-
-if(category==="全部"){
-btn.classList.add("active");
+  const cats=["全部",...new Set(menu.map(x=>x.category||"未分類"))];
+  document.getElementById("category").innerHTML="";
+  cats.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.className="cat"+(i===0?" active":"");
+    b.innerText=c;
+    b.onclick=()=>{
+      document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      renderMenu(c);
+    };
+    category.appendChild(b);
+  });
 }
 
-btn.innerText = category;
+function renderMenu(cat){
+  grid.innerHTML="";
+  const list=cat==="全部"?menu:menu.filter(x=>(x.category||"未分類")===cat);
+  list.forEach(item=>{
+    const div=document.createElement("div");
+    div.className="item";
+    div.onclick=()=>openItem(item);
+    div.innerHTML=`<img src="${item.image||""}"><div class="body"><div class="name">${item.name}</div><div class="price">NT$ ${Number(item.price||0)}</div></div>`;
+    grid.appendChild(div);
+  });
+}
 
-btn.onclick = ()=>{
-
-document.querySelectorAll(".category-btn")
-.forEach(b=>b.classList.remove("active"));
-
-btn.classList.add("active");
-
-renderMenu(category);
-
+window.openItem=item=>{
+  current=item; qty=1; ice="正常冰"; sugar="全糖";
+  mImg.src=item.image||""; mName.innerText=item.name; mPrice.innerText=`NT$ ${Number(item.price||0)}`;
+  note.value=""; document.getElementById("qty").innerText=qty;
+  renderChoices("iceBox",["正常冰","少冰","去冰","熱"],"ice");
+  renderChoices("sugarBox",["全糖","半糖","微糖","無糖"],"sugar");
+  itemOverlay.style.display="flex";
 };
 
-categoryBar.appendChild(btn);
-
-});
-
+function renderChoices(id,arr,type){
+  const box=document.getElementById(id); box.innerHTML="";
+  arr.forEach(v=>{
+    const b=document.createElement("button");
+    b.className="choice "+((type==="ice"?ice:sugar)===v?"active":"");
+    b.innerText=v;
+    b.onclick=()=>{ if(type==="ice") ice=v; else sugar=v; renderChoices(id,arr,type); };
+    box.appendChild(b);
+  });
 }
 
-function renderMenu(category){
+window.changeQty=n=>{qty=Math.max(1,qty+n);document.getElementById("qty").innerText=qty};
 
-menuGrid.innerHTML = "";
-
-const filtered =
-category==="全部"
-? allMenu
-: allMenu.filter(i=>i.category===category);
-
-filtered.forEach(item=>{
-
-const card = document.createElement("div");
-
-card.className = "card";
-
-card.onclick = ()=>openPopup(item);
-
-card.innerHTML = `
-<img src="${item.image}">
-<div class="card-body">
-<div class="name">${item.name}</div>
-<div class="price">NT$ ${item.price}</div>
-</div>
-`;
-
-menuGrid.appendChild(card);
-
-});
-
-}
-
-function openPopup(item){
-
-currentItem = item;
-
-popupQty = 1;
-
-selectedIce = "正常冰";
-
-selectedSugar = "全糖";
-
-document.getElementById("popupImage").src =
-item.image;
-
-document.getElementById("popupName").innerText =
-item.name;
-
-document.getElementById("popupPrice").innerText =
-`NT$ ${item.price}`;
-
-document.getElementById("popupQty").innerText =
-popupQty;
-
-document.getElementById("noteInput").value = "";
-
-renderIceOptions();
-
-renderSugarOptions();
-
-document.getElementById("popupBg").style.display =
-"flex";
-
-}
-
-function renderIceOptions(){
-
-const container =
-document.getElementById("iceOptions");
-
-container.innerHTML = "";
-
-[
-"正常冰",
-"少冰",
-"去冰",
-"熱"
-]
-.forEach(option=>{
-
-const btn =
-document.createElement("button");
-
-btn.className = "choice-btn";
-
-if(option===selectedIce){
-btn.classList.add("active");
-}
-
-btn.innerText = option;
-
-btn.onclick = ()=>{
-
-selectedIce = option;
-
-renderIceOptions();
-
+window.addCart=()=>{
+  cart.push({id:current.id,name:current.name,price:Number(current.price||0),qty,ice,sugar,note:note.value||""});
+  itemOverlay.style.display="none";
+  updateCart();
 };
-
-container.appendChild(btn);
-
-});
-
-}
-
-function renderSugarOptions(){
-
-const container =
-document.getElementById("sugarOptions");
-
-container.innerHTML = "";
-
-[
-"全糖",
-"半糖",
-"微糖",
-"無糖"
-]
-.forEach(option=>{
-
-const btn =
-document.createElement("button");
-
-btn.className = "choice-btn";
-
-if(option===selectedSugar){
-btn.classList.add("active");
-}
-
-btn.innerText = option;
-
-btn.onclick = ()=>{
-
-selectedSugar = option;
-
-renderSugarOptions();
-
-};
-
-container.appendChild(btn);
-
-});
-
-}
-
-window.plusPopupQty = function(){
-
-popupQty++;
-
-document.getElementById("popupQty").innerText =
-popupQty;
-
-}
-
-window.minusPopupQty = function(){
-
-if(popupQty>1){
-popupQty--;
-}
-
-document.getElementById("popupQty").innerText =
-popupQty;
-
-}
-
-window.addToCart = function(){
-
-cart.push({
-
-name:currentItem.name,
-price:currentItem.price,
-qty:popupQty,
-ice:selectedIce,
-sugar:selectedSugar,
-note:document.getElementById("noteInput").value
-
-});
-
-document.getElementById("popupBg").style.display =
-"none";
-
-updateCart();
-
-}
 
 function updateCart(){
-
-let total = 0;
-
-let count = 0;
-
-cart.forEach(item=>{
-
-total += item.price * item.qty;
-
-count += item.qty;
-
-});
-
-document.getElementById("totalPrice").innerText =
-`NT$ ${total}`;
-
-document.getElementById("cartCount").innerText =
-count;
-
-renderCart();
-
+  const count=cart.reduce((s,x)=>s+x.qty,0);
+  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+  document.getElementById("count").innerText=count;
+  document.getElementById("total").innerText=`NT$ ${total}`;
+  renderCart();
 }
 
-window.openCart = function(){
-
-document.getElementById("cartBg").style.display =
-"flex";
-
-}
+window.openCart=()=>{renderCart();cartOverlay.style.display="flex"};
 
 function renderCart(){
+  if(cart.length===0){cartList.innerHTML='<div class="notice">購物車目前沒有商品</div>';return}
+  cartList.innerHTML="";
+  cart.forEach((x,i)=>{
+    const div=document.createElement("div");
+    div.className="cart-item";
+    div.innerHTML=`<div class="cart-name">${x.name} × ${x.qty}</div><div class="detail">冰度：${x.ice}｜糖度：${x.sugar}</div><div class="detail">備註：${x.note||"無"}</div><div class="detail">NT$ ${x.price*x.qty}</div><button class="danger" onclick="delCart(${i})">刪除</button>`;
+    cartList.appendChild(div);
+  });
+}
+window.delCart=i=>{cart.splice(i,1);updateCart()};
 
-const cartList =
-document.getElementById("cartList");
-
-cartList.innerHTML = "";
-
-if(cart.length===0){
-
-cartList.innerHTML = `
-<div class="empty">
-購物車目前沒有商品
-</div>
-`;
-
-return;
-
+async function loadSeats(){
+  try{
+    const snap=await getDocs(collection(db,"seats"));
+    seatSelect.innerHTML="";
+    if(snap.empty){["A1","A2","B1","B2"].forEach(s=>seatSelect.innerHTML+=`<option>${s}</option>`);return}
+    snap.forEach(d=>{
+      const s=d.data();
+      seatSelect.innerHTML+=`<option>${s.seatId||d.id}</option>`;
+    });
+  }catch(e){seatSelect.innerHTML="<option>A1</option><option>A2</option>"}
 }
 
-cart.forEach((item,index)=>{
+window.openCheckout=async()=>{
+  if(cart.length===0){alert("購物車是空的");return}
+  cartOverlay.style.display="none";
+  checkoutOverlay.style.display="flex";
+  await loadBalance();
+};
 
-const div = document.createElement("div");
+window.setDining=v=>{
+  dining=v;
+  dineInBtn.classList.toggle("active",v==="內用");
+  takeOutBtn.classList.toggle("active",v==="外帶");
+  seatArea.style.display=v==="內用"?"block":"none";
+};
 
-div.className = "cart-item";
+async function loadBalance(){
+  const q=query(collection(db,"balances"),where("uid","==",profile.username));
+  const snap=await getDocs(q);
+  if(snap.empty){pointInfo.innerText="找不到點數資料，請洽物業櫃台。";return}
+  const d=snap.docs[0];
+  balanceDocId=d.id;
+  granted=Number(d.data().granted_amount||0);
+  stored=Number(d.data().stored_amount||0);
+  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+  pointInfo.innerText=`配發點數：${granted}｜儲值點數：${stored}｜訂單金額：${total}`;
+}
 
-div.innerHTML = `
+window.submitOrder=async()=>{
+  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+  if(granted+stored<total){alert("點數不足，請洽物業櫃台儲值。");return}
 
-<div class="cart-name">
-${item.name} × ${item.qty}
-</div>
+  let newGranted=granted, newStored=stored;
+  if(newGranted>=total){newGranted-=total}
+  else{const rest=total-newGranted; newGranted=0; newStored-=rest}
 
-<div class="cart-detail">
-冰度：${item.ice}
-</div>
+  const orderId="ZH"+Date.now();
 
-<div class="cart-detail">
-糖度：${item.sugar}
-</div>
+  await addDoc(collection(db,"orders"),{
+    order_id:orderId,
+    uid:profile.username,
+    items:cart,
+    total,
+    dining_type:dining,
+    seat:dining==="內用"?seatSelect.value:"",
+    need_notify:needNotify.checked,
+    status:"等待接單",
+    created_at:new Date().toISOString()
+  });
 
-<div class="cart-detail">
-備註：${item.note || "無"}
-</div>
+  await updateDoc(doc(db,"balances",balanceDocId),{
+    granted_amount:newGranted,
+    stored_amount:newStored
+  });
 
-<div class="cart-detail">
-NT$ ${item.price * item.qty}
-</div>
+  alert("訂單已送出！");
+  cart=[];
+  updateCart();
+  checkoutOverlay.style.display="none";
+  location.href="resident.html";
+};
 
-<button class="delete-btn"
-onclick="deleteCart(${index})">
-刪除
-</button>
-
-`;
-
-cartList.appendChild(div);
-
+[itemOverlay,cartOverlay,checkoutOverlay].forEach(el=>{
+  el.addEventListener("click",e=>{if(e.target===el) el.style.display="none"});
 });
-
-}
-
-window.deleteCart = function(index){
-
-cart.splice(index,1);
-
-updateCart();
-
-}
-
-document.getElementById("popupBg")
-.addEventListener("click",(e)=>{
-
-if(e.target.id==="popupBg"){
-
-document.getElementById("popupBg").style.display =
-"none";
-
-}
-
-});
-
-document.getElementById("cartBg")
-.addEventListener("click",(e)=>{
-
-if(e.target.id==="cartBg"){
-
-document.getElementById("cartBg").style.display =
-"none";
-
-}
-
-});
-
-loadMenu();
-
 </script>
-
 </body>
 </html>
