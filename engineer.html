@@ -3,175 +3,197 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>工程師介面｜昭揚縱橫 咖啡廳點餐系統</title>
 
   <style>
-
-    *{
-      box-sizing:border-box;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
     }
 
-    body{
-      margin:0;
-      background:#f5f1eb;
-      color:#5d534a;
+    body {
+      margin: 0;
+      background: #f5f1eb;
+      color: #5d534a;
     }
 
-    .loading{
-      height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:20px;
-      color:#7b7268;
+    .loading {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #7b7268;
     }
 
-    .topbar{
-      height:60px;
-      background:linear-gradient(to right,#9f8f80,#7e6e61);
-      color:white;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:0 20px;
-      box-shadow:0 3px 10px rgba(0,0,0,.12);
+    .topbar {
+      height: 60px;
+      background: linear-gradient(to right,#9f8f80,#7e6e61);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 3px 10px rgba(0,0,0,.12);
     }
 
-    .title{
-      font-size:22px;
-      letter-spacing:3px;
+    .title {
+      font-size: 22px;
+      letter-spacing: 3px;
     }
 
-    .logout-btn{
-      border:none;
-      background:white;
-      color:#7d6e60;
-      padding:8px 14px;
-      border-radius:5px;
-      cursor:pointer;
+    .logout-btn {
+      border: none;
+      background: white;
+      color: #7d6e60;
+      padding: 8px 14px;
+      border-radius: 5px;
+      cursor: pointer;
     }
 
-    .container{
-      padding:20px;
+    .container {
+      padding: 20px;
     }
 
-    .card{
-      background:white;
-      border-radius:10px;
-      padding:24px;
-      box-shadow:0 6px 18px rgba(0,0,0,.08);
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      margin-bottom: 20px;
     }
 
-    .card-title{
-      font-size:28px;
-      color:#746659;
-      margin-bottom:20px;
+    .card-title {
+      font-size: 24px;
+      color: #746659;
+      margin-bottom: 18px;
     }
 
-    table{
-      width:100%;
-      border-collapse:collapse;
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
     }
 
-    th{
-      background:#f0ebe4;
-      color:#6d6156;
-      padding:14px;
-      text-align:left;
-      border-bottom:1px solid #ddd;
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d7d0c9;
+      border-radius: 5px;
+      font-size: 14px;
     }
 
-    td{
-      padding:14px;
-      border-bottom:1px solid #eee;
+    .add-btn, .save-btn {
+      border: none;
+      background: #9c8e81;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 5px;
+      cursor: pointer;
     }
 
-    input{
-      width:100%;
-      padding:8px 10px;
-      border:1px solid #d7d0c9;
-      border-radius:5px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
     }
 
-    .save-btn{
-      border:none;
-      background:#9c8e81;
-      color:white;
-      padding:8px 14px;
-      border-radius:5px;
-      cursor:pointer;
+    th {
+      background: #f0ebe4;
+      color: #6d6156;
+      padding: 14px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
     }
 
-    .save-btn:hover{
-      opacity:.92;
+    td {
+      padding: 14px;
+      border-bottom: 1px solid #eee;
     }
 
-    .role-badge{
-      display:inline-block;
-      padding:4px 10px;
-      border-radius:999px;
-      background:#eee7df;
-      color:#6d6156;
-      font-size:13px;
+    .role-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eee7df;
+      color: #6d6156;
+      font-size: 13px;
     }
 
-    @media(max-width:900px){
+    .note {
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #8a8076;
+    }
 
-      table{
-        font-size:14px;
+    @media(max-width:900px) {
+      .form-grid {
+        grid-template-columns: 1fr;
       }
 
+      table {
+        font-size: 13px;
+      }
     }
-
   </style>
 </head>
 
 <body>
 
-<div id="loading" class="loading">
-驗證登入狀態中...
-</div>
+<div id="loading" class="loading">驗證登入狀態中...</div>
 
 <div id="app" style="display:none;">
 
   <div class="topbar">
-
-    <div class="title">
-      工程師介面
-    </div>
-
-    <button id="logoutBtn" class="logout-btn">
-      登出
-    </button>
-
+    <div class="title">工程師介面</div>
+    <button id="logoutBtn" class="logout-btn">登出</button>
   </div>
 
   <div class="container">
 
     <div class="card">
+      <div class="card-title">新增帳號</div>
 
-      <div class="card-title">
-        帳號管理系統
+      <div class="form-grid">
+        <input id="newUsername" placeholder="帳號，例如 A102">
+        <input id="newPassword" placeholder="密碼，例如 123456">
+        <select id="newRole">
+          <option value="resident">住戶 resident</option>
+          <option value="cafe">咖啡廳 cafe</option>
+          <option value="property">物業 property</option>
+          <option value="engineer">工程師 engineer</option>
+        </select>
+        <input id="newEmail" placeholder="Auth Email，例如 a102@zongheng.local">
+        <input id="newUnit" placeholder="戶號，可空白">
       </div>
 
-      <table>
+      <br>
 
+      <button class="add-btn" id="addAccountBtn">新增帳號</button>
+
+      <div class="note">
+        新增後請到 Firebase Authentication → Users → Add user，新增相同的 Email 與 Password。<br>
+        例如：auth_email = a102@zongheng.local，password = 123456。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">帳號管理系統</div>
+
+      <table>
         <thead>
           <tr>
             <th>帳號</th>
             <th>角色</th>
+            <th>Auth Email</th>
+            <th>戶號</th>
             <th>密碼</th>
             <th>操作</th>
           </tr>
         </thead>
 
-        <tbody id="accountTable">
-        </tbody>
-
+        <tbody id="accountTable"></tbody>
       </table>
-
     </div>
 
   </div>
@@ -179,170 +201,154 @@
 </div>
 
 <script type="module">
-
 import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
 import {
-getAuth,
-onAuthStateChanged,
-signOut
+  getAuth,
+  onAuthStateChanged,
+  signOut
 }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
-getFirestore,
-collection,
-getDocs,
-doc,
-updateDoc
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  addDoc
 }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
-
-apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-authDomain: "zonghengcafe.firebaseapp.com",
-projectId: "zonghengcafe",
-storageBucket: "zonghengcafe.firebasestorage.app",
-messagingSenderId: "207027108121",
-appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-measurementId: "G-8ZE4SE2T7T"
-
+  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+  authDomain: "zonghengcafe.firebaseapp.com",
+  projectId: "zonghengcafe",
+  storageBucket: "zonghengcafe.firebasestorage.app",
+  messagingSenderId: "207027108121",
+  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+  measurementId: "G-8ZE4SE2T7T"
 };
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-onAuthStateChanged(auth, async(user)=>{
+onAuthStateChanged(auth, async(user) => {
+  if (!user) {
+    alert("請先登入");
+    window.location.href = "index.html";
+    return;
+  }
 
-if(!user){
+  const raw = localStorage.getItem("zh_user");
 
-alert("請先登入");
-window.location.href="index.html";
-return;
+  if (!raw) {
+    window.location.href = "index.html";
+    return;
+  }
 
-}
+  const profile = JSON.parse(raw);
 
-const raw =
-localStorage.getItem("zh_user");
+  if (profile.role !== "engineer") {
+    alert("您沒有權限進入此頁面");
+    window.location.href = "index.html";
+    return;
+  }
 
-if(!raw){
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("app").style.display = "block";
 
-window.location.href="index.html";
-return;
-
-}
-
-const profile =
-JSON.parse(raw);
-
-if(profile.role !== "engineer"){
-
-alert("您沒有權限進入此頁面");
-window.location.href="index.html";
-return;
-
-}
-
-document.getElementById("loading").style.display="none";
-document.getElementById("app").style.display="block";
-
-loadAccounts();
-
+  loadAccounts();
 });
 
-async function loadAccounts(){
+async function loadAccounts() {
+  const table = document.getElementById("accountTable");
+  table.innerHTML = "";
 
-const table =
-document.getElementById("accountTable");
+  const snapshot = await getDocs(collection(db, "accounts"));
 
-table.innerHTML = "";
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
 
-const snapshot =
-await getDocs(collection(db,"accounts"));
+    const tr = document.createElement("tr");
 
-snapshot.forEach((docSnap)=>{
+    tr.innerHTML = `
+      <td>${data.username || ""}</td>
+      <td><span class="role-badge">${data.role || ""}</span></td>
+      <td>${data.auth_email || ""}</td>
+      <td>${data.unit_number || ""}</td>
+      <td>
+        <input type="text" id="pw-${docSnap.id}" value="${data.password || ""}">
+      </td>
+      <td>
+        <button class="save-btn" onclick="savePassword('${docSnap.id}')">儲存</button>
+      </td>
+    `;
 
-const data = docSnap.data();
+    table.appendChild(tr);
+  });
+}
 
-const tr =
-document.createElement("tr");
+window.savePassword = async function(docId) {
+  const value = document.getElementById(`pw-${docId}`).value;
 
-tr.innerHTML = `
+  try {
+    await updateDoc(doc(db, "accounts", docId), {
+      password: value
+    });
 
-<td>
-${data.username || ""}
-</td>
+    alert("已更新 Firestore 密碼欄位。Firebase Authentication 密碼仍需手動同步。");
 
-<td>
-<span class="role-badge">
-${data.role || ""}
-</span>
-</td>
+  } catch(error) {
+    console.error(error);
+    alert("更新失敗");
+  }
+};
 
-<td style="width:240px;">
-<input
-type="text"
-id="pw-${docSnap.id}"
-value="${data.password || ""}">
-</td>
+document.getElementById("addAccountBtn").addEventListener("click", async () => {
+  const username = document.getElementById("newUsername").value.trim();
+  const password = document.getElementById("newPassword").value.trim();
+  const role = document.getElementById("newRole").value;
+  const auth_email = document.getElementById("newEmail").value.trim();
+  const unit_number = document.getElementById("newUnit").value.trim();
 
-<td>
-<button
-class="save-btn"
-onclick="savePassword('${docSnap.id}')">
-儲存
-</button>
-</td>
+  if (!username || !password || !role || !auth_email) {
+    alert("請至少填寫帳號、密碼、角色、Auth Email");
+    return;
+  }
 
-`;
+  try {
+    await addDoc(collection(db, "accounts"), {
+      username,
+      password,
+      role,
+      auth_email,
+      unit_number,
+      created_at: new Date().toISOString()
+    });
 
-table.appendChild(tr);
+    alert("Firestore 帳號已新增。請記得到 Firebase Authentication 新增同一組 Email / Password。");
 
+    document.getElementById("newUsername").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("newEmail").value = "";
+    document.getElementById("newUnit").value = "";
+
+    loadAccounts();
+
+  } catch(error) {
+    console.error(error);
+    alert("新增失敗");
+  }
 });
 
-}
-
-window.savePassword = async function(docId){
-
-const value =
-document.getElementById(`pw-${docId}`).value;
-
-try{
-
-await updateDoc(
-doc(db,"accounts",docId),
-{
-password:value
-}
-);
-
-alert("已更新");
-
-}catch(error){
-
-console.error(error);
-
-alert("更新失敗");
-
-}
-
-}
-
-document.getElementById("logoutBtn")
-.addEventListener("click",async()=>{
-
-await signOut(auth);
-
-localStorage.removeItem("zh_user");
-
-window.location.href="index.html";
-
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  await signOut(auth);
+  localStorage.removeItem("zh_user");
+  window.location.href = "index.html";
 });
-
 </script>
 
 </body>
