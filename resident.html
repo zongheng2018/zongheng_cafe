@@ -3,202 +3,492 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>住戶介面 - 昭揚縱橫咖啡廳</title>
+  <title>昭揚縱橫咖啡廳 - 點餐系統</title>
   <style>
+    /* 全域樣式與精緻咖啡廳配色 */
     body {
-      font-family:"Microsoft JhengHei", Arial, sans-serif;
-      background:#fdf6e3;
-      margin:0;
+      font-family: "Microsoft JhengHei", -apple-system, sans-serif;
+      background-color: #f7f5f0;
+      color: #4a423e;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
     }
+
+    /* 模擬手機容器 */
+    .phone-container {
+      width: 100%;
+      max-width: 412px;
+      min-height: 100vh;
+      background: #fdfbf7;
+      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 頂部導航列 */
     header {
-      background:#5c4033;
-      color:white;
-      padding:12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+      background-color: #ffffff;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #eae5dd;
     }
-    header img {height:40px;}
-    .container {padding:20px;}
-    h1,h2 {color:#5c4033;}
-
-    /* 功能按鈕區 */
-    .menu-buttons {
-      display:flex;
-      flex-wrap:wrap;
-      gap:15px;
-      margin-bottom:20px;
+    .header-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #5c524d;
+      flex-grow: 1;
+      text-align: center;
     }
-    .menu-buttons button {
-      flex:1;
-      min-width:120px;
-      padding:12px;
-      border:none;
-      border-radius:6px;
-      background:#5c4033;
-      color:white;
-      font-size:16px;
-      cursor:pointer;
+    .back-btn {
+      font-size: 20px;
+      cursor: pointer;
+      color: #7a6e67;
+      width: 30px;
     }
-    .menu-buttons button:hover {background:#3e2a20;}
-
-    /* 菜單項目 */
-    .menu-item {
-      border:1px solid #ccc; border-radius:8px;
-      padding:10px; margin:10px 0; display:flex; align-items:center;
-    }
-    .menu-item img {width:60px; height:60px; margin-right:10px; border-radius:8px;}
-    .quantity-control {display:flex; align-items:center; margin-top:5px;}
-    .quantity-control button {
-      width:30px; height:30px; margin:0 5px;
-      background:#5c4033; color:white; border:none; border-radius:4px;
+    .cart-icon {
+      font-size: 20px;
+      cursor: pointer;
+      color: #7a6e67;
+      width: 30px;
+      text-align: right;
     }
 
-    /* 購物車 */
-    .cart {
-      position:fixed; top:10px; left:10px;
-      background:#fff; border:1px solid #ccc; border-radius:8px;
-      padding:10px; width:250px;
+    /* 頁面切換機制 */
+    .page {
+      display: none;
+      padding: 15px;
+      flex-grow: 1;
     }
-    .cart h3 {margin-top:0; color:#5c4033;}
-    .cart-item {display:flex; justify-content:space-between; margin:5px 0;}
-    .cart-item span {flex:1;}
-    .cart-item button {background:red; color:white; border:none; border-radius:4px; cursor:pointer;}
-
-    /* 結帳區 */
-    .checkout {margin-top:20px;}
-    .checkout select, .checkout input {width:100%; padding:8px; margin:8px 0;}
-    .checkout button {
-      width:100%; padding:12px; background:#5c4033; color:white;
-      border:none; border-radius:6px; cursor:pointer;
+    .page.active {
+      display: block;
     }
-    .checkout button:hover {background:#3e2a20;}
 
-    /* RWD 響應式 */
-    @media (max-width:480px) {
-      .cart {width:90%; left:5%; top:auto; bottom:10px;}
-      .menu-buttons {flex-direction:column;}
+    /* --- 畫面 1：主點餐類別頁 --- */
+    .grid-categories {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .category-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid #f0ede6;
+    }
+    .category-card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+    }
+    .category-name {
+      padding: 10px;
+      font-weight: bold;
+      font-size: 15px;
+      color: #5c524d;
+    }
+
+    /* --- 畫面 2：商品與客製化細節頁 --- */
+    .detail-item-card {
+      display: flex;
+      background: white;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .detail-item-card img {
+      width: 75px;
+      height: 75px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-right: 12px;
+    }
+    .item-info {
+      flex-grow: 1;
+    }
+    .item-name {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .item-price {
+      color: #9e8e85;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+    .qty-control {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .qty-val {
+      margin: 0 12px;
+      font-weight: bold;
+    }
+
+    /* 標籤選擇器（冰度、甜度） */
+    .option-group {
+      margin-top: 15px;
+    }
+    .option-title {
+      font-size: 14px;
+      color: #8c827a;
+      margin-bottom: 8px;
+    }
+    .tag-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      padding: 6px 14px;
+      background: #f0ede6;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #6e645e;
+    }
+    .tag.active {
+      background: #7a6e67;
+      color: white;
+    }
+    .note-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #eae5dd;
+      border-radius: 8px;
+      background: #faf8f5;
+      margin-top: 15px;
+      resize: none;
+    }
+
+    /* --- 畫面 3：購物車與最後結帳頁 --- */
+    .cart-list {
+      background: white;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 5px;
+      border-bottom: 1px solid #f5f2eb;
+    }
+    .cart-item:last-child { border-bottom: none; }
+    
+    /* 內用外帶切換紐 */
+    .dine-toggle {
+      display: flex;
+      margin-top: 20px;
+      background: #eae5dd;
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .dine-btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-weight: bold;
+      color: #7a6e67;
+    }
+    .dine-btn.active {
+      background: #7a6e67;
+      color: white;
+    }
+
+    .seat-section {
+      margin-top: 15px;
+    }
+    .seat-select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #eae5dd;
+      background: white;
+    }
+
+    .notify-check {
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    /* 全局底端大按鈕 */
+    .bottom-action-container {
+      margin-top: auto;
+      padding: 15px;
+    }
+    .primary-btn {
+      width: 100%;
+      padding: 14px;
+      background: #7a6e67;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(122,110,103,0.2);
+    }
+    .primary-btn:hover {
+      background: #635852;
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="logo.png" alt="系統Logo">
-    <div>餘額：<span id="balance">載入中...</span></div>
-  </header>
 
-  <!-- 購物車 -->
-  <div class="cart" id="cart">
-    <h3>購物車</h3>
-    <div id="cartItems"></div>
-    <div class="checkout">
-      <select id="dineType">
-        <option value="takeout">外帶</option>
-        <option value="dinein">內用</option>
-      </select>
-      <select id="seatSelect" style="display:none;"></select>
-      <label><input type="checkbox" id="notify"> 餐點完成通知</label>
-      <button onclick="submitOrder()">送出訂單</button>
+  <div class="phone-container">
+    
+    <header>
+      <div class="back-btn" id="backBtn" onclick="goBack()">〈</div>
+      <div class="header-title" id="pageTitle">歡迎點餐</div>
+      <div class="cart-icon" onclick="switchPage('page-cart')">🛒</div>
+    </header>
+
+    <div id="page-categories" class="page active">
+      <div class="grid-categories">
+        <div class="category-card" onclick="selectCategory('果汁')">
+          <img src="https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400" alt="果汁">
+          <div class="category-name">果汁</div>
+        </div>
+        <div class="category-card" onclick="selectCategory('輕食')">
+          <img src="https://images.unsplash.com/photo-1509722747041-616f39b57569?w=400" alt="輕食">
+          <div class="category-name">輕食</div>
+        </div>
+        <div class="category-card" onclick="selectCategory('咖啡')">
+          <img src="https://images.unsplash.com/photo-1507133750040-4a8f57021571?w=400" alt="咖啡">
+          <div class="category-name">咖啡</div>
+        </div>
+        <div class="category-card" onclick="selectCategory('蛋糕')">
+          <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400" alt="蛋糕">
+          <div class="category-name">蛋糕</div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="container">
-    <h1>住戶介面</h1>
-    <div class="menu-buttons">
-      <button onclick="showMenu()">開始點餐</button>
-      <button onclick="showOrders()">訂單紀錄</button>
-      <button onclick="showSettings()">個人設定</button>
-      <button onclick="showAnnouncements()">重要通知</button>
+    <div id="page-detail" class="page">
+      <div class="detail-item-card">
+        <img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400" alt="鮮榨柳橙汁">
+        <div class="item-info">
+          <div class="item-name">鮮榨柳橙汁</div>
+          <div class="item-price">$60</div>
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeStepQty('orange', -1)">-</button>
+            <span class="qty-val" id="qty-orange">1</span>
+            <button class="qty-btn" onclick="changeStepQty('orange', 1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <div class="option-title">冰度</div>
+        <div class="tag-container" id="ice-tags">
+          <div class="tag active" onclick="selectTag('ice', this)">正常</div>
+          <div class="tag" onclick="selectTag('ice', this)">少冰</div>
+          <div class="tag" onclick="selectTag('ice', this)">去冰</div>
+          <div class="tag" onclick="selectTag('ice', this)">熱飲</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <div class="option-title">甜度</div>
+        <div class="tag-container" id="sugar-tags">
+          <div class="tag active" onclick="selectTag('sugar', this)">正常</div>
+          <div class="tag" onclick="selectTag('sugar', this)">微糖</div>
+          <div class="tag" onclick="selectTag('sugar', this)">半糖</div>
+          <div class="tag" onclick="selectTag('sugar', this)">全糖</div>
+        </div>
+      </div>
+
+      <textarea class="note-input" rows="2" placeholder="請輸入備註..."></textarea>
+
+      <div class="bottom-action-container">
+        <button class="primary-btn" onclick="addToCartAndGo()">加入購物車</button>
+      </div>
     </div>
 
-    <div id="menu"></div>
-    <div id="announcements"></div>
-    <div id="orderHistory"></div>
-    <div id="settings"></div>
+    <div id="page-cart" class="page">
+      <div class="cart-list">
+        <div class="cart-item">
+          <span>綜合冰品 x2</span>
+          <span>$150</span>
+        </div>
+        <div class="cart-item">
+          <span>芒果冰沙 x1</span>
+          <span>$85</span>
+        </div>
+      </div>
+
+      <div class="dine-toggle">
+        <div class="dine-btn active" id="btn-dinein" onclick="setDineType('dinein')">內用確認</div>
+        <div class="dine-btn" id="btn-takeout" onclick="setDineType('takeout')">外帶</div>
+      </div>
+
+      <div class="seat-section" id="seat-section">
+        <div class="option-title">請選擇座位 / 桌號：</div>
+        <select class="seat-select" id="seatSelect">
+          </select>
+      </div>
+
+      <div class="notify-check">
+        <input type="checkbox" id="notify" checked>
+        <label for="notify">餐點切換是否需要通知？</label>
+      </div>
+
+      <div class="bottom-action-container">
+        <button class="primary-btn" onclick="submitOrder()">送出訂單</button>
+      </div>
+    </div>
+
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script>
-    const firebaseConfig = { /* Firebase 設定 */ };
+    // 請保留您原本的 Firebase 密鑰設定
+    const firebaseConfig = { /* 請保留原本的內容 */ };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let cart = [];
+    // 頁面巡航歷史紀錄（用來精準控制左上角返回鍵）
+    let pageHistory = ['page-categories'];
+    let currentDineType = 'dinein';
 
-    async function loadResident() {
-      // 餘額
-      const balanceDoc = await db.collection("balances").doc("resident01").get();
-      if (balanceDoc.exists) {
-        const data = balanceDoc.data();
-        document.getElementById("balance").innerText = (data.bonusPoints + data.reservedPoints) + " 點";
-      }
+    window.onload = function() {
+      loadSeats();
+    };
 
-      // 座位
-      const seatSnap = await db.collection("seats").get();
-      seatSnap.forEach(doc => {
-        const opt = document.createElement("option");
-        opt.value = doc.id;
-        opt.textContent = doc.id;
-        document.getElementById("seatSelect").appendChild(opt);
-      });
-    }
-
-    function showMenu() {
-      document.getElementById("menu").innerHTML = "";
-      db.collection("menu").get().then(menuSnap => {
-        menuSnap.forEach(doc => {
-          const item = doc.data();
-          const div = document.createElement("div");
-          div.className = "menu-item";
-          div.innerHTML = `
-            <img src="${item.image || 'default.jpg'}">
-            <div style="flex:1">
-              <strong>${item.item}</strong><br>NT$${item.price}
-              <div class="quantity-control">
-                <button onclick="changeQty('${item.item}', -1)">-</button>
-                <span id="qty-${item.item}">0</span>
-                <button onclick="changeQty('${item.item}', 1)">+</button>
-              </div>
-              <label>冰度：
-                <select id="ice-${item.item}">
-                  <option>正常冰</option><option>少冰</option><option>去冰</option><option>熱</option>
-                </select>
-              </label>
-              <label>甜度：
-                <select id="sugar-${item.item}">
-                  <option>正常</option><option>少糖</option><option>無糖</option>
-                </select>
-              </label>
-              <textarea id="note-${item.item}" placeholder="備註"></textarea>
-            </div>
-          `;
-          document.getElementById("menu").appendChild(div);
+    // 載入 Firebase 座位選單
+    async function loadSeats() {
+      try {
+        const seatSelect = document.getElementById("seatSelect");
+        seatSelect.innerHTML = ""; // 清空
+        const seatSnap = await db.collection("seats").get();
+        seatSnap.forEach(doc => {
+          const opt = document.createElement("option");
+          opt.value = doc.id;
+          opt.textContent = doc.id; // 例如 A101
+          seatSelect.appendChild(opt);
         });
+      } catch(e) {
+        // 備用選項防止資料庫未連上時報錯
+        document.getElementById("seatSelect").innerHTML = '<option value="A101">A101</option><option value="A102">A102</option>';
+      }
+    }
+
+    // SPA 頁面切換核心
+    function switchPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      
+      // 更新標題
+      const titles = {
+        'page-categories': '歡迎點餐',
+        'page-detail': '綜合冰品',
+        'page-cart': '購物車'
+      };
+      document.getElementById('pageTitle').innerText = titles[pageId] || '點餐系統';
+      
+      // 控制返回鍵顯示
+      document.getElementById('backBtn').style.visibility = (pageId === 'page-categories') ? 'hidden' : 'visible';
+      
+      if(pageHistory[pageHistory.length - 1] !== pageId) {
+        pageHistory.push(pageId);
+      }
+    }
+
+    function goBack() {
+      if (pageHistory.length > 1) {
+        pageHistory.pop(); // 移除當前頁
+        const prevPage = pageHistory[pageHistory.length - 1];
+        switchPage(prevPage);
+      }
+    }
+
+    // 畫面 1 選擇大類別後，跳轉到畫面 2
+    function selectCategory(catName) {
+      switchPage('page-detail');
+    }
+
+    // 畫面 2 規格標籤切換
+    function selectTag(type, element) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+      element.classList.add('active');
+    }
+
+    // 數量加減
+    function changeStepQty(id, delta) {
+      const el = document.getElementById(`qty-${id}`);
+      let v = parseInt(el.innerText) + delta;
+      if(v < 1) v = 1;
+      el.innerText = v;
+    }
+
+    // 點擊加入購物車後跳到最後的結帳畫面
+    function addToCartAndGo() {
+      switchPage('page-cart');
+    }
+
+    // 畫面 3：最後設定內用外帶邏輯
+    function setDineType(type) {
+      currentDineType = type;
+      document.getElementById('btn-dinein').classList.remove('active');
+      document.getElementById('btn-takeout').classList.remove('active');
+      
+      if(type === 'dinein') {
+        document.getElementById('btn-dinein').classList.add('active');
+        document.getElementById('seat-section').style.display = 'block';
+      } else {
+        document.getElementById('btn-takeout').classList.add('active');
+        document.getElementById('seat-section').style.display = 'none';
+      }
+    }
+
+    // 送出訂單到 Firebase
+    function submitOrder() {
+      const seat = currentDineType === 'dinein' ? document.getElementById('seatSelect').value : '外帶';
+      const notify = document.getElementById('notify').checked;
+
+      // 建立訂單結構送至 Firestore
+      db.collection("orders").add({
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        dineType: currentDineType,
+        seatId: seat,
+        notifyNeeded: notify,
+        status: "準備中"
+      }).then(() => {
+        alert("訂單已成功送出！");
+        // 回到首頁
+        pageHistory = ['page-categories'];
+        switchPage('page-categories');
+      }).catch(err => {
+        alert("送出失敗: " + err);
       });
     }
-
-    function changeQty(item, delta) {
-      const qtySpan = document.getElementById("qty-" + item);
-      let qty = parseInt(qtySpan.innerText) + delta;
-      if (qty < 0) qty = 0;
-      qtySpan.innerText = qty;
-      updateCart(item, qty);
-    }
-
-    function updateCart(item, qty) {
-      const index = cart.findIndex(c => c.item === item);
-      if (index >= 0) {
-        if (qty === 0) cart.splice(index,1);
-        else cart[index].quantity = qty;
-      } else if (qty > 0) {
-        cart.push({item, quantity: qty});
-      }
-      renderCart();
-    }
-
-    function renderCart() {
-      const cartDiv = document.getElementById("cartItems");
-      cartDiv.innerHTML = "";
-      cart.forEach(c => {
-        const div =
+  </script>
+</body>
+</html>
