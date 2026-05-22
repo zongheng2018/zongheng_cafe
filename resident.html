@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>昭揚縱橫 - 住戶點餐系統</title>
   <style>
-    /* 完美復刻設計圖：簡約高質感全域視覺 */
+    /* 復刻設計圖：簡約高質感全域視覺 */
     body {
       font-family: "-apple-system", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", Arial, sans-serif;
       background: url('bg.jpg') no-repeat center center fixed;
@@ -36,7 +36,7 @@
       max-width: 430px; margin: 15px auto; padding: 0 12px 140px 12px; box-sizing: border-box;
     }
 
-    /* 裝飾性「幾何標題與線條」設計（完美還原設計圖一） */
+    /* 幾何裝飾標題線 */
     .page-title-wrapper {
       display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
     }
@@ -51,7 +51,7 @@
       font-size: 20px; color: #555; font-weight: 400; margin: 0 15px; letter-spacing: 4px;
     }
 
-    /* 設計圖專屬：毛玻璃高質感卡片 */
+    /* 毛玻璃高質感卡片 */
     .app-card {
       background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(8px);
@@ -62,7 +62,7 @@
       margin-bottom: 20px; padding: 18px; box-sizing: border-box;
     }
 
-    /* 收據紙張鋸齒質感下緣（還原公告/單據裝飾） */
+    /* 收據紙張鋸齒質感下緣 */
     .receipt-box { position: relative; padding-bottom: 28px; }
     .receipt-box::after {
       content: ""; display: block; position: absolute; bottom: 0; left: 0; right: 0; height: 8px;
@@ -70,9 +70,7 @@
       background-image: linear-gradient(-45deg, transparent 3px, white 3px), linear-gradient(45deg, transparent 3px, white 3px);
     }
 
-    /* ———————————————————————————————————————————
-       商品列表樣式 (圓角圖片、規格微調)
-       ——————————————————————————————————————————— */
+    /* 商品列表樣式 */
     .item-card {
       background: white; border-radius: 6px; border: 1px solid #ededed;
       padding: 12px; margin-bottom: 12px; display: flex; align-items: center;
@@ -83,9 +81,7 @@
     .item-info-row .name { font-size: 16px; font-weight: bold; color: #333; }
     .item-info-row .price { font-size: 15px; font-weight: bold; color: #9c8e81; }
 
-    /* ———————————————————————————————————————————
-       規格確認彈窗 (完美套用設計圖色調)
-       ——————————————————————————————————————————— */
+    /* 規格確認彈窗 */
     .modal-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.35); z-index: 1000; display: none;
@@ -116,15 +112,13 @@
       padding: 8px; box-sizing: border-box; resize: none; font-size: 13px;
     }
 
-    /* ———————————————————————————————————————————
-       單據填寫、時間與 A1~C6 桌號選取網格
-       ——————————————————————————————————————————— */
+    /* 單據填寫、時間與 A1~C6 桌號選取網格 */
     .form-row { margin-bottom: 16px; font-size: 16px; color: #5c4033; font-weight: bold; }
     .form-row input[type="radio"] { width: 18px; height: 18px; margin-right: 5px; vertical-align: middle; }
     .form-row label { vertical-align: middle; color: #444; font-size: 16px; }
     
-    .time-inputs input { padding: 5px; font-size: 16px; width: 60px; text-align: center; margin: 0 4px; border: 1px solid #ccc; border-radius: 4px; }
-    .form-row select { padding: 5px; font-size: 15px; width: 90px; border: 1px solid #ccc; border-radius: 4px; background: white; }
+    .time-inputs input { padding: 5px; font-size: 16px; width: 60px; text-align: center; margin: 0 4px; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; }
+    .form-row select { padding: 5px; font-size: 15px; width: 90px; border: 1px solid #ccc; border-radius: 4px; background: white; font-weight: bold; }
     
     /* 桌號網格按鈕 */
     .table-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
@@ -132,8 +126,12 @@
       background: white; border: 1px solid #bcaea1; border-radius: 4px; padding: 10px 0;
       font-size: 14px; font-weight: bold; color: #5c4033; text-align: center; cursor: pointer; transition: all 0.2s;
     }
-    /* 劃位網格選中高亮（變為深藍色，呼應結帳截圖需求） */
     .table-btn.selected { background: #1a0dab; color: white; border-color: #1a0dab; }
+
+    /* 桌號顯示標籤 */
+    .selected-seat-badge {
+      display: inline-block; background: #9c8e81; color: white; padding: 2px 12px; border-radius: 4px; font-size: 16px; font-weight: bold; margin-left: 5px; min-width: 35px; text-align: center;
+    }
 
     /* 購物車小項目明細 */
     .cart-summary-item {
@@ -153,7 +151,7 @@
     .btn-setting { width: 100%; padding: 11px; border-radius: 4px; border: 1px solid #c8c8c8; background: white; color: #333; font-size: 14px; cursor: pointer; margin-bottom: 10px; font-weight: bold; }
     .btn-setting.danger { border-color: #d9534f; color: #d9534f; margin-top: 15px; }
 
-    /* ☕ 完美復刻第一張設計圖：經典磨砂金屬漸層按鈕 */
+    /* 經典磨砂金屬漸層大按鈕 */
     .btn-submit-gradient {
       width: 100%; padding: 14px; border-radius: 4px; border: 1px solid #9c9183;
       background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
@@ -166,7 +164,26 @@
       background: #9c8e81; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-size: 14px; cursor: pointer;
     }
 
-    /* 手機底部分頁導航欄 (咖啡廳色系調和) */
+    /* 位置圖容器與防呆不允許點擊設定 */
+    .map-modal {
+      background: #e6e6e6; width: 100%; max-width: 360px; border-radius: 4px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 15px; box-sizing: border-box;
+    }
+    .map-container { 
+      background: white; border-radius: 4px; padding: 20px; text-align: center;
+      user-select: none; pointer-events: none; /* 讓整個位置圖卡片純閱讀、無法點擊交互 */
+    }
+    .map-row-a { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
+    .map-cell-a { background:#c6daf7; border: 1px solid #4a7ec7; padding: 8px 12px; border-radius: 12px; font-weight: bold; font-size: 13px; color:#000; }
+    .map-row-b { display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; }
+    .map-cell-b { background:#c6daf7; border: 1px solid #4a7ec7; padding: 6px 10px; border-radius: 50px; font-weight: bold; font-size: 12px; color:#000; }
+    .map-door-row { display: flex; align-items: flex-start; justify-content: flex-start; padding-left: 20px; margin-bottom: 15px; }
+    .map-door { border: 1px solid #333; width: 40px; padding: 8px 2px; font-size: 12px; text-align: center; font-weight: bold; color:#000; background: #fff; }
+    .map-row-c { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; }
+    .map-cell-c { background:#c6daf7; border: 1px solid #4a7ec7; padding: 6px 10px; border-radius: 10px; font-weight: bold; font-size: 12px; color:#000; }
+    .map-bar { border: 1px solid #333; padding: 10px; font-weight: bold; background: #fafafa; letter-spacing: 2px; color:#000; }
+
+    /* 底部分頁導航欄 */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -237,13 +254,17 @@
         <div class="form-row time-inputs">
           <div style="margin-bottom: 6px;">預 計 取 餐 時 間</div>
           <input type="number" id="time-hour" value="18"> 時 
-          <input type="number" id="time-min" value="11"> 分
+          <input type="number" id="time-min" value="31"> 分
         </div>
 
         <div class="form-row">
           <div style="margin-bottom: 6px;">選 擇 人 數</div>
           <select id="guest-count">
-            <option value="1">1 </option><option value="2">2 </option><option value="3">3 </option><option value="4">4 </option>
+            <option value="1">1</option><option value="2">2</option>
+            <option value="3">3</option><option value="4">4</option>
+            <option value="5">5</option><option value="6">6</option>
+            <option value="7">7</option><option value="8">8</option>
+            <option value="9">9</option><option value="10">10</option>
           </select> 位
         </div>
 
@@ -255,15 +276,15 @@
             </span>
           </div>
           
-          <div style="font-size: 14px; color: #333; margin-bottom: 10px; font-weight: normal;">
-            請於下方選擇桌號！您的桌號：<input type="text" id="lbl-selected-seat" readonly style="width:55px; text-align:center; font-weight:bold; font-size:15px; border:1px solid #ccc; padding:2px; background:#fff; border-radius:4px;">
+          <div style="font-size: 14px; color: #333; margin-bottom: 10px; font-weight: normal; display: flex; align-items: center;">
+            請於下方選擇桌號！您的桌號：<span id="lbl-selected-seat" class="selected-seat-badge">無</span>
           </div>
 
           <div class="table-grid" id="js-table-grid"></div>
         </div>
 
         <label style="display:flex; align-items:center; font-size:15px; font-weight:bold; color:#9c8e81; cursor:pointer; margin: 20px 0 10px 0;">
-          <input type="checkbox" id="notify" style="width:17px; height:17px; margin-right:8px;"> 餐點完成是否需要通知？ <span style="font-weight:normal; color:#444; margin-left:6px;">是</span>
+          <input type="checkbox" id="notify" style="width:17px; height:17px; margin-right:8px;"> 餐點完成是否需要通知？
         </label>
 
         <button type="button" class="btn-submit-gradient" onclick="submitOrder()" style="margin-top:15px;">送出訂單</button>
@@ -293,7 +314,7 @@
           <input type="text" id="setting-username" readonly>
         </div>
         <button type="button" class="btn-setting" onclick="changePassword()">更改登入密碼</button>
-        <button type="button" class="btn-setting danger" onclick="logout()">登出系統</button>
+        <button type="button" class="btn-setting danger" onclick="logout()">登出</button>
       </div>
     </div>
 
@@ -332,7 +353,7 @@
 
   <div class="modal-overlay" id="modal-map" onclick="closeMapModal()">
     <div class="map-modal" onclick="event.stopPropagation()">
-      <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-weight:bold; font-size:15px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-weight:bold; font-size:15px; color:#333;">
         <span>桌號位置圖</span>
         <span style="cursor:pointer; color:#777;" onclick="closeMapModal()">完成 ✖</span>
       </div>
@@ -343,10 +364,12 @@
         <div class="map-row-b">
           <div class="map-cell-b">B1</div><div class="map-cell-b">B2</div><div class="map-cell-b">B3</div><div class="map-cell-b">B4</div>
         </div>
-        <div class="map-row-b" style="margin-bottom:12px;">
+        <div class="map-row-b" style="margin-bottom:15px;">
           <div class="map-cell-b">B8</div><div class="map-cell-b">B7</div><div class="map-cell-b">B6</div><div class="map-cell-b">B5</div>
         </div>
-        <div class="map-door">門口</div>
+        <div class="map-door-row">
+          <div class="map-door">門口</div>
+        </div>
         <div class="map-row-c">
           <div class="map-cell-c">C1</div><div class="map-cell-c">C2</div><div class="map-cell-c">C3</div><div class="map-cell-c">C4</div><div class="map-cell-c">C5</div><div class="map-cell-c">C6</div>
         </div>
@@ -387,6 +410,7 @@
 
     let cart = []; 
     let currentItemData = null;
+    let selectedSeatId = ""; 
     const currentUsername = localStorage.getItem("savedUser") || "resident01";
 
     function switchSection(sectionId, navElement) {
@@ -455,7 +479,10 @@
     function closeMapModal() { document.getElementById('modal-map').classList.remove('active'); }
 
     function clickSeatButton(seatId) {
-      document.getElementById('lbl-selected-seat').value = seatId;
+      selectedSeatId = seatId;
+      document.getElementById('seatSelect').value = seatId;
+      document.getElementById('lbl-selected-seat').innerText = seatId;
+      
       document.querySelectorAll('.table-btn').forEach(btn => {
         btn.classList.toggle('selected', btn.innerText === seatId);
       });
@@ -466,7 +493,6 @@
       document.getElementById("setting-username").value = currentUsername;
 
       try {
-        // 餘額安全讀取避免 NaN
         const balanceDoc = await db.collection("balances").doc(currentUsername).get();
         if (balanceDoc.exists) {
           const data = balanceDoc.data();
@@ -475,7 +501,6 @@
           document.getElementById("balance").innerText = "0 點";
         }
 
-        // 商品渲染
         const menuSnap = await db.collection("menu").get();
         const menuBox = document.getElementById("menu");
         menuBox.innerHTML = "";
@@ -494,19 +519,27 @@
           menuBox.appendChild(card);
         });
 
-        // 載入座位網格按鈕
         const seatSnap = await db.collection("seats").get();
         const gridBox = document.getElementById("js-table-grid");
         gridBox.innerHTML = "";
-        seatSnap.forEach(doc => {
+        
+        const seatDocs = [];
+        seatSnap.forEach(doc => seatDocs.push({id: doc.id}));
+        seatDocs.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true, sensitivity: 'base'}));
+
+        seatDocs.forEach(seat => {
+          const selectNode = document.getElementById("seatSelect");
+          const opt = document.createElement("option");
+          opt.value = seat.id; opt.textContent = seat.id;
+          selectNode.appendChild(opt);
+
           const btn = document.createElement("div");
           btn.className = "table-btn";
-          btn.innerText = doc.id;
-          btn.setAttribute("onclick", `clickSeatButton('${doc.id}')`);
+          btn.innerText = seat.id;
+          btn.setAttribute("onclick", `clickSeatButton('${seat.id}')`);
           gridBox.appendChild(btn);
         });
 
-        // 載入公告
         const ann = await db.collection("announcements").get();
         document.getElementById("announcements").innerHTML = "";
         ann.forEach(doc => {
@@ -515,12 +548,12 @@
           document.getElementById("announcements").appendChild(li);
         });
 
-        // 載入歷史訂單
         const orders = await db.collection("orders").where("customer","==",currentUsername).get();
         document.getElementById("orderHistory").innerHTML = "";
         orders.forEach(doc => {
           const o = doc.data();
           const li = document.createElement("li");
+          li.className = "info-card";
           li.textContent = `${o.items ? o.items[0].item + ' 等商品' : (o.item || '單品')} x${o.quantity || 1} - 狀態: ${o.status}`;
           document.getElementById("orderHistory").appendChild(li);
         });
@@ -559,10 +592,9 @@
       const hr = document.getElementById('time-hour').value;
       const min = document.getElementById('time-min').value;
       const guests = document.getElementById('guest-count').value;
-      const selectedSeat = document.getElementById('lbl-selected-seat').value;
       const needNotify = document.getElementById('notify').checked;
 
-      if(mode === 'dinein' && !selectedSeat) { alert("請先在下方網格選擇座位！"); return; }
+      if(mode === 'dinein' && !selectedSeatId) { alert("請先在下方網格選擇座位！"); return; }
 
       try {
         await db.collection("orders").add({
@@ -571,13 +603,17 @@
           dineType: mode,
           pickupTime: `${hr}:${min}`,
           guests: guests,
-          seat: mode === 'dinein' ? selectedSeat : '外帶',
+          seat: mode === 'dinein' ? selectedSeatId : '外帶',
           notifyNeeded: needNotify,
           status: "準備中",
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         alert("🎉 訂單已成功送出！");
         cart = []; renderCart();
+        selectedSeatId = "";
+        document.getElementById('lbl-selected-seat').innerText = "無";
+        document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
+        
         switchSection('sec-history', document.getElementById('nav-hist'));
         loadResidentSystem();
       } catch(e) {
