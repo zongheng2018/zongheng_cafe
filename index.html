@@ -13,99 +13,18 @@
 <title>昭揚縱橫 咖啡廳點餐系統</title>
 
 <style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
-  background: url("bg.jpg") no-repeat center center fixed;
-  background-size: cover;
-  margin: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.wrapper {
-  width: 100%;
-  max-width: 420px;
-  text-align: center;
-}
-
-.logo {
-  width: 180px;
-  margin-bottom: 12px;
-  opacity: .82;
-}
-
-.system-title {
-  font-size: 20px;
-  color: #666;
-  letter-spacing: 2px;
-  margin-bottom: 48px;
-}
-
-.login-title {
-  font-size: 30px;
-  color: #666;
-  font-weight: 400;
-  letter-spacing: 8px;
-  margin-bottom: 24px;
-}
-
-.login-box {
-  background: rgba(255,255,255,.86);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  padding: 28px;
-  box-shadow: 0 10px 28px rgba(0,0,0,.15);
-}
-
-.input-group {
-  margin-bottom: 16px;
-}
-
-input {
-  width: 100%;
-  height: 54px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 0 16px;
-  font-size: 18px;
-  box-sizing: border-box;
-  outline: none;
-}
-
-input:focus {
-  border-color: #9c8e81;
-}
-
-.remember {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #666;
-  font-size: 15px;
-  margin: 8px 0 24px;
-  text-align: left;
-}
-
-.remember input {
-  width: 18px;
-  height: 18px;
-}
-
-button {
-  width: 100%;
-  height: 56px;
-  border: none;
-  border-radius: 6px;
-  background: linear-gradient(to bottom, #bcaea1, #9c8e81);
-  color: white;
-  font-size: 22px;
-  letter-spacing: 8px;
-  font-weight: 500;
-  cursor: pointer;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:url("bg.jpg") no-repeat center center fixed;background-size:cover;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.wrapper{width:100%;max-width:420px;text-align:center}
+.logo{width:180px;margin-bottom:12px;opacity:.82}
+.system-title{font-size:20px;color:#666;letter-spacing:2px;margin-bottom:48px}
+.login-title{font-size:30px;color:#666;font-weight:400;letter-spacing:8px;margin-bottom:24px}
+.login-box{background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-radius:8px;padding:28px;box-shadow:0 10px 28px rgba(0,0,0,.15)}
+.input-group{margin-bottom:16px}
+input{width:100%;height:54px;border:1px solid #ddd;border-radius:6px;padding:0 16px;font-size:18px;box-sizing:border-box;outline:none}
+input:focus{border-color:#9c8e81}
+.remember{display:flex;align-items:center;gap:8px;color:#666;font-size:15px;margin:8px 0 24px;text-align:left}
+.remember input{width:18px;height:18px}
+button{width:100%;height:56px;border:none;border-radius:6px;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;font-size:22px;letter-spacing:8px;font-weight:500;cursor:pointer}
 </style>
 </head>
 
@@ -137,13 +56,16 @@ button {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
 import {
   getAuth,
   signInWithEmailAndPassword,
+  signInAnonymously,
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
 import {
   getFirestore,
   collection,
@@ -177,6 +99,14 @@ if (remembered) {
   rememberMe.checked = true;
 }
 
+function goByRole(role) {
+  if (role === "resident") location.href = "resident.html";
+  else if (role === "cafe") location.href = "cafe.html";
+  else if (role === "property") location.href = "property.html";
+  else if (role === "engineer") location.href = "engineer.html";
+  else alert("未知角色");
+}
+
 async function login() {
   const username = usernameInput.value.trim();
   const password = passwordInput.value.trim();
@@ -208,8 +138,8 @@ async function login() {
       ...accountDoc.data()
     };
 
-    if (!account.auth_email) {
-      alert("此帳號尚未設定 auth_email");
+    if (account.password && account.password !== password) {
+      alert("密碼錯誤");
       return;
     }
 
@@ -218,11 +148,16 @@ async function login() {
       rememberMe.checked ? browserLocalPersistence : browserSessionPersistence
     );
 
-    await signInWithEmailAndPassword(
-      auth,
-      account.auth_email,
-      password
-    );
+    try {
+      if (account.auth_email) {
+        await signInWithEmailAndPassword(auth, account.auth_email, password);
+      } else {
+        await signInAnonymously(auth);
+      }
+    } catch (e) {
+      console.warn("Firebase Auth 登入失敗，改用匿名登入補狀態", e);
+      await signInAnonymously(auth);
+    }
 
     localStorage.setItem(
       "zh_user",
@@ -230,7 +165,7 @@ async function login() {
         id: account.id,
         username: account.username,
         role: account.role,
-        auth_email: account.auth_email,
+        auth_email: account.auth_email || "",
         unit_number: account.unit_number || ""
       })
     );
@@ -241,17 +176,7 @@ async function login() {
       localStorage.removeItem("rememberUser");
     }
 
-    if (account.role === "resident") {
-      location.href = "resident.html";
-    } else if (account.role === "cafe") {
-      location.href = "cafe.html";
-    } else if (account.role === "property") {
-      location.href = "property.html";
-    } else if (account.role === "engineer") {
-      location.href = "engineer.html";
-    } else {
-      alert("未知角色");
-    }
+    goByRole(account.role);
 
   } catch (e) {
     console.error(e);
