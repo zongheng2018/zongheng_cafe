@@ -1,129 +1,167 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>物業櫃台｜昭揚縱橫 咖啡廳點餐系統</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
-    }
+<title>物業櫃台｜昭揚縱橫咖啡廳點餐系統</title>
 
-    body {
-      margin: 0;
-      background: #f5f1eb;
-      color: #5d534a;
-    }
+<style>
 
-    .loading {
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      color: #7b7268;
-    }
+body{
+    margin:0;
+    font-family:"Microsoft JhengHei";
+    background:#ece7df;
+}
 
-    .topbar {
-      height: 60px;
-      background: linear-gradient(to right, #9f8f80, #7e6e61);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      box-shadow: 0 3px 10px rgba(0,0,0,.12);
-    }
+.topbar{
+    background:#6f4b3e;
+    color:white;
+    padding:18px 30px;
+    font-size:30px;
+    font-weight:bold;
+}
 
-    .title {
-      font-size: 22px;
-      letter-spacing: 3px;
-    }
+.container{
+    padding:30px;
+}
 
-    .logout-btn {
-      border: none;
-      background: white;
-      color: #7d6e60;
-      padding: 8px 14px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+.card{
+    background:white;
+    border-radius:18px;
+    padding:25px;
+    margin-bottom:30px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
 
-    .container {
-      padding: 20px;
-    }
+.card h2{
+    margin-top:0;
+    color:#6f4b3e;
+}
 
-    .welcome-box {
-      background: white;
-      border-radius: 10px;
-      padding: 28px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
-    }
+input{
+    width:100%;
+    padding:14px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    margin-top:10px;
+    margin-bottom:18px;
+    font-size:18px;
+    box-sizing:border-box;
+}
 
-    .welcome-title {
-      font-size: 28px;
-      margin-bottom: 14px;
-      color: #746659;
-    }
+button{
+    background:#9b8579;
+    color:white;
+    border:none;
+    border-radius:10px;
+    padding:12px 24px;
+    font-size:18px;
+    cursor:pointer;
+}
 
-    .welcome-text {
-      line-height: 1.9;
-      color: #7b7269;
-    }
-  </style>
+button:hover{
+    background:#7d695e;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#f1ece6;
+    padding:15px;
+    text-align:left;
+}
+
+td{
+    padding:15px;
+    border-bottom:1px solid #eee;
+}
+
+.badge{
+    padding:5px 12px;
+    border-radius:20px;
+    background:#ece7df;
+    color:#6f4b3e;
+    display:inline-block;
+}
+
+.logout{
+    position:absolute;
+    top:18px;
+    right:30px;
+}
+
+</style>
 </head>
 
 <body>
 
-<div id="loading" class="loading">
-  驗證登入狀態中...
+<div class="topbar">
+    物業櫃檯
+    <button class="logout" onclick="logout()">登出</button>
 </div>
 
-<div id="app" style="display:none;">
+<div class="container">
 
-  <div class="topbar">
-    <div class="title">物業櫃台</div>
-    <button id="logoutBtn" class="logout-btn">登出</button>
-  </div>
+    <div class="card">
 
-  <div class="container">
-    <div class="welcome-box">
-      <div class="welcome-title">物業管理系統</div>
+        <h2>新增住戶帳號</h2>
 
-      <div class="welcome-text">
-        下一步我們會開始加入：
-        <br><br>
-        ・新增住戶帳號
-        <br>
-        ・修改住戶密碼
-        <br>
-        ・儲值點數
-        <br>
-        ・配發點數
-        <br>
-        ・列印儲值單
-        <br>
-        ・管理訂單
-        <br>
-        ・發送通知
-      </div>
+        <input type="text" id="newAccount" placeholder="住戶帳號（例：A001）">
+
+        <input type="password" id="newPassword" placeholder="初始密碼">
+
+        <button onclick="createResident()">
+            新增住戶
+        </button>
+
     </div>
-  </div>
+
+    <div class="card">
+
+        <h2>住戶點數管理</h2>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>戶號</th>
+                    <th>配發點數</th>
+                    <th>儲值點數</th>
+                    <th>新增配發</th>
+                    <th>新增儲值</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+
+            <tbody id="residentTable">
+
+            </tbody>
+
+        </table>
+
+    </div>
 
 </div>
 
 <script type="module">
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-  getAuth,
-  onAuthStateChanged,
-  signOut
+getFirestore,
+collection,
+getDocs,
+addDoc,
+updateDoc,
+doc,
+query,
+where
 }
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
@@ -136,39 +174,172 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    alert("請先登入");
-    window.location.href = "index.html";
-    return;
-  }
+const db = getFirestore(app);
 
-  const raw = localStorage.getItem("zh_user");
+const role = localStorage.getItem("role");
 
-  if (!raw) {
-    window.location.href = "index.html";
-    return;
-  }
+if(role !== "property"){
+    alert("沒有權限");
+    location.href = "index.html";
+}
 
-  const profile = JSON.parse(raw);
+window.logout = function(){
+    localStorage.clear();
+    location.href = "index.html";
+}
 
-  if (profile.role !== "property") {
-    alert("您沒有權限進入此頁面");
-    window.location.href = "index.html";
-    return;
-  }
+async function loadResidents(){
 
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("app").style.display = "block";
-});
+    const tbody = document.getElementById("residentTable");
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await signOut(auth);
-  localStorage.removeItem("zh_user");
-  window.location.href = "index.html";
-});
+    tbody.innerHTML = "";
+
+    const accountsSnapshot = await getDocs(collection(db,"accounts"));
+
+    const balancesSnapshot = await getDocs(collection(db,"balances"));
+
+    accountsSnapshot.forEach((accountDoc)=>{
+
+        const account = accountDoc.data();
+
+        if(account.role !== "resident") return;
+
+        let balanceData = null;
+        let balanceId = null;
+
+        balancesSnapshot.forEach((balanceDoc)=>{
+
+            const b = balanceDoc.data();
+
+            if(b.uid === account.username){
+                balanceData = b;
+                balanceId = balanceDoc.id;
+            }
+
+        });
+
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+        
+        <td>${account.username}</td>
+
+        <td>
+            ${balanceData?.granted_amount || 0}
+        </td>
+
+        <td>
+            ${balanceData?.stored_amount || 0}
+        </td>
+
+        <td>
+            <input type="number" id="grant_${balanceId}" value="0">
+        </td>
+
+        <td>
+            <input type="number" id="store_${balanceId}" value="0">
+        </td>
+
+        <td>
+            <button onclick="updateBalance('${balanceId}')">
+                儲存
+            </button>
+        </td>
+
+        `;
+
+        tbody.appendChild(tr);
+
+    });
+
+}
+
+window.updateBalance = async function(balanceId){
+
+    const grantValue =
+    Number(document.getElementById(`grant_${balanceId}`).value);
+
+    const storeValue =
+    Number(document.getElementById(`store_${balanceId}`).value);
+
+    const balanceRef = doc(db,"balances",balanceId);
+
+    const balancesSnapshot = await getDocs(collection(db,"balances"));
+
+    let currentGrant = 0;
+    let currentStore = 0;
+
+    balancesSnapshot.forEach((d)=>{
+
+        if(d.id === balanceId){
+
+            currentGrant = Number(d.data().granted_amount || 0);
+
+            currentStore = Number(d.data().stored_amount || 0);
+
+        }
+
+    });
+
+    await updateDoc(balanceRef,{
+
+        granted_amount: currentGrant + grantValue,
+
+        stored_amount: currentStore + storeValue
+
+    });
+
+    alert("更新成功");
+
+    loadResidents();
+
+}
+
+window.createResident = async function(){
+
+    const username =
+    document.getElementById("newAccount").value;
+
+    const password =
+    document.getElementById("newPassword").value;
+
+    if(!username || !password){
+
+        alert("請完整填寫");
+
+        return;
+    }
+
+    await addDoc(collection(db,"accounts"),{
+
+        username: username,
+        password: password,
+        role: "resident"
+
+    });
+
+    await addDoc(collection(db,"balances"),{
+
+        uid: username,
+        unit_number: username,
+        granted_amount: 0,
+        stored_amount: 0
+
+    });
+
+    alert("新增成功");
+
+    document.getElementById("newAccount").value = "";
+
+    document.getElementById("newPassword").value = "";
+
+    loadResidents();
+
+}
+
+loadResidents();
+
 </script>
 
 </body>
