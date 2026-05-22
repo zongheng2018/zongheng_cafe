@@ -269,7 +269,7 @@ async function login(){
     const account =
     snap.docs[0].data();
 
-    if(account.password !== password){
+    if(String(account.password).trim() !== password.trim()){
 
       alert("請確認帳號密碼");
 
