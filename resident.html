@@ -1,84 +1,39 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.6">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="UTF-8">
+  <title>住戶介面</title>
+  <style>
+    body {font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh;}
+    .box {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2); width:400px;}
   </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;住戶頁面&lt;/title&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;h2&gt;住戶專區&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="balance"&gt;餘額：載入中...&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;最新公告&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;ul id="announcements"&gt;&lt;/ul&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Firebase SDK --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"&gt;&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 🔑 同樣貼上你的 Firebase 設定</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const firebaseConfig = {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>authDomain: "zonghengcafe.firebaseapp.com",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>projectId: "zonghengcafe",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>storageBucket: "zonghengcafe.firebasestorage.app",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>messagingSenderId: "207027108121",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>appId: "1:207027108121:web:e7a39e19982ed77f9aed88",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>measurementId: "G-8ZE4SE2T7T"</p>
-<p class="p1"><span class="Apple-converted-space">    </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>const app = firebase.initializeApp(firebaseConfig);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const db = firebase.firestore();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ⚠️ 這裡要知道住戶的 UID 或帳號</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 假設登入時有把 username 存在 localStorage</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const username = localStorage.getItem("username");</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 1. 讀取餘額</p>
-<p class="p1"><span class="Apple-converted-space">    </span>async function loadBalance() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("balances")</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.where("unit_number", "==", username)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.get();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (!snapshot.empty) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const balance = snapshot.docs[0].data().amount;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById("balance").innerText = "餘額：" + balance + " 元";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById("balance").innerText = "餘額資料不存在";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 2. 讀取公告</p>
-<p class="p1"><span class="Apple-converted-space">    </span>async function loadAnnouncements() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("announcements").get();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const list = document.getElementById("announcements");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = "";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>snapshot.forEach(doc =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const ann = doc.data();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const li = document.createElement("li");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>li.innerText = ann.date + " - " + ann.title + "：" + ann.content;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>list.appendChild(li);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 初始化</p>
-<p class="p1"><span class="Apple-converted-space">    </span>loadBalance();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>loadAnnouncements();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+  <div class="box">
+    <div id="balance">餘額：載入中...</div>
+    <h2>公告</h2>
+    <ul id="announcements"></ul>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = { /* Firebase 設定 */ };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function loadResident() {
+      const balanceDoc = await db.collection("balances").doc("resident01").get();
+      if (balanceDoc.exists) document.getElementById("balance").innerText = "餘額：" + balanceDoc.data().amount;
+
+      const ann = await db.collection("announcements").get();
+      ann.forEach(doc => {
+        const li = document.createElement("li");
+        li.textContent = doc.data().text;
+        document.getElementById("announcements").appendChild(li);
+      });
+    }
+    loadResident();
+  </script>
 </body>
 </html>
