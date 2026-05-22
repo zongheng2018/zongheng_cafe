@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#9c8e81">
 <link rel="apple-touch-icon" href="logo.png">
@@ -13,30 +14,149 @@
 <title>昭揚縱橫 咖啡廳點餐系統</title>
 
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:url("bg.jpg") no-repeat center center fixed;background-size:cover;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.wrapper{width:100%;max-width:420px;text-align:center}
-.logo{width:180px;margin-bottom:12px;opacity:.82}
-.system-title{font-size:20px;color:#666;letter-spacing:2px;margin-bottom:48px}
-.login-title{font-size:30px;color:#666;font-weight:400;letter-spacing:8px;margin-bottom:24px}
-.login-box{background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-radius:8px;padding:28px;box-shadow:0 10px 28px rgba(0,0,0,.15)}
-.input-group{margin-bottom:16px}
-input{width:100%;height:54px;border:1px solid #ddd;border-radius:6px;padding:0 16px;font-size:18px;box-sizing:border-box;outline:none}
-input:focus{border-color:#9c8e81}
-.remember{display:flex;align-items:center;gap:8px;color:#666;font-size:15px;margin:8px 0 24px;text-align:left}
-.remember input{width:18px;height:18px}
-button{width:100%;height:56px;border:none;border-radius:6px;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;font-size:22px;letter-spacing:8px;font-weight:500;cursor:pointer}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;
+  background:url("bg.jpg") no-repeat center center fixed;
+  background-size:cover;
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:rgba(255,255,255,.35);
+  backdrop-filter:blur(4px);
+  z-index:-1;
+}
+
+.wrapper{
+  width:100%;
+  max-width:420px;
+  text-align:center;
+}
+
+.logo{
+  width:170px;
+  margin-bottom:10px;
+  opacity:.88;
+}
+
+.system-title{
+  font-size:20px;
+  color:#666;
+  letter-spacing:2px;
+  margin-bottom:46px;
+}
+
+.login-title{
+  font-size:30px;
+  color:#666;
+  font-weight:400;
+  letter-spacing:8px;
+  margin-bottom:24px;
+}
+
+.login-box{
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(10px);
+  border-radius:10px;
+  padding:28px;
+  box-shadow:0 12px 28px rgba(0,0,0,.12);
+}
+
+.input-group{
+  margin-bottom:16px;
+}
+
+input{
+  width:100%;
+  height:54px;
+  border:1px solid #ddd;
+  border-radius:6px;
+  padding:0 16px;
+  font-size:18px;
+  box-sizing:border-box;
+  outline:none;
+  background:white;
+}
+
+input:focus{
+  border-color:#9c8e81;
+}
+
+.remember{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#666;
+  font-size:15px;
+  margin:8px 0 24px;
+  text-align:left;
+}
+
+.remember input{
+  width:18px;
+  height:18px;
+}
+
+button{
+  width:100%;
+  height:56px;
+  border:none;
+  border-radius:6px;
+  background:linear-gradient(to bottom,#bcaea1,#9c8e81);
+  color:white;
+  font-size:22px;
+  letter-spacing:8px;
+  font-weight:500;
+  cursor:pointer;
+  transition:.2s;
+}
+
+button:hover{
+  opacity:.95;
+}
+
+button:disabled{
+  opacity:.7;
+}
+
+@media(max-width:520px){
+
+  .logo{
+    width:140px;
+  }
+
+  .login-box{
+    padding:24px;
+  }
+
+}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
-  <img src="logo.png" class="logo">
-  <div class="system-title">昭揚縱橫 咖啡廳點餐系統</div>
 
-  <div class="login-title">登入</div>
+  <img src="logo.png" class="logo">
+
+  <div class="system-title">
+    昭揚縱橫 咖啡廳點餐系統
+  </div>
+
+  <div class="login-title">
+    登入
+  </div>
 
   <div class="login-box">
+
     <div class="input-group">
       <input id="username" placeholder="username">
     </div>
@@ -50,21 +170,18 @@ button{width:100%;height:56px;border:none;border-radius:6px;background:linear-gr
       保持登入狀態
     </label>
 
-    <button id="loginBtn">登入</button>
+    <button id="loginBtn">
+      登入
+    </button>
+
   </div>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signInAnonymously,
-  setPersistence,
-  browserLocalPersistence,
-  browserSessionPersistence
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
 import {
   getFirestore,
@@ -72,130 +189,186 @@ import {
   query,
   where,
   getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+}
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-  authDomain: "zonghengcafe.firebaseapp.com",
-  projectId: "zonghengcafe",
-  storageBucket: "zonghengcafe.firebasestorage.app",
-  messagingSenderId: "207027108121",
-  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-  measurementId: "G-8ZE4SE2T7T"
+  apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+  authDomain:"zonghengcafe.firebaseapp.com",
+  projectId:"zonghengcafe",
+  storageBucket:"zonghengcafe.firebasestorage.app",
+  messagingSenderId:"207027108121",
+  appId:"1:207027108121:web:e7a39e19982ed77f9aed88",
+  measurementId:"G-8ZE4SE2T7T"
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-const rememberMe = document.getElementById("rememberMe");
-const loginBtn = document.getElementById("loginBtn");
+const usernameInput =
+document.getElementById("username");
 
-const remembered = localStorage.getItem("rememberUser");
-if (remembered) {
+const passwordInput =
+document.getElementById("password");
+
+const rememberMe =
+document.getElementById("rememberMe");
+
+const loginBtn =
+document.getElementById("loginBtn");
+
+const remembered =
+localStorage.getItem("rememberUser");
+
+if(remembered){
+
   usernameInput.value = remembered;
+
   rememberMe.checked = true;
+
 }
 
-function goByRole(role) {
-  if (role === "resident") location.href = "resident.html";
-  else if (role === "cafe") location.href = "cafe.html";
-  else if (role === "property") location.href = "property.html";
-  else if (role === "engineer") location.href = "engineer.html";
-  else alert("未知角色");
-}
+async function login(){
 
-async function login() {
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value.trim();
+  const username =
+  usernameInput.value.trim();
 
-  if (!username || !password) {
+  const password =
+  passwordInput.value.trim();
+
+  if(!username || !password){
+
     alert("請輸入帳號密碼");
+
     return;
+
   }
 
-  loginBtn.innerText = "登入中";
   loginBtn.disabled = true;
 
-  try {
+  loginBtn.innerText = "登入中";
+
+  try{
+
     const q = query(
-      collection(db, "accounts"),
-      where("username", "==", username)
+      collection(db,"accounts"),
+      where("username","==",username)
     );
 
-    const snap = await getDocs(q);
+    const snap =
+    await getDocs(q);
 
-    if (snap.empty) {
+    if(snap.empty){
+
       alert("帳號不存在");
+
       return;
+
     }
 
-    const accountDoc = snap.docs[0];
-    const account = {
-      id: accountDoc.id,
-      ...accountDoc.data()
-    };
+    const account =
+    snap.docs[0].data();
 
-    if (account.password && account.password !== password) {
-      alert("密碼錯誤");
+    if(account.password !== password){
+
+      alert("請確認帳號密碼");
+
       return;
-    }
 
-    await setPersistence(
-      auth,
-      rememberMe.checked ? browserLocalPersistence : browserSessionPersistence
-    );
-
-    try {
-      if (account.auth_email) {
-        await signInWithEmailAndPassword(auth, account.auth_email, password);
-      } else {
-        await signInAnonymously(auth);
-      }
-    } catch (e) {
-      console.warn("Firebase Auth 登入失敗，改用匿名登入補狀態", e);
-      await signInAnonymously(auth);
     }
 
     localStorage.setItem(
       "zh_user",
-      JSON.stringify({
-        id: account.id,
-        username: account.username,
-        role: account.role,
-        auth_email: account.auth_email || "",
-        unit_number: account.unit_number || ""
-      })
+      JSON.stringify(account)
     );
 
-    if (rememberMe.checked) {
-      localStorage.setItem("rememberUser", username);
-    } else {
-      localStorage.removeItem("rememberUser");
+    if(rememberMe.checked){
+
+      localStorage.setItem(
+        "rememberUser",
+        username
+      );
+
+    }else{
+
+      localStorage.removeItem(
+        "rememberUser"
+      );
+
     }
 
-    goByRole(account.role);
+    // 角色跳轉
 
-  } catch (e) {
-    console.error(e);
-    alert("登入失敗，請確認帳號密碼");
-  } finally {
-    loginBtn.innerText = "登入";
-    loginBtn.disabled = false;
+    if(account.role === "resident"){
+
+      location.href =
+      "resident.html";
+
+    }
+    else if(account.role === "cafe"){
+
+      location.href =
+      "cafe.html";
+
+    }
+    else if(account.role === "property"){
+
+      location.href =
+      "property.html";
+
+    }
+    else if(account.role === "engineer"){
+
+      location.href =
+      "engineer.html";
+
+    }
+    else{
+
+      alert("未知角色");
+
+    }
+
   }
+  catch(e){
+
+    console.error(e);
+
+    alert("登入失敗");
+
+  }
+  finally{
+
+    loginBtn.disabled = false;
+
+    loginBtn.innerText = "登入";
+
+  }
+
 }
 
-loginBtn.addEventListener("click", login);
+loginBtn.addEventListener(
+  "click",
+  login
+);
 
-passwordInput.addEventListener("keydown", e => {
-  if (e.key === "Enter") login();
-});
+passwordInput.addEventListener(
+  "keydown",
+  e=>{
+    if(e.key==="Enter"){
+      login();
+    }
+  }
+);
 
+// PWA
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js");
+
+  navigator.serviceWorker
+  .register("./sw.js");
+
 }
+
 </script>
 
 </body>
