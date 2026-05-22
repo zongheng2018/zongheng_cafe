@@ -3,63 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <title>登入介面</title>
+  <style>
+    body {font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh;}
+    .box {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2); width:350px; text-align:center;}
+    h1 {margin-bottom:20px; font-size:22px; color:#333;}
+    input, button {width:90%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc;}
+    button {background:#4CAF50; color:white; border:none; cursor:pointer;}
+    button:hover {background:#45a049;}
+    img.logo {width:80px; margin-bottom:15px;}
+  </style>
 </head>
 <body>
-  <h1>登入介面</h1>
-  <input id="username" placeholder="帳號">
-  <input id="password" type="password" placeholder="密碼">
-  <button onclick="login()">登入</button>
+  <div class="box">
+    <img src="logo.png" class="logo" alt="系統Logo">
+    <h1>登入介面</h1>
+    <input id="username" placeholder="帳號">
+    <input id="password" type="password" placeholder="密碼">
+    <button onclick="login()">登入</button>
+  </div>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
-
   <script>
-    // Firebase 設定
-    const firebaseConfig = {
-      apiKey: "AIzaSyOpbsZy4h3Fs3u4JzWLjWAAaAzROU6mU",
-      authDomain: "zonghengcafe.firebaseapp.com",
-      projectId: "zonghengcafe",
-      storageBucket: "zonghengcafe.firebasestorage.app",
-      messagingSenderId: "927076108212",
-      appId: "1:927076108212:web:907e1980e2d77f9aad88",
-      measurementId: "G-6224ESE471"
-    };
-
-    // 初始化 Firebase
+    const firebaseConfig = { /* Firebase 設定 */ };
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 登入函式
     async function login() {
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-
-      const snapshot = await db.collection("accounts")
-        .where("username", "==", username)
-        .get();
-
+      const snapshot = await db.collection("accounts").where("username","==",username).get();
       if (!snapshot.empty) {
         const user = snapshot.docs[0].data();
         if (user.password === password) {
-          const role = user.role;
-          if (role === "resident") {
-            window.location.href = "resident.html";
-          } else if (role === "property") {
-            window.location.href = "property.html";
-          } else if (role === "cafe") {
-            window.location.href = "cafe.html";
-          } else if (role === "engineer") {
-            window.location.href = "engineer.html";
-          } else {
-            alert("未知角色：" + role);
-          }
-        } else {
-          alert("密碼錯誤！");
-        }
-      } else {
-        alert("帳號不存在！");
-      }
+          if (user.role === "resident") window.location.href="resident.html";
+          else if (user.role === "property") window.location.href="property.html";
+          else if (user.role === "cafe") window.location.href="cafe.html";
+          else if (user.role === "engineer") window.location.href="engineer.html";
+        } else alert("密碼錯誤！");
+      } else alert("帳號不存在！");
     }
   </script>
 </body>
