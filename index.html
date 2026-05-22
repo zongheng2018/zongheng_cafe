@@ -2,21 +2,36 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>登入介面</title>
+  <title>咖啡廳點餐系統</title>
   <style>
-    body {font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh;}
-    .box {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2); width:350px; text-align:center;}
+    body {
+      font-family: Arial;
+      background: url('coffee-bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      background: rgba(255,255,255,0.9);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      width: 350px;
+      text-align: center;
+    }
     h1 {margin-bottom:20px; font-size:22px; color:#333;}
     input, button {width:90%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc;}
     button {background:#4CAF50; color:white; border:none; cursor:pointer;}
     button:hover {background:#45a049;}
-    img.logo {width:80px; margin-bottom:15px;}
+    img.logo {width:100px; margin-bottom:15px;}
   </style>
 </head>
 <body>
   <div class="box">
     <img src="logo.png" class="logo" alt="系統Logo">
-    <h1>登入介面</h1>
+    <h1>咖啡廳點餐系統</h1>
     <input id="username" placeholder="帳號">
     <input id="password" type="password" placeholder="密碼">
     <button onclick="login()">登入</button>
