@@ -4,46 +4,18 @@
   <meta charset="UTF-8">
   <title>工程師後台</title>
   <style>
-    body {
-      font-family: Arial;
-      background:#f0f2f5;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-    }
-    .box {
-      background:white;
-      padding:30px;
-      border-radius:10px;
-      box-shadow:0 4px 8px rgba(0,0,0,0.2);
-      width:500px;
-    }
-    h1 {
-      text-align:center;
-      margin-bottom:20px;
-    }
-    input, button {
-      width:90%;
-      padding:10px;
-      margin:10px 0;
-      border-radius:5px;
-      border:1px solid #ccc;
-    }
-    button {
-      background:#4CAF50;
-      color:white;
-      border:none;
-      cursor:pointer;
-    }
-    button:hover {
-      background:#45a049;
-    }
-    ul {text-align:left;}
+    body {font-family:"Microsoft JhengHei"; background:#fdf6e3; display:flex; justify-content:center; align-items:center; height:100vh;}
+    .box {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2); width:500px;}
+    h1 {text-align:center; margin-bottom:20px; color:#5c4033;}
+    h2 {color:#5c4033;}
+    input, select, button {width:90%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc;}
+    button {background:#5c4033; color:white; border:none; cursor:pointer;}
+    button:hover {background:#3e2a20;}
   </style>
 </head>
 <body>
   <div class="box">
+    <img src="logo.png" class="logo" alt="系統Logo" style="width:80px;">
     <h1>工程師後台</h1>
     <input id="newUser" placeholder="帳號">
     <input id="newPass" type="password" placeholder="密碼">
@@ -57,45 +29,5 @@
     <h2>帳號列表</h2>
     <ul id="accounts"></ul>
   </div>
-
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
-  <script>
-    const firebaseConfig = { /* Firebase 設定 */ };
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    async function addAccount() {
-      const username = document.getElementById("newUser").value;
-      const password = document.getElementById("newPass").value;
-      const role = document.getElementById("newRole").value;
-      if (username && password) {
-        await db.collection("accounts").add({username, password, role});
-        alert("帳號已新增！");
-        location.reload();
-      }
-    }
-
-    async function deleteAccount(id) {
-      await db.collection("accounts").doc(id).delete();
-      alert("帳號已刪除！");
-      location.reload();
-    }
-
-    async function loadAccounts() {
-      const acc = await db.collection("accounts").get();
-      acc.forEach(doc => {
-        const li = document.createElement("li");
-        li.textContent = doc.data().username + " (" + doc.data().role + ")";
-        const btn = document.createElement("button");
-        btn.textContent = "刪除";
-        btn.style.marginLeft = "10px";
-        btn.onclick = () => deleteAccount(doc.id);
-        li.appendChild(btn);
-        document.getElementById("accounts").appendChild(li);
-      });
-    }
-    loadAccounts();
-  </script>
 </body>
 </html>
