@@ -32,6 +32,30 @@ font-weight:700;
 display:flex;
 justify-content:space-between;
 align-items:center;
+position:sticky;
+top:0;
+z-index:20;
+}
+
+.cart-icon{
+position:relative;
+font-size:28px;
+}
+
+.cart-badge{
+position:absolute;
+top:-8px;
+right:-10px;
+background:#d64545;
+color:white;
+width:22px;
+height:22px;
+border-radius:50%;
+font-size:12px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:700;
 }
 
 .category-bar{
@@ -41,7 +65,7 @@ gap:12px;
 padding:15px;
 background:white;
 position:sticky;
-top:0;
+top:72px;
 z-index:10;
 box-shadow:0 2px 8px rgba(0,0,0,0.08);
 }
@@ -71,43 +95,154 @@ gap:18px;
 
 .card{
 background:white;
-border-radius:22px;
+border-radius:24px;
 overflow:hidden;
-box-shadow:0 4px 12px rgba(0,0,0,0.08);
+box-shadow:0 6px 18px rgba(0,0,0,0.08);
+transition:.2s;
+cursor:pointer;
+}
+
+.card:hover{
+transform:translateY(-3px);
 }
 
 .card img{
 width:100%;
-height:180px;
+height:200px;
 object-fit:cover;
 }
 
 .card-body{
-padding:15px;
+padding:16px;
 }
 
 .name{
-font-size:22px;
+font-size:24px;
 font-weight:700;
 color:#5c4033;
-margin-bottom:8px;
+margin-bottom:10px;
 }
 
 .price{
-font-size:20px;
+font-size:22px;
 font-weight:700;
 color:#b7791f;
-margin-bottom:14px;
 }
 
-.counter{
+/* popup */
+
+.popup-bg{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.45);
+backdrop-filter:blur(6px);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:999;
+padding:20px;
+}
+
+.popup{
+background:white;
+width:100%;
+max-width:520px;
+border-radius:28px;
+overflow:hidden;
+max-height:90vh;
+overflow-y:auto;
+animation:popup .2s ease;
+}
+
+@keyframes popup{
+from{
+transform:translateY(20px);
+opacity:0;
+}
+to{
+transform:translateY(0);
+opacity:1;
+}
+}
+
+.popup img{
+width:100%;
+height:240px;
+object-fit:cover;
+}
+
+.popup-body{
+padding:22px;
+}
+
+.popup-name{
+font-size:30px;
+font-weight:700;
+color:#5c4033;
+margin-bottom:10px;
+}
+
+.popup-price{
+font-size:24px;
+font-weight:700;
+color:#b7791f;
+margin-bottom:24px;
+}
+
+.option-title{
+font-size:18px;
+font-weight:700;
+margin-bottom:12px;
+color:#5c4033;
+}
+
+.option-group{
+margin-bottom:22px;
+}
+
+.choice-btn{
+padding:10px 16px;
+border:none;
+border-radius:14px;
+background:#ece3da;
+color:#6b4637;
+margin-right:10px;
+margin-bottom:10px;
+font-size:15px;
+font-weight:700;
+}
+
+.choice-btn.active{
+background:#6b4637;
+color:white;
+}
+
+.note{
+width:100%;
+height:110px;
+border:none;
+background:#f3f0eb;
+border-radius:18px;
+padding:16px;
+font-size:16px;
+resize:none;
+outline:none;
+}
+
+.popup-bottom{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:28px;
+}
+
+.qty-box{
 display:flex;
 align-items:center;
-justify-content:space-between;
-margin-top:12px;
+gap:16px;
 }
 
-.counter button{
+.qty-btn{
 width:42px;
 height:42px;
 border:none;
@@ -118,8 +253,13 @@ font-size:24px;
 font-weight:700;
 }
 
-.qty{
-font-size:22px;
+.popup-add{
+background:#6b4637;
+color:white;
+border:none;
+padding:16px 28px;
+border-radius:18px;
+font-size:18px;
 font-weight:700;
 }
 
@@ -142,13 +282,13 @@ background:#6b4637;
 color:white;
 border:none;
 padding:16px 28px;
-border-radius:16px;
+border-radius:18px;
 font-size:18px;
 font-weight:700;
 }
 
 .total{
-font-size:22px;
+font-size:24px;
 font-weight:700;
 color:#6b4637;
 }
@@ -159,24 +299,120 @@ color:#6b4637;
 <body>
 
 <div class="header">
-<div>開始點餐</div>
-<div>🛒</div>
+
+<div>
+開始點餐
+</div>
+
+<div class="cart-icon">
+
+🛒
+
+<div class="cart-badge" id="cartCount">
+0
+</div>
+
+</div>
+
 </div>
 
 <div class="category-bar" id="categoryBar"></div>
 
 <div class="menu-grid" id="menuGrid"></div>
 
+<!-- popup -->
+
+<div class="popup-bg" id="popupBg">
+
+<div class="popup">
+
+<img id="popupImage">
+
+<div class="popup-body">
+
+<div class="popup-name" id="popupName"></div>
+
+<div class="popup-price" id="popupPrice"></div>
+
+<div class="option-group">
+
+<div class="option-title">
+冰度
+</div>
+
+<div id="iceOptions"></div>
+
+</div>
+
+<div class="option-group">
+
+<div class="option-title">
+糖度
+</div>
+
+<div id="sugarOptions"></div>
+
+</div>
+
+<div class="option-group">
+
+<div class="option-title">
+備註
+</div>
+
+<textarea
+class="note"
+id="noteInput"
+placeholder="例如：不要太燙、先做"></textarea>
+
+</div>
+
+<div class="popup-bottom">
+
+<div class="qty-box">
+
+<button class="qty-btn" onclick="minusPopupQty()">
+−
+</button>
+
+<div id="popupQty">
+1
+</div>
+
+<button class="qty-btn" onclick="plusPopupQty()">
++
+</button>
+
+</div>
+
+<button class="popup-add" onclick="addToCart()">
+加入購物車
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 <div class="bottom-cart">
-<div class="total" id="totalPrice">NT$ 0</div>
+
+<div class="total" id="totalPrice">
+NT$ 0
+</div>
+
 <button class="cart-btn">
 查看購物車
 </button>
+
 </div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
 getFirestore,
@@ -196,17 +432,29 @@ measurementId: "G-8ZE4SE2T7T"
 };
 
 const app = initializeApp(firebaseConfig);
+
 const db = getFirestore(app);
 
 const menuGrid = document.getElementById("menuGrid");
+
 const categoryBar = document.getElementById("categoryBar");
 
 let allMenu = [];
+
 let cart = [];
+
+let currentItem = null;
+
+let popupQty = 1;
+
+let selectedIce = "正常冰";
+
+let selectedSugar = "全糖";
 
 async function loadMenu(){
 
-const snapshot = await getDocs(collection(db,"menu"));
+const snapshot =
+await getDocs(collection(db,"menu"));
 
 allMenu = [];
 
@@ -218,8 +466,7 @@ if(data.enabled){
 
 allMenu.push({
 id:doc.id,
-...data,
-qty:0
+...data
 });
 
 }
@@ -227,13 +474,17 @@ qty:0
 });
 
 renderCategories();
+
 renderMenu("全部");
 
 }
 
 function renderCategories(){
 
-const categories = ["全部",...new Set(allMenu.map(i=>i.category))];
+const categories = [
+"全部",
+...new Set(allMenu.map(i=>i.category))
+];
 
 categoryBar.innerHTML = "";
 
@@ -270,7 +521,8 @@ function renderMenu(category){
 
 menuGrid.innerHTML = "";
 
-const filtered = category==="全部"
+const filtered =
+category==="全部"
 ? allMenu
 : allMenu.filter(i=>i.category===category);
 
@@ -280,33 +532,24 @@ const card = document.createElement("div");
 
 card.className = "card";
 
+card.onclick = ()=>openPopup(item);
+
 card.innerHTML = `
+
 <img src="${item.image}">
+
 <div class="card-body">
 
-<div class="name">${item.name}</div>
+<div class="name">
+${item.name}
+</div>
 
 <div class="price">
 NT$ ${item.price}
 </div>
 
-<div class="counter">
-
-<button onclick="minusQty('${item.id}')">
-−
-</button>
-
-<div class="qty" id="qty-${item.id}">
-${item.qty}
 </div>
 
-<button onclick="plusQty('${item.id}')">
-+
-</button>
-
-</div>
-
-</div>
 `;
 
 menuGrid.appendChild(card);
@@ -315,46 +558,198 @@ menuGrid.appendChild(card);
 
 }
 
-window.plusQty = function(id){
+function openPopup(item){
 
-const item = allMenu.find(i=>i.id===id);
+currentItem = item;
 
-item.qty++;
+popupQty = 1;
 
-document.getElementById(`qty-${id}`).innerText = item.qty;
+selectedIce = "正常冰";
 
-updateTotal();
+selectedSugar = "全糖";
+
+document.getElementById("popupImage").src =
+item.image;
+
+document.getElementById("popupName").innerText =
+item.name;
+
+document.getElementById("popupPrice").innerText =
+`NT$ ${item.price}`;
+
+document.getElementById("popupQty").innerText =
+popupQty;
+
+document.getElementById("noteInput").value = "";
+
+renderIceOptions();
+
+renderSugarOptions();
+
+document.getElementById("popupBg").style.display =
+"flex";
 
 }
 
-window.minusQty = function(id){
+function renderIceOptions(){
 
-const item = allMenu.find(i=>i.id===id);
+const container =
+document.getElementById("iceOptions");
 
-if(item.qty>0){
-item.qty--;
+container.innerHTML = "";
+
+[
+"正常冰",
+"少冰",
+"去冰",
+"熱"
+]
+.forEach(option=>{
+
+const btn =
+document.createElement("button");
+
+btn.className = "choice-btn";
+
+if(option===selectedIce){
+btn.classList.add("active");
 }
 
-document.getElementById(`qty-${id}`).innerText = item.qty;
+btn.innerText = option;
 
-updateTotal();
+btn.onclick = ()=>{
 
-}
+selectedIce = option;
 
-function updateTotal(){
+renderIceOptions();
 
-let total = 0;
+};
 
-allMenu.forEach(item=>{
-
-total += item.price * item.qty;
+container.appendChild(btn);
 
 });
 
-document.getElementById("totalPrice")
-.innerText = `NT$ ${total}`;
+}
+
+function renderSugarOptions(){
+
+const container =
+document.getElementById("sugarOptions");
+
+container.innerHTML = "";
+
+[
+"全糖",
+"半糖",
+"微糖",
+"無糖"
+]
+.forEach(option=>{
+
+const btn =
+document.createElement("button");
+
+btn.className = "choice-btn";
+
+if(option===selectedSugar){
+btn.classList.add("active");
+}
+
+btn.innerText = option;
+
+btn.onclick = ()=>{
+
+selectedSugar = option;
+
+renderSugarOptions();
+
+};
+
+container.appendChild(btn);
+
+});
 
 }
+
+window.plusPopupQty = function(){
+
+popupQty++;
+
+document.getElementById("popupQty").innerText =
+popupQty;
+
+}
+
+window.minusPopupQty = function(){
+
+if(popupQty>1){
+popupQty--;
+}
+
+document.getElementById("popupQty").innerText =
+popupQty;
+
+}
+
+window.addToCart = function(){
+
+cart.push({
+
+name:currentItem.name,
+
+price:currentItem.price,
+
+qty:popupQty,
+
+ice:selectedIce,
+
+sugar:selectedSugar,
+
+note:
+document.getElementById("noteInput").value
+
+});
+
+document.getElementById("popupBg").style.display =
+"none";
+
+updateCart();
+
+}
+
+function updateCart(){
+
+let total = 0;
+
+let count = 0;
+
+cart.forEach(item=>{
+
+total += item.price * item.qty;
+
+count += item.qty;
+
+});
+
+document.getElementById("totalPrice").innerText =
+`NT$ ${total}`;
+
+document.getElementById("cartCount").innerText =
+count;
+
+}
+
+document.getElementById("popupBg")
+.addEventListener("click",(e)=>{
+
+if(e.target.id==="popupBg"){
+
+document.getElementById("popupBg").style.display =
+"none";
+
+}
+
+});
 
 loadMenu();
 
