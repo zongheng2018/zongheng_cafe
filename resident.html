@@ -2,499 +2,333 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>昭揚縱橫 - 住戶點餐介面</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>昭揚縱橫 - 咖啡廳吧檯管理系統</title>
   <style>
-    /* 全域手機版視覺 */
     body {
       font-family: "-apple-system", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", Arial, sans-serif;
       background: url('bg.jpg') no-repeat center center fixed;
       background-size: cover;
-      margin: 0;
-      padding: 0;
-      color: #4a4a4a;
-      box-sizing: border-box;
-      min-height: 100vh;
+      background-color: #f4ede4;
+      margin: 0; padding: 0; color: #333;
     }
 
-    /* 頂部固定導航列：移除文字標題，只留 Logo */
+    /* 頂部導航列 */
     header {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-      padding: 10px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      background: #6a2c91; color: white;
+      padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100;
     }
-    .header-left {
-      display: flex;
-      align-items: center;
-    }
-    header img { height: 35px; width: auto; }
-    
-    .balance-box {
-      background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 13px;
-      font-weight: 500;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      white-space: nowrap;
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
+    .btn-logout {
+      background: #d9534f; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
     }
 
-    /* 手機視窗外殼 */
-    .phone-window {
-      max-width: 430px;
-      margin: 15px auto;
-      padding: 0 12px 80px 12px;
+    /* 主佈局：左右兩欄 (左邊處理訂單，右邊管理商品) */
+    .admin-container {
+      max-width: 1300px; margin: 25px auto; padding: 0 20px;
+      display: grid; grid-template-columns: 1.2fr 1fr; gap: 25px;
       box-sizing: border-box;
     }
 
-    /* 介面卡片通用 */
-    .app-card {
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 10px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      margin-bottom: 20px;
-      overflow: hidden;
+    .panel {
+      background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px);
+      border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.6); overflow: hidden;
     }
+    .panel-header {
+      background: #f8f6f2; padding: 14px 20px; border-bottom: 1px solid #e0e0e0;
+      font-size: 18px; font-weight: bold; color: #5c4033;
+    }
+    .panel-body { padding: 20px; }
 
-    .card-header {
-      background: rgba(248, 246, 242, 0.8);
-      padding: 12px 16px;
-      border-bottom: 1px solid #e0e0e0;
+    /* ———————————————————————————————————————————
+       左欄：訂單管理樣式
+       ——————————————————————————————————————————— */
+    .order-list { display: flex; flex-direction: column; gap: 15px; }
+    .order-card {
+      background: white; border: 1px solid #ddd; border-radius: 6px;
+      padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
-    .card-header h2 {
-      margin: 0; font-size: 17px; color: #5c4033; font-weight: 500; letter-spacing: 2px; text-align: center;
-    }
-
-    #dineType { display: none; }
-
-    /* 外帶/內用頁籤切換 */
-    .dine-tabs {
-      display: flex;
-      border: 1px solid #bcaea1;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 15px;
-    }
-    .dine-tab-btn {
-      flex: 1; padding: 10px; text-align: center; background: white; color: #7a6e65; font-size: 14px; cursor: pointer; border: none;
-    }
-    .dine-tab-btn.active {
-      background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%); color: white;
-    }
-
-    /* 四宮格點餐首頁 */
-    .grid-menu {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px;
-    }
-    .grid-item {
-      background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e8e8e8; text-align: center; cursor: pointer;
-    }
-    .grid-item img { width: 100%; height: 110px; object-fit: cover; }
-    .grid-item .title { padding: 10px; font-size: 14px; font-weight: bold; color: #5c4033; }
-
-    /* 商品詳細清單與規格 */
-    .menu-item {
-      background: white; border: 1px solid #ededed; border-radius: 6px; padding: 12px; display: flex; align-items: flex-start; margin: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.03);
-    }
-    .menu-item img { width: 75px; height: 75px; object-fit: cover; margin-right: 12px; border-radius: 6px; }
-    .menu-info { flex: 1; }
-    .menu-info strong { font-size: 15px; color: #333; display: block; }
-    .menu-price { color: #9c8e81; font-weight: bold; font-size: 14px; margin: 4px 0; }
+    .order-card.status-ready { border-left: 6px solid #f0ad4e; } /* 準備中 */
+    .order-card.status-done { border-left: 6px solid #5cb85c; opacity: 0.7; } /* 已完成 */
     
-    .spec-row { display: flex; gap: 8px; margin: 6px 0; }
-    .spec-row label { font-size: 11px; color: #666; flex: 1; display: flex; flex-direction: column; gap: 2px; }
-    .spec-row select { width: 100%; padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; background: #fafafa; }
-    
-    .quantity-control { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-    .quantity-control button { width: 28px; height: 28px; background: #f4ede4; color: #5c4033; border: 1px solid #decbc0; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
-    .quantity-control span { font-size: 15px; font-weight: bold; min-width: 20px; text-align: center; }
+    .order-meta {
+      display: flex; justify-content: space-between; font-size: 13px; color: #777;
+      border-bottom: 1px dashed #eee; padding-bottom: 8px; margin-bottom: 10px;
+    }
+    .order-dine-tag {
+      padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px;
+    }
+    .dine-takeout { background: #ffebeb; color: #d9534f; }
+    .dine-dinein { background: #ebefff; color: #4a67d6; }
 
-    textarea { width: 100%; height: 45px; margin-top: 8px; border-radius: 4px; border: 1px solid #ddd; padding: 6px; font-size: 12px; box-sizing: border-box; resize: none; }
+    .order-items-box {
+      background: #fafafa; padding: 10px; border-radius: 4px; margin-bottom: 12px; font-size: 14px;
+    }
+    .order-item-line { margin-bottom: 6px; }
+    .order-item-line:last-child { margin-bottom: 0; }
 
-    /* 購物車明細 */
-    #cartItems { background: #fafafa; border-radius: 4px; padding: 8px; max-height: 120px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 12px; }
-    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
-    .cart-item button { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; }
+    .order-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-action {
+      padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;
+    }
+    .btn-done { background: #5cb85c; color: white; }
+    .btn-cancel { background: #d9534f; color: white; }
 
-    /* 收據紙張鋸齒質感 */
-    .receipt-box { position: relative; padding-bottom: 24px; }
-    .receipt-box::after {
-      content: ""; display: block; position: absolute; bottom: 0; left: 0; right: 0; height: 8px;
-      background-size: 12px 8px; background-repeat: repeat-x;
-      background-image: linear-gradient(-45deg, transparent 3px, white 3px), linear-gradient(45deg, transparent 3px, white 3px);
+    /* ———————————————————————————————————————————
+       右欄：商品上架管理與表單
+       ——————————————————————————————————————————— */
+    .menu-form {
+      background: #fdfbf7; border: 1px solid #decbc0; border-radius: 6px;
+      padding: 15px; margin-bottom: 20px;
     }
-
-    /* 公告與紀錄 */
-    #announcements, #orderHistory { list-style: none; padding: 0; margin: 0; }
-    #announcements li, #orderHistory li {
-      background: white; border: 1px solid #eee; border-radius: 6px; padding: 12px; margin: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); font-size: 13px;
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; font-weight: bold; }
+    .form-group input {
+      width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;
     }
-    .ann-tag { display: inline-block; background: #9c8e81; color: white; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
-
-    /* 個人設定欄位樣式 */
-    .setting-group {
-      padding: 16px;
-    }
-    .setting-item {
-      margin-bottom: 15px;
-    }
-    .setting-item label {
-      display: block; font-size: 13px; color: #666; margin-bottom: 5px; font-weight: bold;
-    }
-    .setting-item input {
-      width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #eee; color: #555; font-size: 14px; box-sizing: border-box;
-    }
-    .btn-setting {
-      width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #c8c8c8; background: white; color: #333; font-size: 14px; cursor: pointer; margin-bottom: 10px; transition: background 0.2s;
-    }
-    .btn-setting:hover { background: #f5f5f5; }
-    .btn-setting.danger { border-color: #d9534f; color: #d9534f; margin-top: 15px; }
-    .btn-setting.danger:hover { background: #fdf7f7; }
-
-    /* 磨砂大按鈕 */
-    .btn-submit {
-      width: 100%; padding: 14px; border-radius: 4px; border: 1px solid #9c9183;
-      background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
-      color: white; font-size: 16px; letter-spacing: 4px; text-indent: 4px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    .btn-back {
-      background: white; border: 1px solid #c8c8c8; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #555;
+    .btn-add-item {
+      width: 100%; padding: 10px; background: #6a2c91; color: white; border: none;
+      border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer;
     }
 
-    /* 底部分頁切換欄 */
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
-      background: rgba(255, 255, 255, 0.96); box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
-      display: flex; justify-content: space-around; align-items: center; z-index: 200;
+    /* 商品列表清單 */
+    .admin-menu-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+    .admin-menu-item {
+      background: white; border: 1px solid #eee; border-radius: 6px;
+      padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;
     }
-    .nav-item { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; color: #888; font-size: 11px; cursor: pointer; }
-    .nav-item svg { width: 22px; height: 22px; fill: #888; margin-bottom: 2px; }
-    .nav-item.active { color: #9c8e81; font-weight: bold; }
-    .nav-item.active svg { fill: #9c8e81; }
+    .admin-menu-info { font-size: 15px; }
+    .admin-menu-info strong { color: #6a2c91; }
+    .btn-delete-item {
+      background: none; border: 1px solid #d9534f; color: #d9534f; padding: 4px 8px;
+      border-radius: 4px; cursor: pointer; font-size: 12px;
+    }
+    .btn-delete-item:hover { background: #ffebeb; }
 
-    .view-section { display: none; }
-    .view-section.active { display: block; }
+    /* RWD 手機板自動排列 */
+    @media (max-width: 900px) {
+      .admin-container { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
-  <select id="dineType">
-    <option value="takeout" selected>外帶</option>
-    <option value="dinein">內用</option>
-  </select>
-
   <header>
-    <div class="header-left">
-      <img src="logo.png" alt="系統Logo">
-    </div>
-    <div class="header-right">
-      <div class="balance-box">餘額：<span id="balance">載入中...</span></div>
-    </div>
+    <h1>昭揚縱橫 - 咖啡廳吧檯管理系統</h1>
+    <button class="btn-logout" onclick="logout()">安全登出</button>
   </header>
 
-  <div class="phone-window">
+  <div class="admin-container">
 
-    <div id="sec-announcements" class="view-section">
-      <div class="app-card">
-        <div class="card-header"><h2>最新公告</h2></div>
-        <ul id="announcements"></ul>
-      </div>
-    </div>
-
-    <div id="sec-menu-home" class="view-section active">
-      <div class="app-card">
-        <div class="card-header"><h2>歡迎點餐</h2></div>
-        <div class="grid-menu">
-          <div class="grid-item" onclick="openCategory('juice')">
-            <img src="https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400" alt="果汁">
-            <div class="title">果汁</div>
-          </div>
-          <div class="grid-item" onclick="openCategory('sandwich')">
-            <img src="https://images.unsplash.com/photo-1509722747041-616f39b57569?w=400" alt="三明治">
-            <div class="title">三明治</div>
-          </div>
-          <div class="grid-item" onclick="openCategory('coffee')">
-            <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400" alt="咖啡">
-            <div class="title">咖啡</div>
-          </div>
-          <div class="grid-item" onclick="openCategory('tart')">
-            <img src="https://images.unsplash.com/photo-1519869325930-281384150729?w=400" alt="塔類">
-            <div class="title">塔類</div>
-          </div>
+    <div class="panel">
+      <div class="panel-header">📥 即時住戶點餐單據</div>
+      <div class="panel-body">
+        <div id="order-container" class="order-list">
+          <p style="color:#888; text-align:center;">正在監聽即時訂單中...</p>
         </div>
       </div>
     </div>
 
-    <div id="sec-menu-detail" class="view-section">
-      <div style="margin-bottom: 12px;">
-        <button class="btn-back" onclick="switchSection('sec-menu-home')">← 返回分類</button>
-      </div>
-      
-      <div class="app-card">
-        <div class="card-header"><h2 id="category-title">商品明細</h2></div>
-        <div id="menu"></div>
-      </div>
-
-      <div class="app-card receipt-box" style="padding: 16px; background: white;">
-        <div class="card-header" style="padding: 0 0 10px 0; background: none;"><h2 style="font-size:16px; text-align:left;">購物車明細</h2></div>
-        <div id="cartItems"></div>
+    <div class="panel">
+      <div class="panel-header">☕ 吧檯商品上架管理</div>
+      <div class="panel-body">
         
-        <div class="dine-tabs">
-          <button type="button" class="dine-tab-btn active" id="tab-takeout" onclick="setDineType('takeout')">外帶</button>
-          <button type="button" class="dine-tab-btn" id="tab-dinein" onclick="setDineType('dinein')">內用</button>
-        </div>
-
-        <select id="seatSelect" style="display:none; margin-bottom: 12px; width:100%; padding:8px; border-radius:4px; border:1px solid #ddd;"></select>
-        
-        <label style="display:flex; align-items:center; font-size:13px; margin-bottom:15px; color:#666; cursor:pointer;">
-          <input type="checkbox" id="notify" style="margin-right:6px;"> 點餐確認是否需要通知？
-        </label>
-        
-        <button class="btn-submit" onclick="submitOrder()">送出訂單</button>
-      </div>
-    </div>
-
-    <div id="sec-history" class="view-section">
-      <div class="app-card">
-        <div class="card-header"><h2>訂單紀錄</h2></div>
-        <ul id="orderHistory"></ul>
-      </div>
-    </div>
-
-    <div id="sec-settings" class="view-section">
-      <div class="app-card">
-        <div class="card-header"><h2>個人設定</h2></div>
-        <div class="setting-group">
-          <div class="setting-item">
-            <label>目前登入帳號</label>
-            <input type="text" id="setting-username" readonly>
+        <div class="menu-form">
+          <div style="font-weight: bold; margin-bottom: 10px; color: #5c4033;">新增吧檯點餐單品</div>
+          <div class="form-group">
+            <label for="item-name">商品名稱</label>
+            <input type="text" id="item-name" placeholder="例如：美式咖啡、綜合水果茶">
           </div>
-          <button type="button" class="btn-setting" onclick="changePassword()">更改登入密碼</button>
-          <button type="button" class="btn-setting danger" onclick="logout()">安全登出系統</button>
+          <div class="form-group">
+            <label for="item-price">販售價格 (點數/元)</label>
+            <input type="number" id="item-price" placeholder="例如：20">
+          </div>
+          <div class="form-group">
+            <label for="item-image">商品圖片網址 (選填，留空則使用預設圖)</label>
+            <input type="text" id="item-image" placeholder="https://images.unsplash.com/...">
+          </div>
+          <button type="button" class="btn-add-item" onclick="addMenuItem()">🚀 確定發布上架</button>
         </div>
+
+        <div style="font-weight: bold; margin-bottom: 10px; color: #5c4033;">目前已上架商品清單：</div>
+        <div id="admin-menu-container" class="admin-menu-list">
+          </div>
+
       </div>
     </div>
 
-  </div>
-
-  <div class="bottom-nav">
-    <div class="nav-item" id="nav-ann" onclick="switchSection('sec-announcements', this)">
-      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z"/></svg>
-      最新公告
-    </div>
-    <div class="nav-item active" id="nav-menu" onclick="switchSection('sec-menu-home', this)">
-      <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2v-9.03C10.74 12.84 12.4 11.12 12.4 9V2h-1.4v7zm4-6v8h2.5v11h2V3H15z"/></svg>
-      歡迎點餐
-    </div>
-    <div class="nav-item" id="nav-hist" onclick="switchSection('sec-history', this)">
-      <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-      訂單紀錄
-    </div>
-    <div class="nav-item" id="nav-set" onclick="switchSection('sec-settings', this)">
-      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/></svg>
-      個人設定
-    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script>
-    const firebaseConfig = { /* 請貼上您的 Firebase 設定 */ };
+    const firebaseConfig = { /* 請在此處貼上您的 Firebase 設定 */ };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let cart = [];
-    // 動態取得目前登入者（若登入頁存 admin 就自動抓 admin），讓餘額跟紀錄不會卡死錯誤
-    const currentUsername = localStorage.getItem("savedUser") || "resident01";
+    /* =========================================================================
+       1. 即時訂單監聽與管理
+       ========================================================================= */
+    function listenOrders() {
+      // 監聽 orders 集合，並依照時間倒序排列（最新訂單在最上面）
+      db.collection("orders").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+        const container = document.getElementById("order-container");
+        container.innerHTML = "";
 
-    function switchSection(sectionId, navElement) {
-      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById(sectionId).classList.add('active');
-      if(navElement) {
-        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-        navElement.classList.add('active');
-      }
-      window.scrollTo(0,0);
-    }
-
-    function openCategory(catName) {
-      const titles = { juice: '果汁系列', sandwich: '精緻三明治', coffee: '香醇咖啡', tart: '法式甜塔' };
-      document.getElementById('category-title').innerText = titles[catName] || '商品詳細清單';
-      switchSection('sec-menu-detail', document.getElementById('nav-menu'));
-    }
-
-    function setDineType(type) {
-      document.getElementById('dineType').value = type;
-      document.getElementById('tab-takeout').classList.toggle('active', type === 'takeout');
-      document.getElementById('tab-dinein').classList.toggle('active', type === 'dinein');
-      document.getElementById('seatSelect').style.display = (type === 'dinein') ? 'block' : 'none';
-    }
-
-    // 核心讀取與介面渲染邏輯
-    async function loadResident() {
-      // 在個人設定填入唯讀帳號
-      document.getElementById("setting-username").value = currentUsername;
-
-      try {
-        // 1. 餘額讀取（動態串接目前帳號文件名稱）
-        const balanceDoc = await db.collection("balances").doc(currentUsername).get();
-        if (balanceDoc.exists) {
-          const data = balanceDoc.data();
-          const bonus = Number(data.bonusPoints) || 0;
-          const reserved = Number(data.reservedPoints) || 0;
-          document.getElementById("balance").innerText = (bonus + reserved) + " 點";
-        } else {
-          // 如果沒有對應帳號的文件，嘗試預設為 0 點，不讓介面卡在 "載入中..."
-          document.getElementById("balance").innerText = "0 點";
+        if (snapshot.empty) {
+          container.innerHTML = `<p style="color:#888; text-align:center; padding:20px;">目前尚無任何住戶訂單。</p>`;
+          return;
         }
 
-        // 2. 菜單渲染（完美加回備註 textarea 與正確的 id 數量控制元件）
-        const menuSnap = await db.collection("menu").get();
-        document.getElementById("menu").innerHTML = "";
-        menuSnap.forEach(doc => {
-          const item = doc.data();
-          const div = document.createElement("div");
-          div.className = "menu-item";
-          div.innerHTML = `
-            <img src="${item.image || 'default.jpg'}">
-            <div class="menu-info">
-              <strong>${item.item}</strong>
-              <div class="menu-price">NT$${item.price}</div>
-              <div class="spec-row">
-                <label>冰度
-                  <select id="ice-${item.item}">
-                    <option>正常冰</option><option>少冰</option><option>去冰</option><option>熱</option>
-                  </select>
-                </label>
-                <label>甜度
-                  <select id="sugar-${item.item}">
-                    <option>正常</option><option>少糖</option><option>無糖</option>
-                  </select>
-                </label>
-              </div>
-              <textarea id="note-${item.item}" placeholder="備註（如：少蜜、去冰等）"></textarea>
-              <div class="quantity-control">
-                <button type="button" onclick="changeQty('${item.item}', -1)">-</button>
-                <span id="qty-${item.item}">0</span>
-                <button type="button" onclick="changeQty('${item.item}', 1)">+</button>
-              </div>
+        snapshot.forEach(doc => {
+          const o = doc.data();
+          const docId = doc.id;
+
+          // 解析餐點明細內容
+          let itemsHtml = "";
+          if (Array.isArray(o.items)) {
+            o.items.forEach(c => {
+              itemsHtml += `<div class="order-item-line">🔹 <strong>${c.item}</strong> x${c.quantity} <span style="color:#666; font-size:12px;">${c.note ? '['+c.note+']' : ''}</span></div>`;
+            });
+          } else {
+            // 相容舊版單筆寫入
+            itemsHtml = `<div class="order-item-line">🔹 <strong>${o.item}</strong> x${o.quantity}</div>`;
+          }
+
+          // 判斷外帶內用樣式
+          const isTakeout = o.dineType === 'takeout';
+          const dineTagClass = isTakeout ? 'dine-takeout' : 'dine-dinein';
+          const dineTagText = isTakeout ? '外帶' : `內用 (${o.seat || '未選桌'})`;
+
+          const card = document.createElement("div");
+          card.className = `order-card ${o.status === '已完成' ? 'status-done' : 'status-ready'}`;
+          card.innerHTML = `
+            <div class="order-meta">
+              <div>住戶：<strong>${o.customer}</strong></div>
+              <div>取餐時間：<strong style="color:#6a2c91;">${o.pickupTime || '即刻'}</strong></div>
+              <div class="order-dine-tag ${dineTagClass}">${dineTagText}</div>
+            </div>
+            <div class="order-items-box">
+              ${itemsHtml}
+            </div>
+            <div style="font-size:13px; margin-bottom:10px; color:#555;">
+              👤 人數：${o.guests || 1} 位 | 🔔 完餐通知：${o.notifyNeeded ? '👉 是，需要通知' : '否'}
+            </div>
+            <div class="order-actions">
+              ${o.status !== '已完成' ? `
+                <button class="btn-action btn-done" onclick="updateOrderStatus('${docId}', '已完成')">✓ 完成餐點</button>
+                <button class="btn-action btn-cancel" onclick="deleteOrder('${docId}')">🗑 刪除單據</button>
+              ` : `<span style="color:#5cb85c; font-weight:bold; font-size:14px;">✓ 已完成出餐</span>`}
             </div>
           `;
-          document.getElementById("menu").appendChild(div);
+          container.appendChild(card);
         });
-
-        // 3. 載入最新公告
-        const ann = await db.collection("announcements").get();
-        document.getElementById("announcements").innerHTML = "";
-        ann.forEach(doc => {
-          const li = document.createElement("li");
-          li.innerHTML = `<div class="ann-tag">公告通知</div><div>${doc.data().text || ''}</div>`;
-          document.getElementById("announcements").appendChild(li);
-        });
-
-        // 4. 載入座位
-        const seatSnap = await db.collection("seats").get();
-        document.getElementById("seatSelect").innerHTML = "";
-        seatSnap.forEach(doc => {
-          const opt = document.createElement("option");
-          opt.value = doc.id; opt.textContent = doc.id;
-          document.getElementById("seatSelect").appendChild(opt);
-        });
-
-        // 5. 載入訂單歷史
-        const orders = await db.collection("orders").where("customer","==",currentUsername).get();
-        document.getElementById("orderHistory").innerHTML = "";
-        orders.forEach(doc => {
-          const o = doc.data();
-          const li = document.createElement("li");
-          li.textContent = `${o.item || ''} x${o.quantity || 1} - ${o.status || '處理中'}`;
-          document.getElementById("orderHistory").appendChild(li);
-        });
-      } catch (error) {
-        console.error("Firebase 讀取發生錯誤：", error);
-        document.getElementById("balance").innerText = "無法載入";
-      }
-    }
-
-    // 原始加減數量與購物車核心邏輯（完全接回）
-    function changeQty(item, delta) {
-      const qtySpan = document.getElementById("qty-" + item);
-      let qty = parseInt(qtySpan.innerText) + delta;
-      if (qty < 0) qty = 0;
-      qtySpan.innerText = qty;
-      updateCart(item, qty);
-    }
-
-    function updateCart(item, qty) {
-      const index = cart.findIndex(c => c.item === item);
-      if (index >= 0) {
-        if (qty === 0) cart.splice(index,1);
-        else cart[index].quantity = qty;
-      } else if (qty > 0) {
-        cart.push({item, quantity: qty});
-      }
-      renderCart();
-    }
-
-    function renderCart() {
-      const cartDiv = document.getElementById("cartItems");
-      cartDiv.innerHTML = "";
-      cart.forEach(c => {
-        const div = document.createElement("div");
-        div.className = "cart-item";
-        div.innerHTML = `<span>${c.item} x${c.quantity}</span><button onclick="changeQty('${c.item}', 0)">刪除</button>`;
-        cartDiv.appendChild(div);
+      }, error => {
+        console.error("訂單監聽錯誤：", error);
       });
     }
 
-    // 變更密碼功能實作
-    async function changePassword() {
-      const newPassword = prompt("請輸入您的新密碼：");
-      if (!newPassword || newPassword.trim() === "") {
-        alert("操作取消，新密碼不可為空。");
+    // 更新訂單狀態（例如：轉為已完成）
+    async function updateOrderStatus(docId, newStatus) {
+      try {
+        await db.collection("orders").doc(docId).update({ status: newStatus });
+      } catch (e) {
+        alert("狀態更新失敗！");
+      }
+    }
+
+    // 刪除/取消訂單
+    async function deleteOrder(docId) {
+      if (confirm("確定要刪除或拒絕這筆住戶訂單嗎？")) {
+        try {
+          await db.collection("orders").doc(docId).delete();
+        } catch (e) {
+          alert("刪除失敗！");
+        }
+      }
+    }
+
+    /* =========================================================================
+       2. 商品上下架管理庫 (menu 集合)
+       ========================================================================= */
+    // 監聽並渲染目前吧檯已上架的單品
+    function listenMenu() {
+      db.collection("menu").onSnapshot(snapshot => {
+        const container = document.getElementById("admin-menu-container");
+        container.innerHTML = "";
+
+        snapshot.forEach(doc => {
+          const item = doc.data();
+          const docId = doc.id;
+
+          const div = document.createElement("div");
+          div.className = "admin-menu-item";
+          div.innerHTML = `
+            <div class="admin-menu-info">
+              <strong>${item.item}</strong> - <span style="color:#8e7c6e; font-weight:bold;">${item.price} 點</span>
+            </div>
+            <button class="btn-delete-item" onclick="deleteMenuItem('${docId}', '${item.item}')">下架停售</button>
+          `;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    // 吧檯工作人員新增商品
+    async function addMenuItem() {
+      const name = document.getElementById("item-name").value.trim();
+      const price = document.getElementById("item-price").value.trim();
+      const image = document.getElementById("item-image").value.trim();
+
+      if (!name || !price) {
+        alert("請至少輸入【商品名稱】和【販售價格】！");
         return;
       }
+
       try {
-        const snapshot = await db.collection("accounts").where("username", "==", currentUsername).get();
-        if (!snapshot.empty) {
-          const docId = snapshot.docs[0].id;
-          await db.collection("accounts").doc(docId).update({ password: newPassword.trim() });
-          alert("密碼修改成功！下次請用新密碼登入。");
-        } else {
-          alert("錯誤：在資料庫中找不到您目前登入的帳號文件。");
-        }
+        await db.collection("menu").add({
+          item: name,
+          price: Number(price),
+          image: image || "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400" // 沒給圖就用預設咖啡圖
+        });
+
+        alert(`🎉 ${name} 已成功上架，住戶端已即時同步！`);
+        // 清空輸入欄位
+        document.getElementById("item-name").value = "";
+        document.getElementById("item-price").value = "";
+        document.getElementById("item-image").value = "";
       } catch (e) {
-        alert("更變密碼失敗，請稍後再試。");
+        alert("商品上架失敗，請檢查權限或 Firebase 設定。");
         console.error(e);
       }
     }
 
-    // 登出系統
+    // 吧檯工作人員下架刪除商品
+    async function deleteMenuItem(docId, itemName) {
+      if (confirm(`確定要將【${itemName}】下架並從菜單中移除嗎？`)) {
+        try {
+          await db.collection("menu").doc(docId).delete();
+          alert(`${itemName} 已下架。`);
+        } catch (e) {
+          alert("下架失敗！");
+        }
+      }
+    }
+
     function logout() {
-      if (confirm("確定要安全登出點餐系統嗎？")) {
-        localStorage.removeItem("savedPass");
+      if (confirm("確定要登出管理後台？")) {
+        localStorage.clear();
         window.location.href = "index.html";
       }
     }
 
-    function submitOrder() { 
-      if(cart.length === 0) { alert("購物車目前是空的喔！"); return; }
-      alert("訂單已成功送出！"); 
+    // 網頁開啟時同時監聽訂單與商品菜單
+    window.onload = function() {
+      listenOrders();
+      listenMenu();
     }
-
-    window.onload = loadResident;
   </script>
 </body>
 </html>
