@@ -1,78 +1,66 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.6">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+  <meta charset="UTF-8">
+  <title>登入介面</title>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;社區登入系統&lt;/title&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;h2&gt;登入介面&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="username" placeholder="帳號"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="password" type="password" placeholder="密碼"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;button onclick="login()"&gt;登入&lt;/button&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 1. 引入 Firebase SDK --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"&gt;&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 2. Firebase 初始化配置 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const firebaseConfig = {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>authDomain: "zonghengcafe.firebaseapp.com",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>projectId: "zonghengcafe",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>storageBucket: "zonghengcafe.firebasestorage.app",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>messagingSenderId: "207027108121",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>appId: "1:207027108121:web:e7a39e19982ed77f9aed88",</p>
-<p class="p1"><span class="Apple-converted-space">      </span>measurementId: "G-8ZE4SE2T7T"</p>
-<p class="p1"><span class="Apple-converted-space">    </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 3. 初始化 Firebase</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const app = firebase.initializeApp(firebaseConfig);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const db = firebase.firestore();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 4. 登入函式</p>
-<p class="p1"><span class="Apple-converted-space">    </span>async function login() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const username = document.getElementById("username").value;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const password = document.getElementById("password").value;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("accounts") // ✅ 改成 accounts</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.where("username", "==", username)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.where("password", "==", password)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.get();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (!snapshot.empty) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const user = snapshot.docs[0].data();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>alert("登入成功！角色：" + user.role);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (user.role === "resident") {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>window.location.href = "resident.html";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else if (user.role === "property") {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>window.location.href = "property.html";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else if (user.role === "cafe") {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>window.location.href = "cafe.html";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else if (user.role === "engineer") {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>window.location.href = "engineer.html";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>alert("帳號或密碼錯誤！");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+  <h1>登入介面</h1>
+  <input id="username" placeholder="帳號">
+  <input id="password" type="password" placeholder="密碼">
+  <button onclick="login()">登入</button>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+
+  <script>
+    // Firebase 設定
+    const firebaseConfig = {
+      apiKey: "AIzaSyOpbsZy4h3Fs3u4JzWLjWAAaAzROU6mU",
+      authDomain: "zonghengcafe.firebaseapp.com",
+      projectId: "zonghengcafe",
+      storageBucket: "zonghengcafe.firebasestorage.app",
+      messagingSenderId: "927076108212",
+      appId: "1:927076108212:web:907e1980e2d77f9aad88",
+      measurementId: "G-6224ESE471"
+    };
+
+    // 初始化 Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 登入函式
+    async function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const snapshot = await db.collection("accounts")
+        .where("username", "==", username)
+        .get();
+
+      if (!snapshot.empty) {
+        const user = snapshot.docs[0].data();
+        if (user.password === password) {
+          const role = user.role;
+          if (role === "resident") {
+            window.location.href = "resident.html";
+          } else if (role === "property") {
+            window.location.href = "property.html";
+          } else if (role === "cafe") {
+            window.location.href = "cafe.html";
+          } else if (role === "engineer") {
+            window.location.href = "engineer.html";
+          } else {
+            alert("未知角色：" + role);
+          }
+        } else {
+          alert("密碼錯誤！");
+        }
+      } else {
+        alert("帳號不存在！");
+      }
+    }
+  </script>
 </body>
 </html>
