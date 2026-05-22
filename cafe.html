@@ -28,11 +28,4 @@
     const db = firebase.firestore();
 
     async function addMenu() {
-      const item = document.getElementById("menuItem").value;
-      if (item) await db.collection("menu").add({item});
-      location.reload();
-    }
-
-    // 播放音效
-    function playSound() {
-      const audio = new Audio("
+      const item = document.getElementById
