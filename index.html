@@ -183,21 +183,14 @@
 
   <div class="top-banner">
     <img src="logo.png" class="logo" alt="縱橫Logo">
-
-    <h1>
-      昭揚縱橫 咖啡廳點餐系統
-    </h1>
+    <h1>昭揚縱橫 咖啡廳點餐系統</h1>
   </div>
 
   <div class="login-container">
 
     <div class="login-title-wrapper">
       <div class="login-title-line"></div>
-
-      <h2 class="login-title">
-        登入
-      </h2>
-
+      <h2 class="login-title">登入</h2>
       <div class="login-title-line right"></div>
     </div>
 
@@ -207,24 +200,14 @@
         <svg viewBox="0 0 24 24">
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/>
         </svg>
-
-        <input
-          id="username"
-          type="text"
-          placeholder="username"
-          autocomplete="username">
+        <input id="username" type="text" placeholder="username" autocomplete="username">
       </div>
 
       <div class="input-group">
         <svg viewBox="0 0 24 24">
           <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
         </svg>
-
-        <input
-          id="password"
-          type="password"
-          placeholder="password"
-          autocomplete="current-password">
+        <input id="password" type="password" placeholder="password" autocomplete="current-password">
       </div>
 
       <label class="remember" for="rememberMe">
@@ -232,177 +215,150 @@
         保持登入狀態
       </label>
 
-      <button
-        class="btn-login"
-        id="loginBtn">
-        登入
-      </button>
+      <button class="btn-login" id="loginBtn">登入</button>
 
     </div>
 
   </div>
 
 <script type="module">
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
 import {
-getAuth,
-signInWithEmailAndPassword,
-setPersistence,
-browserLocalPersistence,
-browserSessionPersistence
-}
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  getAuth,
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
-getFirestore,
-collection,
-query,
-where,
-getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
-
-apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-authDomain: "zonghengcafe.firebaseapp.com",
-projectId: "zonghengcafe",
-storageBucket: "zonghengcafe.firebasestorage.app",
-messagingSenderId: "207027108121",
-appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-measurementId: "G-8ZE4SE2T7T"
-
+  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+  authDomain: "zonghengcafe.firebaseapp.com",
+  projectId: "zonghengcafe",
+  storageBucket: "zonghengcafe.firebasestorage.app",
+  messagingSenderId: "207027108121",
+  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+  measurementId: "G-8ZE4SE2T7T"
 };
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const loginBtn =
-document.getElementById("loginBtn");
+const loginBtn = document.getElementById("loginBtn");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const rememberInput = document.getElementById("rememberMe");
 
-const rememberedUser =
-localStorage.getItem("rememberUser");
+const rememberedUser = localStorage.getItem("rememberUser");
 
-if(rememberedUser){
-
-document.getElementById("username").value =
-rememberedUser;
-
-document.getElementById("rememberMe").checked = true;
-
+if (rememberedUser) {
+  usernameInput.value = rememberedUser;
+  rememberInput.checked = true;
 }
 
-loginBtn.addEventListener("click", async ()=>{
+async function login() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  const remember = rememberInput.checked;
 
-const username =
-document.getElementById("username").value.trim();
+  if (!username || !password) {
+    alert("請輸入帳號密碼");
+    return;
+  }
 
-const password =
-document.getElementById("password").value.trim();
+  loginBtn.disabled = true;
+  loginBtn.innerText = "登入中";
 
-const remember =
-document.getElementById("rememberMe").checked;
+  try {
+    const q = query(
+      collection(db, "accounts"),
+      where("username", "==", username)
+    );
 
-if(!username || !password){
+    const snapshot = await getDocs(q);
 
-alert("請輸入帳號密碼");
-return;
+    if (snapshot.empty) {
+      alert("帳號不存在");
+      return;
+    }
 
+    const accountDoc = snapshot.docs[0];
+    const account = {
+      id: accountDoc.id,
+      ...accountDoc.data()
+    };
+
+    if (!account.auth_email) {
+      alert("此帳號尚未設定 auth_email");
+      return;
+    }
+
+    await setPersistence(
+      auth,
+      remember ? browserLocalPersistence : browserSessionPersistence
+    );
+
+    await signInWithEmailAndPassword(
+      auth,
+      account.auth_email,
+      password
+    );
+
+    localStorage.setItem(
+      "zh_user",
+      JSON.stringify({
+        id: account.id,
+        username: account.username,
+        role: account.role,
+        auth_email: account.auth_email,
+        unit_number: account.unit_number || ""
+      })
+    );
+
+    if (remember) {
+      localStorage.setItem("rememberUser", username);
+    } else {
+      localStorage.removeItem("rememberUser");
+    }
+
+    if (account.role === "engineer") {
+      location.href = "engineer.html";
+    } else if (account.role === "cafe") {
+      location.href = "cafe.html";
+    } else if (account.role === "property") {
+      location.href = "property.html";
+    } else if (account.role === "resident") {
+      location.href = "resident.html";
+    } else {
+      alert("未知角色，請聯絡工程師");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("登入失敗，請確認帳號密碼");
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.innerText = "登入";
+  }
 }
 
-try{
+loginBtn.addEventListener("click", login);
 
-const q = query(
-collection(db,"accounts"),
-where("username","==",username)
-);
-
-const snapshot = await getDocs(q);
-
-if(snapshot.empty){
-
-alert("帳號不存在");
-return;
-
-}
-
-const userData =
-snapshot.docs[0].data();
-
-await setPersistence(
-auth,
-remember
-? browserLocalPersistence
-: browserSessionPersistence
-);
-
-await signInWithEmailAndPassword(
-auth,
-userData.auth_email,
-password
-);
-
-localStorage.setItem(
-"zh_user",
-JSON.stringify({
-username: username,
-role: userData.role
-})
-);
-
-if(remember){
-
-localStorage.setItem(
-"rememberUser",
-username
-);
-
-}else{
-
-localStorage.removeItem(
-"rememberUser"
-);
-
-}
-
-switch(userData.role){
-
-case "engineer":
-window.location.href = "engineer.html";
-break;
-
-case "cafe":
-window.location.href = "cafe.html";
-break;
-
-case "property":
-window.location.href = "property.html";
-break;
-
-case "resident":
-window.location.href = "resident.html";
-break;
-
-default:
-alert("未知角色");
-
-}
-
-}catch(error){
-
-console.error(error);
-
-alert("登入失敗");
-
-}
-
+passwordInput.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    login();
+  }
 });
-
 </script>
 
 </body>
