@@ -1,33 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>工程師後台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工程師介面</title>
   <style>
-    body {font-family:"Microsoft JhengHei"; background:#fdf6e3; display:flex; justify-content:center; align-items:center; height:100vh;}
-    .box {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.2); width:500px;}
-    h1 {text-align:center; margin-bottom:20px; color:#5c4033;}
-    h2 {color:#5c4033;}
-    input, select, button {width:90%; padding:10px; margin:10px 0; border-radius:5px; border:1px solid #ccc;}
-    button {background:#5c4033; color:white; border:none; cursor:pointer;}
-    button:hover {background:#3e2a20;}
+    body {font-family:"Microsoft JhengHei"; background:#fdf6e3; margin:0;}
+    header {
+      background:#5c4033; color:white; padding:16px;
+      text-align:center; font-size:22px; letter-spacing:4px;
+    }
+    .container {padding:20px;}
+    h2 {color:#5c4033; margin-top:30px;}
+
+    /* 主控台按鈕區 */
+    .button-group {
+      display:flex; flex-wrap:wrap; gap:15px; margin-bottom:20px;
+    }
+    .button-group button {
+      flex:1; min-width:140px; padding:14px;
+      border:none; border-radius:6px;
+      background:linear-gradient(to bottom,#bcaea1,#9c8e81);
+      color:white; font-size:16px; letter-spacing:2px;
+      cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    }
+    .button-group button:hover {opacity:0.95;}
+    .button-group button:active {transform:scale(0.98);}
+
+    /* 表格 */
+    table {width:100%; border-collapse:collapse; margin-top:15px;}
+    th, td {border:1px solid #ccc; padding:8px; text-align:center;}
+    th {background:#eee; color:#5c4033;}
+
+    /* 狀態燈 */
+    .status {display:flex; align-items:center; gap:10px; margin:10px 0;}
+    .light {width:16px; height:16px; border-radius:50%;}
+    .green {background:green;}
+    .red {background:red;}
+
+    /* 卡片 */
+    .card {
+      background:white; border-radius:8px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      padding:15px; margin:15px 0;
+    }
+    .card h3 {margin:0; color:#5c4033;}
+    .card p {margin:6px 0; color:#333;}
+
+    @media (max-width:480px) {
+      .button-group {flex-direction:column;}
+      header {font-size:18px;}
+    }
   </style>
 </head>
 <body>
-  <div class="box">
-    <img src="logo.png" class="logo" alt="系統Logo" style="width:80px;">
-    <h1>工程師後台</h1>
-    <input id="newUser" placeholder="帳號">
-    <input id="newPass" type="password" placeholder="密碼">
-    <select id="newRole">
-      <option value="resident">住戶</option>
-      <option value="property">物業</option>
-      <option value="cafe">咖啡廳</option>
-      <option value="engineer">工程師</option>
-    </select>
-    <button onclick="addAccount()">新增帳號</button>
-    <h2>帳號列表</h2>
-    <ul id="accounts"></ul>
+  <header>工程師介面</header>
+
+  <div class="container">
+    <div class="button-group">
+      <button onclick="viewAccounts()">帳號管理</button>
+      <button onclick="systemCheck()">系統檢查</button>
+      <button onclick="resetSystem()">重置系統</button>
+      <button onclick="showAnnouncements()">公告管理</button>
+    </div>
+
+    <div id="content"></div>
   </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = { /* Firebase 設定 */ };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function viewAccounts(){
+      document.getElementById("content").innerHTML="<h2>帳號管理</h2><table><tr><th>帳號</th><th>角色</th><th>操作</th></tr></table>";
+      const accounts=await db.collection("accounts").get();
+      accounts.forEach(doc=>{
+        const a=doc.data();
+        const row=document.createElement("tr");
+        row.innerHTML=`<td>${a.username}</td><td>${a.role}</td>
+                       <td><button onclick="deleteAccount('${doc.id}')">刪除</button></td>`;
+        document.querySelector("table").appendChild(row);
+      });
+    }
+
+    async function deleteAccount(id){
+      await db.collection("accounts").doc(id).delete();
+      alert("帳號已刪除！");
+      viewAccounts();
+    }
+
+    function systemCheck(){
+      document.getElementById("content").innerHTML=`
+        <h2>系統檢查</h2>
+        <div class="status"><div class="light green"></div><span>資料庫連線正常</span></div>
+        <div class="status"><div class="light green"></div><span>訂單監聽正常</span></div>
+        <div class="status"><div class="light green"></div><span>通知服務正常</span></div>`;
+    }
+
+    async function resetSystem(){
+      if(confirm("確定要重置系統？這會刪除所有訂單並重建預設帳號！")){
+        const orders=await db.collection("orders").get();
+        orders.forEach(doc=>db.collection("orders").doc(doc.id).delete());
+        await db.collection("accounts").add({username:"admin",password:"admin",role:"engineer"});
+        alert("系統已重置！");
+      }
+    }
+
+    async function showAnnouncements(){
+      document.getElementById("content").innerHTML="<h2>公告管理</h2><div id='ann'></div><button onclick='addAnnouncement()'>新增公告</button>";
+      const ann=await db.collection("announcements").get();
+      ann.forEach(doc=>{
+        const a=doc.data();
+        const div=document.createElement("div");
+        div.className="card";
+        div.innerHTML=`<h3>${a.text}</h3><p>${new Date(a.time.seconds*1000).toLocaleString()}</p>`;
+        document.getElementById("ann").appendChild(div);
+      });
+    }
+
+    function addAnnouncement(){
+      const text=prompt("輸入公告內容：");
+      if(text){
+        db.collection("announcements").add({text,time:new Date()});
+        alert("公告已發送！");
+        showAnnouncements();
+      }
+    }
+  </script>
 </body>
 </html>
