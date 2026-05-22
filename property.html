@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.6">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;物業櫃檯&lt;/title&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h2&gt;物業櫃檯管理&lt;/h2&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 新增公告 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;新增公告&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="title" placeholder="公告標題"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="content" placeholder="公告內容"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;button onclick="addAnnouncement()"&gt;新增公告&lt;/button&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 公告列表 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;公告列表&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;ul id="announcements"&gt;&lt;/ul&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 住戶帳號列表 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;住戶帳號&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;ul id="accounts"&gt;&lt;/ul&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Firebase SDK --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"&gt;&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const firebaseConfig = {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>authDomain: "zonghengcafe.firebaseapp.com",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>projectId: "zonghengcafe",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>storageBucket: "zonghengcafe.firebasestorage.app",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>messagingSenderId: "207027108121",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>appId: "1:207027108121:web:e7a39e19982ed77f9aed88",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>measurementId: "G-8ZE4SE2T7T"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const app = firebase.initializeApp(firebaseConfig);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const db = firebase.firestore();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 新增公告</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function addAnnouncement() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const title = document.getElementById("title").value;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const content = document.getElementById("content").value;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const date = new Date().toLocaleDateString();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>await db.collection("announcements").add({</p>
+<p class="p1"><span class="Apple-converted-space">        </span>title: title,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>content: content,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>date: date</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>alert("公告已新增！");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>loadAnnouncements();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 載入公告</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function loadAnnouncements() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("announcements").get();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const list = document.getElementById("announcements");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = "";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>snapshot.forEach(doc =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const ann = doc.data();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const li = document.createElement("li");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>li.innerText = ann.date + " - " + ann.title + "：" + ann.content;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>list.appendChild(li);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 載入住戶帳號</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function loadAccounts() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("accounts").get();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const list = document.getElementById("accounts");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = "";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>snapshot.forEach(doc =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const acc = doc.data();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const li = document.createElement("li");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>li.innerText = acc.username + "（角色：" + acc.role + "）";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>list.appendChild(li);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 初始化</p>
+<p class="p1"><span class="Apple-converted-space">    </span>loadAnnouncements();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>loadAccounts();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>

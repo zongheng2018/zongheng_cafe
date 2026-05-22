@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.6">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;咖啡廳櫃檯&lt;/title&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h2&gt;咖啡廳櫃檯管理&lt;/h2&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 新增菜單 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;新增菜單項目&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="item" placeholder="品項名稱"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="price" type="number" placeholder="價格"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;button onclick="addMenuItem()"&gt;新增品項&lt;/button&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 菜單列表 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;菜單列表&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;ul id="menu"&gt;&lt;/ul&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 訂單列表 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;訂單列表&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;ul id="orders"&gt;&lt;/ul&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Firebase SDK --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"&gt;&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const firebaseConfig = {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>authDomain: "zonghengcafe.firebaseapp.com",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>projectId: "zonghengcafe",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>storageBucket: "zonghengcafe.firebasestorage.app",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>messagingSenderId: "207027108121",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>appId: "1:207027108121:web:e7a39e19982ed77f9aed88",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>measurementId: "G-8ZE4SE2T7T"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const app = firebase.initializeApp(firebaseConfig);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const db = firebase.firestore();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 新增菜單項目</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function addMenuItem() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const item = document.getElementById("item").value;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const price = parseInt(document.getElementById("price").value);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>await db.collection("menu").add({</p>
+<p class="p1"><span class="Apple-converted-space">        </span>item: item,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>price: price</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>alert("品項已新增！");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>loadMenu();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 載入菜單</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function loadMenu() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("menu").get();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const list = document.getElementById("menu");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = "";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>snapshot.forEach(doc =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const menuItem = doc.data();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const li = document.createElement("li");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>li.innerText = menuItem.item + " - " + menuItem.price + " 元";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>list.appendChild(li);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 載入訂單</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function loadOrders() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("orders").get();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const list = document.getElementById("orders");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = "";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>snapshot.forEach(doc =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const order = doc.data();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const li = document.createElement("li");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>li.innerText = "住戶：" + order.unit_number + "，品項：" + order.item + "，數量：" + order.quantity;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>list.appendChild(li);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 初始化</p>
+<p class="p1"><span class="Apple-converted-space">    </span>loadMenu();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>loadOrders();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;咖啡廳櫃檯&lt;/title&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h2&gt;咖啡廳櫃檯管理&lt;/h2&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 新增菜單 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;新增菜單項目&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="item" placeholder="品項名稱"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="price" type="number" placeholder="價格"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;button onclick="addMenuItem()"&gt;新增品項&lt;/button&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 菜單列表 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;菜單列表&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;ul id="menu"&gt;&lt;/ul&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 訂單列表 --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;訂單列表&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;ul id="orders"&gt;&lt;/ul&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Firebase SDK --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"&gt;&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const firebaseConfig = {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>authDomain: "zonghengcafe.firebaseapp.com",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>projectId: "zonghengcafe",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>storageBucket: "zonghengcafe.firebasestorage.app",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>messagingSenderId: "207027108121",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>appId: "1:207027108121:web:e7a39e19982ed77f9aed88",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>measurementId: "G-8ZE4SE2T7T"</p>
+<p class="p1"><span class="Apple-converted-space">    </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const app = firebase.initializeApp(firebaseConfig);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const db = firebase.firestore();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 新增菜單項目</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function addMenuItem() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const item = document.getElementById("item").value;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const price = parseInt(document.getElementById("price").value);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>await db.collection("menu").add({</p>
+<p class="p1"><span class="Apple-converted-space">        </span>item: item,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>price: price</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>alert("品項已新增！");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>loadMenu();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 載入菜單</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function loadMenu() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("menu").get();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const list = document.getElementById("menu");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = "";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>snapshot.forEach(doc =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const menuItem = doc.data();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const li = document.createElement("li");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>li.innerText = menuItem.item + " - " + menuItem.price + " 元";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>list.appendChild(li);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 載入訂單</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function loadOrders() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const snapshot = await db.collection("orders").get();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const list = document.getElementById("orders");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = "";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>snapshot.forEach(doc =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const order = doc.data();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const li = document.createElement("li");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>li.innerText = "住戶：" + order.unit_number + "，品項：" + order.item + "，數量：" + order.quantity;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>list.appendChild(li);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 初始化</p>
+<p class="p1"><span class="Apple-converted-space">    </span>loadMenu();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>loadOrders();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
