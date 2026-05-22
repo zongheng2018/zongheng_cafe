@@ -1,290 +1,404 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>昭揚縱橫 咖啡廳點餐系統</title>
+
   <style>
-    body {
-      font-family: "-apple-system", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", Arial, sans-serif;
-      background: url('bg.jpg') no-repeat center center fixed;
-      background-size: cover;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+    * {
       box-sizing: border-box;
-      padding: 20px;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     }
 
-    /* 頂部標題與 Logo 區 */
-    .top-banner {
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(rgba(255,255,255,0.68), rgba(255,255,255,0.78)),
+        url("./bg.jpg") center/cover no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #5a5148;
+    }
+
+    .login-wrap {
+      width: min(92vw, 430px);
+      transform: translateY(-22px);
+      animation: fadeUp .7s ease both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(-22px);
+      }
+    }
+
+    .brand {
       text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: 22px;
     }
-    .top-banner img.logo {
+
+    .brand img {
       width: 180px;
-      height: auto;
-      margin-bottom: 8px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
+      max-width: 58%;
+      opacity: .78;
+      margin-bottom: 12px;
     }
-    .top-banner h1 {
-      font-size: 20px;
-      color: #656565;
+
+    .brand h1 {
+      font-size: 28px;
+      letter-spacing: 4px;
       font-weight: 500;
       margin: 0;
+      color: #777168;
+    }
+
+    .brand p {
+      margin: 10px 0 0;
+      font-size: 15px;
       letter-spacing: 2px;
+      color: #8c8378;
     }
 
-    /* 登入區塊外殼 */
-    .login-container {
-      width: 100%;
-      max-width: 380px;
+    .card {
+      background: rgba(255,255,255,.84);
+      border-radius: 14px;
+      padding: 26px 26px 24px;
+      box-shadow: 0 14px 36px rgba(73, 63, 51, .16);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(188, 174, 156, .35);
     }
 
-    /* 「登入」文字的分隔線設計 */
-    .login-title-wrapper {
+    .title {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 20px;
+      gap: 18px;
+      margin-bottom: 24px;
+      color: #7d766d;
+      font-size: 30px;
+      font-weight: 500;
+      letter-spacing: 4px;
     }
-    .login-title-line {
-      flex: 1;
+
+    .title::before,
+    .title::after {
+      content: "";
+      width: 74px;
       height: 1px;
-      background: linear-gradient(to var(--direction, right), rgba(160, 160, 160, 0), rgba(160, 160, 160, 0.5));
-    }
-    .login-title-line.right {
-      --direction: left;
-    }
-    .login-title {
-      font-size: 24px;
-      color: #555;
-      font-weight: 400;
-      margin: 0 20px;
-      letter-spacing: 6px;
+      background: #d8cec2;
     }
 
-    /* 登入白盒（加入毛玻璃與對比設計圖的軟陰影） */
-    .login-box {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      padding: 30px 25px;
-      border-radius: 6px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-      box-sizing: border-box;
-    }
-
-    /* 輸入框外層包裝（放圖標用） */
     .input-group {
       position: relative;
       margin-bottom: 16px;
-      width: 100%;
-    }
-    .input-group svg {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 20px;
-      height: 20px;
-      fill: #8c8c8c;
-    }
-    .input-group input {
-      width: 100%;
-      padding: 14px 14px 14px 46px;
-      border-radius: 4px;
-      border: 1px solid #dcdcdc;
-      font-size: 16px;
-      color: #333;
-      box-sizing: border-box;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .input-group input:focus {
-      border-color: #a39485;
-    }
-    .input-group input::placeholder {
-      color: #a0a0a0;
     }
 
-    /* 記住我 勾選方塊 */
+    .input-group span {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9b948c;
+      font-size: 21px;
+    }
+
+    input {
+      width: 100%;
+      height: 54px;
+      border: 1px solid #d8d0c8;
+      border-radius: 8px;
+      background: rgba(255,255,255,.76);
+      padding: 0 16px 0 52px;
+      font-size: 19px;
+      color: #5a5148;
+      outline: none;
+      transition: .25s ease;
+    }
+
+    input:focus {
+      border-color: #aa9270;
+      box-shadow: 0 0 0 3px rgba(170,146,112,.16);
+      background: #fff;
+    }
+
     .remember {
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      font-size: 14px;
-      color: #555;
-      margin-bottom: 24px;
+      gap: 10px;
+      margin: 16px 0 20px;
+      font-size: 17px;
+      color: #7c756e;
       user-select: none;
-      cursor: pointer;
     }
+
     .remember input {
-      margin: 0 8px 0 2px;
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      accent-color: #9b8768;
     }
 
-    /* 完美還原設計圖的磨砂質感金屬漸層按鈕 */
-    button.btn-login {
+    button {
       width: 100%;
-      padding: 14px;
-      border-radius: 4px;
-      border: 1px solid #9c9183;
-      background: linear-gradient(to bottom, #bcaea1 0%, #9c8e81 100%);
+      height: 58px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(#bba57e, #7e745f);
       color: white;
-      font-size: 18px;
-      letter-spacing: 6px;
-      text-indent: 6px; /* 修正因字距產生的偏心 */
+      font-size: 28px;
+      letter-spacing: 5px;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    button.btn-login:hover {
-      opacity: 0.95;
-    }
-    button.btn-login:active {
-      transform: scale(0.99);
+      box-shadow: 0 5px 10px rgba(86,73,54,.25);
+      transition: transform .18s ease, filter .18s ease;
     }
 
-    /* RWD 響應式：手機版調整 */
-    @media (max-width: 480px) {
-      .top-banner img.logo {
-        width: 150px;
+    button:active {
+      transform: scale(.985);
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .msg {
+      min-height: 24px;
+      margin-top: 15px;
+      text-align: center;
+      color: #b84236;
+      font-size: 15px;
+    }
+
+    @media (max-height: 720px) {
+      .login-wrap {
+        transform: translateY(-38px);
       }
-      .top-banner h1 {
-        font-size: 18px;
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(-38px);
+        }
       }
-      .login-title {
-        font-size: 22px;
+
+      .brand img {
+        width: 145px;
+        margin-bottom: 8px;
       }
-      .login-box {
-        padding: 25px 20px;
+
+      .brand h1 {
+        font-size: 24px;
+      }
+
+      .brand p {
+        font-size: 14px;
+      }
+
+      .card {
+        padding: 22px;
       }
     }
   </style>
 </head>
+
 <body>
-
-  <div class="top-banner">
-    <img src="logo.png" class="logo" alt="縱橫Logo">
-    <h1>昭揚縱橫 咖啡廳點餐系統</h1>
-  </div>
-
-  <div class="login-container">
-    <div class="login-title-wrapper">
-      <div class="login-title-line"></div>
-      <h2 class="login-title">登入</h2>
-      <div class="login-title-line right"></div>
+  <div class="login-wrap">
+    <div class="brand">
+      <img src="./logo.png" alt="縱橫 Logo" />
+      <h1>昭揚縱橫</h1>
+      <p>咖啡廳點餐系統</p>
     </div>
 
-    <div class="login-box">
+    <div class="card">
+      <div class="title">登入</div>
+
       <div class="input-group">
-        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/></svg>
-        <input id="username" type="text" placeholder="username" autocomplete="username">
-      </div>
-      
-      <div class="input-group">
-        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-        <input id="password" type="password" placeholder="password" autocomplete="current-password">
+        <span>👤</span>
+        <input id="username" type="text" placeholder="帳號" autocomplete="username" />
       </div>
 
-      <label class="remember" for="rememberMe">
-        <input type="checkbox" id="rememberMe"> 保持登入狀態
+      <div class="input-group">
+        <span>🔒</span>
+        <input id="password" type="password" placeholder="密碼" autocomplete="current-password" />
+      </div>
+
+      <label class="remember">
+        <input id="rememberMe" type="checkbox" />
+        記住我的帳號
       </label>
 
-      <button class="btn-login" onclick="login()">登入</button>
+      <button id="loginBtn">登入</button>
+      <div id="message" class="msg"></div>
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script>
-    // 填入你的 Firebase 專案設定
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      setPersistence,
+      browserLocalPersistence,
+      browserSessionPersistence,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    import {
+      getFirestore,
+      collection,
+      query,
+      where,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
     const firebaseConfig = {
-  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-  authDomain: "zonghengcafe.firebaseapp.com",
-  projectId: "zonghengcafe",
-  storageBucket: "zonghengcafe.appspot.com",
-  messagingSenderId: "207027108121",
-  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-  measurementId: "G-8ZE4SE2T7T"
-};
+      apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+      authDomain: "zonghengcafe.firebaseapp.com",
+      projectId: "zonghengcafe",
+      storageBucket: "zonghengcafe.firebasestorage.app",
+      messagingSenderId: "207027108121",
+      appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+      measurementId: "G-8ZE4SE2T7T"
+    };
 
-    
-    // 初始化 Firebase (Compat 版本)
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // 預設工程師帳號
-    async function ensureAdmin() {
-      try {
-        const snapshot = await db.collection("accounts").where("username","==","admin").get();
-        if (snapshot.empty) {
-          await db.collection("accounts").add({username:"admin", password:"admin", role:"engineer"});
-        }
-      } catch (e) {
-        console.error("預設帳號檢查失敗：", e);
-      }
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const rememberInput = document.getElementById("rememberMe");
+    const loginBtn = document.getElementById("loginBtn");
+    const message = document.getElementById("message");
+
+    const savedUsername = localStorage.getItem("zh_saved_username");
+    if (savedUsername) {
+      usernameInput.value = savedUsername;
+      rememberInput.checked = true;
     }
-    ensureAdmin();
+
+    function roleToPage(role) {
+      if (role === "engineer") return "engineer.html";
+      if (role === "cafe") return "cafe.html";
+      if (role === "property") return "property.html";
+      if (role === "resident") return "resident.html";
+      return "index.html";
+    }
+
+    async function getAccountByUsername(username) {
+      const q = query(
+        collection(db, "accounts"),
+        where("username", "==", username)
+      );
+
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        return null;
+      }
+
+      const doc = snap.docs[0];
+
+      return {
+        id: doc.id,
+        ...doc.data()
+      };
+    }
 
     async function login() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const remember = document.getElementById("rememberMe").checked;
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      message.textContent = "";
 
       if (!username || !password) {
-        alert("請輸入帳號和密碼");
+        message.textContent = "請輸入帳號與密碼";
         return;
       }
 
+      loginBtn.disabled = true;
+      loginBtn.textContent = "登入中";
+
       try {
-        const snapshot = await db.collection("accounts").where("username","==",username).get();
-        if (!snapshot.empty) {
-          const user = snapshot.docs[0].data();
-          if (user.password === password) {
-            if (remember) {
-              localStorage.setItem("savedUser", username);
-              localStorage.setItem("savedPass", password);
-            } else {
-              localStorage.removeItem("savedUser");
-              localStorage.removeItem("savedPass");
-            }
-            
-            // 頁面跳轉
-            if (user.role === "resident") window.location.href="resident.html";
-            else if (user.role === "property") window.location.href="property.html";
-            else if (user.role === "cafe") window.location.href="cafe.html";
-            else if (user.role === "engineer") window.location.href="engineer.html";
-          } else {
-            alert("密碼錯誤！");
-          }
-        } else {
-          alert("帳號不存在！");
+        const account = await getAccountByUsername(username);
+
+        if (!account) {
+          throw new Error("找不到此帳號");
         }
-      } catch(e) {
-        alert("登入失敗，請檢查 Firebase 設定或網路連線");
-        console.error(e);
+
+        if (!account.auth_email) {
+          throw new Error("此帳號尚未設定 Firebase Auth Email");
+        }
+
+        await setPersistence(
+          auth,
+          rememberInput.checked ? browserLocalPersistence : browserSessionPersistence
+        );
+
+        await signInWithEmailAndPassword(auth, account.auth_email, password);
+
+        const profile = {
+          accountId: account.id,
+          username: account.username,
+          role: account.role,
+          unit_number: account.unit_number || "",
+          auth_email: account.auth_email
+        };
+
+        localStorage.setItem("zh_user", JSON.stringify(profile));
+
+        if (rememberInput.checked) {
+          localStorage.setItem("zh_saved_username", username);
+        } else {
+          localStorage.removeItem("zh_saved_username");
+        }
+
+        window.location.href = roleToPage(account.role);
+
+      } catch (err) {
+        console.error(err);
+        message.textContent = "登入失敗，請確認帳號密碼是否正確";
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "登入";
       }
     }
 
-    // 自動填入記住的帳號密碼
-    window.onload = function() {
-      const savedUser = localStorage.getItem("savedUser");
-      const savedPass = localStorage.getItem("savedPass");
-      if (savedUser && savedPass) {
-        document.getElementById("username").value = savedUser;
-        document.getElementById("password").value = savedPass;
-        document.getElementById("rememberMe").checked = true;
+    loginBtn.addEventListener("click", login);
+
+    passwordInput.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        login();
       }
-    }
+    });
+
+    onAuthStateChanged(auth, async function(user) {
+      if (!user) return;
+
+      const raw = localStorage.getItem("zh_user");
+      if (!raw) return;
+
+      try {
+        const profile = JSON.parse(raw);
+        if (profile && profile.role) {
+          window.location.href = roleToPage(profile.role);
+        }
+      } catch (e) {
+        localStorage.removeItem("zh_user");
+      }
+    });
   </script>
 </body>
 </html>
