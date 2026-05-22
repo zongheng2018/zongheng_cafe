@@ -108,6 +108,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // 預設工程師帳號
     async function ensureAdmin() {
       const snapshot = await db.collection("accounts").where("username","==","admin").get();
       if (snapshot.empty) {
