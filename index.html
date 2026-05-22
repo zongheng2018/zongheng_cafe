@@ -8,45 +8,19 @@
       font-family: "Microsoft JhengHei", Arial, sans-serif;
       background: url('bg.jpg') no-repeat center center fixed;
       background-size: cover;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      display: flex; justify-content: center; align-items: center; height: 100vh;
     }
     .box {
       background: rgba(255, 255, 255, 0.85);
-      padding: 40px;
-      border-radius: 12px;
+      padding: 40px; border-radius: 12px;
       box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-      width: 380px;
-      text-align: center;
+      width: 380px; text-align: center;
     }
-    h1 {
-      margin-bottom: 20px;
-      font-size: 24px;
-      color: #5c4033;
-    }
-    input, button {
-      width: 90%;
-      padding: 12px;
-      margin: 12px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      background: #5c4033;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #3e2a20;
-    }
-    img.logo {
-      width: 120px;
-      margin-bottom: 20px;
-    }
+    h1 {margin-bottom:20px; font-size:24px; color:#5c4033;}
+    input, button {width:90%; padding:12px; margin:12px 0; border-radius:6px; border:1px solid #ccc; font-size:16px;}
+    button {background:#5c4033; color:white; border:none; cursor:pointer;}
+    button:hover {background:#3e2a20;}
+    img.logo {width:120px; margin-bottom:20px;}
   </style>
 </head>
 <body>
@@ -62,22 +36,26 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = { /* Firebase 設定 */ };
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     async function login() {
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-      const snapshot = await db.collection("accounts").where("username","==",username).get();
-      if (!snapshot.empty) {
-        const user = snapshot.docs[0].data();
-        if (user.password === password) {
-          if (user.role === "resident") window.location.href="resident.html";
-          else if (user.role === "property") window.location.href="property.html";
-          else if (user.role === "cafe") window.location.href="cafe.html";
-          else if (user.role === "engineer") window.location.href="engineer.html";
-        } else alert("密碼錯誤！");
-      } else alert("帳號不存在！");
+      try {
+        const snapshot = await db.collection("accounts").where("username","==",username).get();
+        if (!snapshot.empty) {
+          const user = snapshot.docs[0].data();
+          if (user.password === password) {
+            if (user.role === "resident") window.location.href="resident.html";
+            else if (user.role === "property") window.location.href="property.html";
+            else if (user.role === "cafe") window.location.href="cafe.html";
+            else if (user.role === "engineer") window.location.href="engineer.html";
+          } else alert("密碼錯誤！");
+        } else alert("帳號不存在！");
+      } catch(e) {
+        alert("登入失敗，請檢查 Firebase 設定");
+      }
     }
   </script>
 </body>
