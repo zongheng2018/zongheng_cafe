@@ -6,137 +6,30 @@
 <title>住戶首頁｜昭揚縱橫 咖啡廳點餐系統</title>
 
 <style>
-*{
-  box-sizing:border-box;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;
-}
-
-body{
-  margin:0;
-  min-height:100vh;
-  background:url("bg.jpg") center center / cover no-repeat fixed;
-  color:#5f574f;
-  padding-bottom:86px;
-}
-
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  background:rgba(255,255,255,.72);
-  backdrop-filter:blur(4px);
-  z-index:-1;
-}
-
-.topbar{
-  height:68px;
-  background:rgba(255,255,255,.86);
-  border-bottom:1px solid #ddd5cc;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 22px;
-}
-
-.brand img{
-  width:72px;
-  opacity:.82;
-}
-
-.logout{
-  border:1px solid #c9c0b7;
-  background:rgba(255,255,255,.88);
-  color:#6d6258;
-  border-radius:8px;
-  padding:9px 16px;
-  cursor:pointer;
-}
-
-.container{
-  max-width:760px;
-  margin:24px auto;
-  padding:0 16px;
-}
-
-.card{
-  background:rgba(255,255,255,.9);
-  border-radius:14px;
-  padding:24px;
-  box-shadow:0 8px 24px rgba(0,0,0,.08);
-}
-
-.section-title{
-  font-size:28px;
-  color:#6d6258;
-  margin-bottom:18px;
-  font-weight:600;
-  letter-spacing:2px;
-}
-
-.announcement{
-  background:rgba(248,245,241,.95);
-  border-radius:10px;
-  min-height:180px;
-  padding:20px;
-  line-height:1.9;
-  font-size:18px;
-}
-
-.bottom-menu{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:78px;
-  background:rgba(255,255,255,.95);
-  border-top:1px solid #ddd5cc;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  box-shadow:0 -4px 18px rgba(0,0,0,.08);
-  z-index:10;
-}
-
-.menu-btn{
-  border:none;
-  background:none;
-  color:#8b8885;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:5px;
-  cursor:pointer;
-}
-
-.menu-btn.active{
-  color:#9b8e81;
-  font-weight:600;
-}
-
-.menu-btn svg{
-  width:27px;
-  height:27px;
-  stroke:currentColor;
-  fill:none;
-  stroke-width:2.3;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-}
-
-.menu-text{
-  font-size:14px;
-  letter-spacing:1px;
-}
-
-.loading{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#6d6258;
-  font-size:18px;
-  letter-spacing:2px;
-}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
+body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:86px}
+body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);backdrop-filter:blur(4px);z-index:-1}
+.topbar{height:68px;background:rgba(255,255,255,.86);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.brand img{width:72px;opacity:.82}
+.logout{border:1px solid #c9c0b7;background:rgba(255,255,255,.88);color:#6d6258;border-radius:8px;padding:9px 16px;cursor:pointer}
+.container{max-width:760px;margin:24px auto;padding:0 16px}
+.card{background:rgba(255,255,255,.9);border-radius:14px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,.08);margin-bottom:18px}
+.section-title{font-size:28px;color:#6d6258;margin-bottom:18px;font-weight:600;letter-spacing:2px}
+.announcement{background:rgba(248,245,241,.95);border-radius:10px;min-height:180px;padding:20px;line-height:1.9;font-size:18px}
+.bottom-menu{position:fixed;left:0;right:0;bottom:0;height:78px;background:rgba(255,255,255,.95);border-top:1px solid #ddd5cc;display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 -4px 18px rgba(0,0,0,.08);z-index:10}
+.menu-btn{border:none;background:none;color:#8b8885;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+.menu-btn.active{color:#9b8e81;font-weight:600}
+.menu-btn svg{width:27px;height:27px;stroke:currentColor;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.menu-text{font-size:14px;letter-spacing:1px}
+.loading{min-height:100vh;display:flex;align-items:center;justify-content:center;color:#6d6258;font-size:18px;letter-spacing:2px}
+.order-item,.notice-item,.point-box{background:#f8f5f1;border-radius:12px;padding:16px;margin-bottom:12px;line-height:1.8}
+.order-title{font-weight:700;color:#6d6258;font-size:18px}
+.status{display:inline-block;padding:4px 10px;border-radius:999px;background:#e7ded5;color:#6d6258;font-size:13px}
+.point-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.point-box{text-align:center}
+.point-label{font-size:14px;color:#8b8178}
+.point-value{font-size:28px;font-weight:800;color:#6f4f40}
+.action-btn{width:100%;border:none;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;border-radius:12px;padding:14px;font-size:17px;font-weight:700;margin-top:12px}
 </style>
 </head>
 
@@ -145,133 +38,148 @@ body::before{
 <div id="loading" class="loading">驗證登入狀態中...</div>
 
 <div id="app" style="display:none;">
-
   <div class="topbar">
-    <div class="brand">
-      <img src="logo.png">
-    </div>
-
+    <div class="brand"><img src="logo.png"></div>
     <button class="logout" id="logoutBtn">登出</button>
   </div>
 
-  <div class="container">
-    <div class="card">
-      <div class="section-title">最新公告</div>
-      <div class="announcement" id="announcementBox">目前尚無公告</div>
-    </div>
-  </div>
+  <div class="container" id="content"></div>
 
   <div class="bottom-menu">
-
-    <button class="menu-btn active">
-      <svg viewBox="0 0 24 24">
-        <path d="M4 5h16v12H7l-3 3V5z"></path>
-        <path d="M8 9h8"></path>
-        <path d="M8 13h5"></path>
-      </svg>
+    <button class="menu-btn active" id="tabNotice" onclick="showNotice()">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v12H7l-3 3V5z"></path><path d="M8 9h8"></path><path d="M8 13h5"></path></svg>
       <div class="menu-text">最新公告</div>
     </button>
 
-    <button class="menu-btn">
-      <svg viewBox="0 0 24 24">
-        <path d="M7 8h13"></path>
-        <path d="M7 12h13"></path>
-        <path d="M7 16h13"></path>
-        <path d="M3 8h.01"></path>
-        <path d="M3 12h.01"></path>
-        <path d="M3 16h.01"></path>
-      </svg>
+    <button class="menu-btn" onclick="location.href='resident_order.html'">
+      <svg viewBox="0 0 24 24"><path d="M7 8h13"></path><path d="M7 12h13"></path><path d="M7 16h13"></path><path d="M3 8h.01"></path><path d="M3 12h.01"></path><path d="M3 16h.01"></path></svg>
       <div class="menu-text">點餐首頁</div>
     </button>
 
-    <button class="menu-btn">
-      <svg viewBox="0 0 24 24">
-        <path d="M12 8v5l3 2"></path>
-        <path d="M3.05 11a9 9 0 1 1 2.64 6.36"></path>
-        <path d="M3 17v-6h6"></path>
-      </svg>
+    <button class="menu-btn" id="tabOrders" onclick="showOrders()">
+      <svg viewBox="0 0 24 24"><path d="M12 8v5l3 2"></path><path d="M3.05 11a9 9 0 1 1 2.64 6.36"></path><path d="M3 17v-6h6"></path></svg>
       <div class="menu-text">訂單紀錄</div>
     </button>
 
-    <button class="menu-btn">
-      <svg viewBox="0 0 24 24">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-        <circle cx="12" cy="7" r="4"></circle>
-      </svg>
+    <button class="menu-btn" id="tabProfile" onclick="showProfile()">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
       <div class="menu-text">個人設定</div>
     </button>
-
   </div>
-
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore,collection,getDocs,query,where,orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-  authDomain: "zonghengcafe.firebaseapp.com",
-  projectId: "zonghengcafe",
-  storageBucket: "zonghengcafe.firebasestorage.app",
-  messagingSenderId: "207027108121",
-  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-  measurementId: "G-8ZE4SE2T7T"
-};
+const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+let profile=null;
 
-onAuthStateChanged(auth, async(user)=>{
-  if(!user){
-    alert("請先登入");
-    location.href="index.html";
-    return;
-  }
+onAuthStateChanged(auth,async user=>{
+  if(!user){location.href="index.html";return}
+  const raw=localStorage.getItem("zh_user");
+  if(!raw){location.href="index.html";return}
+  profile=JSON.parse(raw);
+  if(profile.role!=="resident"){alert("沒有權限");location.href="index.html";return}
 
-  const raw = localStorage.getItem("zh_user");
-  if(!raw){
-    alert("登入資訊遺失");
-    location.href="index.html";
-    return;
-  }
-
-  const profile = JSON.parse(raw);
-  if(profile.role !== "resident"){
-    alert("沒有權限");
-    location.href="index.html";
-    return;
-  }
-
-  document.getElementById("loading").style.display="none";
-  document.getElementById("app").style.display="block";
-
-  loadAnnouncements();
+  loading.style.display="none";
+  appDiv.style.display="block";
+  await showNotice();
 });
 
-async function loadAnnouncements(){
-  const snapshot = await getDocs(collection(db,"announcements"));
+const appDiv=document.getElementById("app");
+const content=document.getElementById("content");
 
-  if(snapshot.empty){
-    document.getElementById("announcementBox").innerText="目前尚無公告";
+function setActive(id){
+  document.querySelectorAll(".menu-btn").forEach(b=>b.classList.remove("active"));
+  if(id) document.getElementById(id).classList.add("active");
+}
+
+window.showNotice=async function(){
+  setActive("tabNotice");
+  content.innerHTML=`<div class="card"><div class="section-title">最新公告</div><div class="announcement" id="announcementBox">讀取中...</div></div>
+  <div class="card"><div class="section-title">重要通知</div><div id="noticeList">讀取中...</div></div>`;
+
+  const snap=await getDocs(collection(db,"announcements"));
+  if(snap.empty){
+    announcementBox.innerText="目前尚無公告";
+    noticeList.innerHTML='<div class="notice-item">目前尚無重要通知</div>';
     return;
   }
 
-  let latest = "";
-
-  snapshot.forEach((doc)=>{
-    const data = doc.data();
-    if(!latest && data.content){
-      latest = data.content;
-    }
+  let latest="";
+  let html="";
+  snap.forEach(d=>{
+    const x=d.data();
+    if(!latest && x.content) latest=x.content;
+    html+=`<div class="notice-item"><b>${x.title||"通知"}</b><br>${x.content||""}</div>`;
   });
 
-  document.getElementById("announcementBox").innerText = latest || "目前尚無公告";
+  announcementBox.innerText=latest||"目前尚無公告";
+  noticeList.innerHTML=html;
 }
 
-document.getElementById("logoutBtn").addEventListener("click",async()=>{
+window.showOrders=async function(){
+  setActive("tabOrders");
+  content.innerHTML=`<div class="card"><div class="section-title">訂單紀錄</div><div id="orderList">讀取中...</div></div>`;
+
+  const q=query(collection(db,"orders"),where("uid","==",profile.username));
+  const snap=await getDocs(q);
+
+  if(snap.empty){
+    orderList.innerHTML='<div class="order-item">目前尚無訂單紀錄</div>';
+    return;
+  }
+
+  let orders=[];
+  snap.forEach(d=>orders.push({id:d.id,...d.data()}));
+  orders.sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
+
+  orderList.innerHTML="";
+  orders.forEach(o=>{
+    const items=(o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
+    orderList.innerHTML+=`
+      <div class="order-item">
+        <div class="order-title">${o.order_id||""} <span class="status">${o.status||""}</span></div>
+        <div>${items}</div>
+        <div>金額：NT$ ${o.total||0}</div>
+        <div>${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
+      </div>`;
+  });
+}
+
+window.showProfile=async function(){
+  setActive("tabProfile");
+  content.innerHTML=`<div class="card"><div class="section-title">個人設定</div><div id="profileBox">讀取中...</div></div>`;
+
+  const q=query(collection(db,"balances"),where("uid","==",profile.username));
+  const snap=await getDocs(q);
+
+  let granted=0,stored=0;
+  if(!snap.empty){
+    granted=Number(snap.docs[0].data().granted_amount||0);
+    stored=Number(snap.docs[0].data().stored_amount||0);
+  }
+
+  profileBox.innerHTML=`
+    <div class="point-grid">
+      <div class="point-box"><div class="point-label">配發點數</div><div class="point-value">${granted}</div></div>
+      <div class="point-box"><div class="point-label">儲值點數</div><div class="point-value">${stored}</div></div>
+      <div class="point-box"><div class="point-label">總點數</div><div class="point-value">${granted+stored}</div></div>
+    </div>
+    <div class="notice-item">
+      帳號：${profile.username}<br>
+      密碼修改請洽物業櫃台或工程師。
+    </div>
+  `;
+}
+
+logoutBtn.addEventListener("click",async()=>{
   await signOut(auth);
   localStorage.removeItem("zh_user");
   location.href="index.html";
