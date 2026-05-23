@@ -3,17 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>咖啡廳櫃台｜昭揚縱橫</title>
+<title>咖啡廳櫃台｜昭揚縱橫 咖啡廳點餐系統</title>
 
 <style>
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
 body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f}
 body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);backdrop-filter:blur(5px);z-index:-1}
 .header{height:72px;background:rgba(255,255,255,.88);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
-.brand{display:flex;align-items:center;gap:12px}
-.brand img{width:72px;opacity:.82}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:72px;opacity:.82}
 .title{font-size:22px;letter-spacing:2px;font-weight:700;color:#6d6258}
-.logout{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:9px 16px}
+.header-actions{display:flex;gap:10px;align-items:center}
+.logout,.sound-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:9px 14px;font-weight:800}
+.sound-btn.on{background:#6b8b61;color:white;border-color:#6b8b61}
 .container{max-width:1180px;margin:22px auto;padding:0 16px 40px}
 .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
 .tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06)}
@@ -22,63 +23,52 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .section-title{font-size:26px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
 .order-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .order-card{background:white;border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
-.order-id{font-size:20px;font-weight:900}
-.meta{font-size:14px;color:#777;line-height:1.7}
+.order-card.new{animation:pulse 1.2s ease-in-out 4;border:2px solid #d8b56d}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+.order-id{font-size:20px;font-weight:900}.meta{font-size:14px;color:#777;line-height:1.7}
 .badge{display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:800}
-.wait{background:#fff1d9;color:#9b681f}
-.making{background:#e6f0ff;color:#426f9c}
-.done{background:#e8f5e9;color:#3f7f47}
-.cancel{background:#fde8e6;color:#b3514a}
+.wait{background:#fff1d9;color:#9b681f}.making{background:#e6f0ff;color:#426f9c}.done{background:#e8f5e9;color:#3f7f47}.cancel{background:#fde8e6;color:#b3514a}
 .order-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
-.order-item{padding:10px 0;border-bottom:1px solid #eee}
-.item-name{font-weight:900}
-.item-detail{font-size:14px;color:#777;line-height:1.6}
+.order-item{padding:10px 0;border-bottom:1px solid #eee}.item-name{font-weight:900}.item-detail{font-size:14px;color:#777;line-height:1.6}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81}
-.btn.primary{background:#6d6258}
-.btn.done{background:#6b8b61}
-.btn.danger{background:#c86b62}
-.btn.light{background:#f0e8df;color:#7a6b60}
+.btn.primary{background:#6d6258}.btn.done{background:#6b8b61}.btn.danger{background:#c86b62}.btn.light{background:#f0e8df;color:#7a6b60}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 input,textarea,select{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
 textarea{height:86px;resize:none;grid-column:1/-1}
 .menu-row{display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #eee5dd}
 .menu-img{width:80px;height:80px;object-fit:cover;border-radius:16px;background:#eee}
-.menu-name{font-size:18px;font-weight:900}
-.menu-meta{font-size:14px;color:#777;margin-top:4px}
-.hidden{display:none}
-.empty{text-align:center;color:#999;padding:40px}
-.setting-status{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
+.menu-name{font-size:18px;font-weight:900}.menu-meta{font-size:14px;color:#777;margin-top:4px}
+.hidden{display:none}.empty{text-align:center;color:#999;padding:40px}.setting-status{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
 .option-editor{margin-top:14px;background:#f8f5f1;border-radius:16px;padding:16px}
 .option-title{font-size:18px;font-weight:900;color:#6d6258;margin-bottom:12px}
 .option-group-box{background:white;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #eee5dd}
 .option-choice-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
-.small-btn{border:none;border-radius:10px;padding:8px 12px;background:#9c8e81;color:white;font-weight:800}
-.small-btn.danger{background:#c86b62}
+.small-btn{border:none;border-radius:10px;padding:8px 12px;background:#9c8e81;color:white;font-weight:800}.small-btn.danger{background:#c86b62}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99;padding:18px}
 .modal{background:white;width:100%;max-width:680px;border-radius:24px;padding:22px;max-height:90vh;overflow:auto}
-@media(max-width:760px){
-  .tabs{grid-template-columns:1fr}
-  .form-grid{grid-template-columns:1fr}
-  .menu-row{grid-template-columns:1fr}
-  .brand img{width:60px}
-  .title{font-size:18px}
-}
+@media(max-width:760px){.tabs{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.menu-row{grid-template-columns:1fr}.brand img{width:60px}.title{font-size:18px}.header{padding:0 12px}.sound-btn{font-size:13px;padding:8px}}
 </style>
 </head>
 
 <body>
+
+<audio id="newOrderAudio" preload="auto">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
 
 <div class="header">
   <div class="brand">
     <img src="logo.png">
     <div class="title">咖啡廳櫃台</div>
   </div>
-  <button class="logout" id="logoutBtn">登出</button>
+  <div class="header-actions">
+    <button class="sound-btn" id="soundBtn" onclick="enableSound()">啟用音效</button>
+    <button class="logout" id="logoutBtn">登出</button>
+  </div>
 </div>
 
 <div class="container">
-
   <div class="tabs">
     <button class="tab active" onclick="showTab('orders',this)">訂單管理</button>
     <button class="tab" onclick="showTab('menu',this)">菜單管理</button>
@@ -86,24 +76,14 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </div>
 
   <section id="ordersTab">
-    <div class="card">
-      <div class="section-title">等待接單</div>
-      <div id="waitingOrders" class="order-grid"></div>
-    </div>
-    <div class="card">
-      <div class="section-title">製作中</div>
-      <div id="makingOrders" class="order-grid"></div>
-    </div>
-    <div class="card">
-      <div class="section-title">已完成 / 已取消</div>
-      <div id="doneOrders" class="order-grid"></div>
-    </div>
+    <div class="card"><div class="section-title">等待接單</div><div id="waitingOrders" class="order-grid"></div></div>
+    <div class="card"><div class="section-title">製作中</div><div id="makingOrders" class="order-grid"></div></div>
+    <div class="card"><div class="section-title">已完成 / 已取消</div><div id="doneOrders" class="order-grid"></div></div>
   </section>
 
   <section id="menuTab" class="hidden">
     <div class="card">
       <div class="section-title">新增菜單</div>
-
       <div class="form-grid">
         <input id="mName" placeholder="品項名稱">
         <input id="mPrice" type="number" placeholder="價格">
@@ -115,19 +95,11 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="option-editor">
         <div class="option-title">自訂選項</div>
         <div id="newOptionList"></div>
-
-        <button class="btn light" type="button" onclick="addNewOptionGroup()">
-          ＋新增選項群組
-        </button>
-
-        <div class="meta" style="margin-top:10px;">
-          例如：群組名稱填「冰度」，選項填「去冰、正常冰、微冰」。
-        </div>
+        <button class="btn light" type="button" onclick="addNewOptionGroup()">＋新增選項群組</button>
+        <div class="meta" style="margin-top:10px;">例如：群組名稱填「冰度」，選項填「去冰、正常冰、微冰」。</div>
       </div>
 
-      <div class="btn-row">
-        <button class="btn primary" onclick="addMenu()">新增品項</button>
-      </div>
+      <div class="btn-row"><button class="btn primary" onclick="addMenu()">新增品項</button></div>
     </div>
 
     <div class="card">
@@ -146,13 +118,11 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
     </div>
   </section>
-
 </div>
 
 <div class="modal-bg" id="editModalBg">
   <div class="modal">
     <div class="section-title">編輯品項</div>
-
     <input type="hidden" id="editId">
 
     <div class="form-grid">
@@ -166,10 +136,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="option-editor">
       <div class="option-title">自訂選項</div>
       <div id="editOptionList"></div>
-
-      <button class="btn light" type="button" onclick="addEditOptionGroup()">
-        ＋新增選項群組
-      </button>
+      <button class="btn light" type="button" onclick="addEditOptionGroup()">＋新增選項群組</button>
     </div>
 
     <div class="btn-row">
@@ -201,6 +168,34 @@ const db=getFirestore(app);
 let menuCache=[];
 let newOptionGroups=[];
 let editOptionGroups=[];
+let knownOrderIds=new Set();
+let firstSnapshot=true;
+let soundEnabled=false;
+
+window.enableSound=async()=>{
+  const audio=document.getElementById("newOrderAudio");
+  try{
+    audio.volume=1;
+    await audio.play();
+    audio.pause();
+    audio.currentTime=0;
+    soundEnabled=true;
+    soundBtn.classList.add("on");
+    soundBtn.innerText="音效已啟用";
+    alert("新訂單音效已啟用");
+  }catch(e){
+    alert("瀏覽器阻擋音效，請再按一次啟用音效");
+  }
+};
+
+function playNewOrderSound(){
+  if(!soundEnabled)return;
+  const audio=document.getElementById("newOrderAudio");
+  try{
+    audio.currentTime=0;
+    audio.play();
+  }catch(e){}
+}
 
 onAuthStateChanged(auth,user=>{
   if(!user){location.href="index.html";return}
@@ -237,12 +232,8 @@ function formatItems(items){
       <div class="item-name">${x.name} × ${x.qty}</div>
       ${
         x.options
-        ? Object.entries(x.options).map(([k,v])=>`
-            <div class="item-detail">${k}：${v}</div>
-          `).join("")
-        : `
-          <div class="item-detail">冰度：${x.ice||"無"}｜糖度：${x.sugar||"無"}</div>
-        `
+        ? Object.entries(x.options).map(([k,v])=>`<div class="item-detail">${k}：${v}</div>`).join("")
+        : `<div class="item-detail">冰度：${x.ice||"無"}｜糖度：${x.sugar||"無"}</div>`
       }
       <div class="item-detail">備註：${x.note||"無"}</div>
     </div>
@@ -258,13 +249,21 @@ function listenOrders(){
 
     if(snap.empty){
       waitingOrders.innerHTML=`<div class="empty">目前沒有訂單</div>`;
+      firstSnapshot=false;
       return;
     }
 
     snap.forEach(d=>{
       const o=d.data();
+      const isNew=!knownOrderIds.has(d.id);
+      knownOrderIds.add(d.id);
+
+      if(!firstSnapshot && isNew && (o.status||"等待接單")==="等待接單"){
+        playNewOrderSound();
+      }
+
       const div=document.createElement("div");
-      div.className="order-card";
+      div.className="order-card "+(!firstSnapshot && isNew ? "new" : "");
       div.innerHTML=`
         <div class="order-head">
           <div>
@@ -283,24 +282,20 @@ function listenOrders(){
         </div>
       `;
 
-      if(o.status==="等待接單") waitingOrders.appendChild(div);
+      if(o.status==="等待接單"||!o.status) waitingOrders.appendChild(div);
       else if(o.status==="製作中") makingOrders.appendChild(div);
       else doneOrders.appendChild(div);
     });
+
+    firstSnapshot=false;
   });
 }
 
 window.updateOrder=async(id,status)=>{
-  await updateDoc(doc(db,"orders",id),{
-    status,
-    updated_at:new Date().toISOString()
-  });
+  await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()});
 };
 
-window.addNewOptionGroup=function(){
-  newOptionGroups.push({title:"",choices:[""]});
-  renderNewOptionGroups();
-};
+window.addNewOptionGroup=function(){newOptionGroups.push({title:"",choices:[""]});renderNewOptionGroups();};
 
 function renderNewOptionGroups(){
   newOptionList.innerHTML="";
@@ -342,12 +337,10 @@ window.removeNewChoice=(gIndex,cIndex)=>{newOptionGroups[gIndex].choices.splice(
 window.removeNewOptionGroup=(gIndex)=>{newOptionGroups.splice(gIndex,1);renderNewOptionGroups()};
 
 function getCleanOptions(groups){
-  return groups
-    .map(group=>({
-      title:String(group.title||"").trim(),
-      choices:group.choices.map(x=>String(x||"").trim()).filter(x=>x)
-    }))
-    .filter(group=>group.title && group.choices.length>0);
+  return groups.map(group=>({
+    title:String(group.title||"").trim(),
+    choices:group.choices.map(x=>String(x||"").trim()).filter(x=>x)
+  })).filter(group=>group.title&&group.choices.length>0);
 }
 
 window.addMenu=async()=>{
@@ -357,31 +350,19 @@ window.addMenu=async()=>{
   const image=mImage.value.trim();
   const note=mNote.value.trim();
 
-  if(!name||!price||!category){
-    alert("請填名稱、價格、分類");
-    return;
-  }
+  if(!name||!price||!category){alert("請填名稱、價格、分類");return}
 
   await addDoc(collection(db,"menu"),{
-    name,
-    price,
-    category,
-    image,
-    note,
+    name,price,category,image,note,
     enabled:true,
     custom_options:getCleanOptions(newOptionGroups),
     note_enabled:true,
     created_at:new Date().toISOString()
   });
 
-  mName.value="";
-  mPrice.value="";
-  mCategory.value="";
-  mImage.value="";
-  mNote.value="";
+  mName.value="";mPrice.value="";mCategory.value="";mImage.value="";mNote.value="";
   newOptionGroups=[];
   renderNewOptionGroups();
-
   alert("菜單已新增");
   loadMenu();
 };
@@ -400,9 +381,7 @@ async function loadMenu(){
     const m={id:d.id,...d.data()};
     menuCache.push(m);
 
-    const optionsText=(m.custom_options||[])
-      .map(o=>`${o.title}：${(o.choices||[]).join("、")}`)
-      .join("<br>");
+    const optionsText=(m.custom_options||[]).map(o=>`${o.title}：${(o.choices||[]).join("、")}`).join("<br>");
 
     const row=document.createElement("div");
     row.className="menu-row";
@@ -411,16 +390,13 @@ async function loadMenu(){
       <div>
         <div class="menu-name">${m.name||""}</div>
         <div class="menu-meta">
-          ${m.category||""}｜NT$ ${m.price||0}｜
-          ${m.enabled===false?"暫停供應":"供應中"}<br>
+          ${m.category||""}｜NT$ ${m.price||0}｜${m.enabled===false?"暫停供應":"供應中"}<br>
           ${optionsText || "未設定自訂選項"}
         </div>
       </div>
       <div class="btn-row">
         <button class="btn light" onclick="openEditMenu('${m.id}')">編輯</button>
-        <button class="btn ${m.enabled===false?"done":"danger"}" onclick="toggleMenu('${m.id}',${m.enabled!==false})">
-          ${m.enabled===false?"恢復":"暫停"}
-        </button>
+        <button class="btn ${m.enabled===false?"done":"danger"}" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button>
         <button class="btn danger" onclick="deleteMenu('${m.id}')">刪除</button>
       </div>
     `;
@@ -431,7 +407,6 @@ async function loadMenu(){
 window.openEditMenu=(id)=>{
   const m=menuCache.find(x=>x.id===id);
   if(!m)return;
-
   editId.value=m.id;
   editName.value=m.name||"";
   editPrice.value=m.price||0;
@@ -443,14 +418,9 @@ window.openEditMenu=(id)=>{
   editModalBg.style.display="flex";
 };
 
-window.closeEditModal=()=>{
-  editModalBg.style.display="none";
-};
+window.closeEditModal=()=>{editModalBg.style.display="none";};
 
-window.addEditOptionGroup=function(){
-  editOptionGroups.push({title:"",choices:[""]});
-  renderEditOptionGroups();
-};
+window.addEditOptionGroup=function(){editOptionGroups.push({title:"",choices:[""]});renderEditOptionGroups();};
 
 function renderEditOptionGroups(){
   editOptionList.innerHTML="";
@@ -493,7 +463,6 @@ window.removeEditOptionGroup=(gIndex)=>{editOptionGroups.splice(gIndex,1);render
 
 window.saveEditMenu=async()=>{
   const id=editId.value;
-
   await updateDoc(doc(db,"menu",id),{
     name:editName.value.trim(),
     price:Number(editPrice.value),
@@ -504,16 +473,13 @@ window.saveEditMenu=async()=>{
     note_enabled:true,
     updated_at:new Date().toISOString()
   });
-
   editModalBg.style.display="none";
   alert("品項已更新");
   loadMenu();
 };
 
 window.toggleMenu=async(id,enabled)=>{
-  await updateDoc(doc(db,"menu",id),{
-    enabled:!enabled
-  });
+  await updateDoc(doc(db,"menu",id),{enabled:!enabled});
   loadMenu();
 };
 
@@ -526,7 +492,6 @@ window.deleteMenu=async(id)=>{
 async function loadSettings(){
   const ref=doc(db,"settings","cafe");
   const s=await getDoc(ref);
-
   if(!s.exists()){
     await setDoc(ref,{open:true});
     systemStatus.innerText="目前狀態：開放點餐";
@@ -541,7 +506,7 @@ window.setCafeOpen=async(open)=>{
 };
 
 editModalBg.addEventListener("click",e=>{
-  if(e.target===editModalBg) closeEditModal();
+  if(e.target===editModalBg)closeEditModal();
 });
 
 logoutBtn.addEventListener("click",async()=>{
