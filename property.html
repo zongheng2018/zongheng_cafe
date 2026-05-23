@@ -82,7 +82,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="section-title">新增住戶帳號</div>
       <div class="form-grid">
         <input id="new_username" placeholder="帳號，例如 A001">
-        <input id="new_password" placeholder="密碼，至少 6 碼">
+        <input id="new_password" placeholder="密碼，至少 4 碼">
         <input id="new_floor" placeholder="樓層">
         <input id="new_room" placeholder="房號">
         <input id="new_granted" type="number" placeholder="初始配發點數，可空白">
@@ -300,8 +300,8 @@ window.createResident = async () => {
     return;
   }
 
-  if (password.length < 6) {
-    alert("密碼至少 6 碼");
+  if (password.length < 4) {
+    alert("密碼至少 4 碼");
     return;
   }
 
