@@ -110,14 +110,10 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="form-grid">
         <input id="mName" placeholder="品項名稱">
         <input id="mPrice" type="number" placeholder="價格">
-        <div>
-          <select id="mCategorySelect" onchange="syncCategoryInput()">
-            <option value="">選擇既有分類</option>
-          </select>
-        </div>
-        <div>
-          <input id="mCategory" placeholder="或輸入新分類">
-        </div>
+        <select id="mCategorySelect" onchange="syncCategoryInput()">
+          <option value="">選擇既有分類</option>
+        </select>
+        <input id="mCategory" placeholder="分類，例如 咖啡">
         <input id="mImage" placeholder="圖片網址">
         <textarea id="mNote" placeholder="品項備註，可空白"></textarea>
       </div>
@@ -142,12 +138,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="card">
       <div class="section-title">代客點餐</div>
 
-      <div style="margin-bottom:16px;">
-        <select id="counterCategoryFilter" onchange="changeCounterCategory(this.value)">
-          <option value="全部">全部分類</option>
-        </select>
-      </div>
-
       <div class="form-grid">
         <input id="counterResidentInput" placeholder="輸入住戶帳號，例如 A001">
         <button class="btn primary" onclick="loadCounterResident()">載入住戶</button>
@@ -161,6 +151,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="counter-grid">
       <div class="card">
         <div class="section-title">菜單</div>
+        <select id="counterCategoryFilter" onchange="changeCounterCategory(this.value)" style="margin-bottom:14px;">
+          <option value="全部">全部分類</option>
+        </select>
         <div id="counterMenuList" class="counter-menu-list"></div>
       </div>
 
@@ -193,6 +186,23 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="card">
       <div class="section-title">點餐系統設定</div>
       <div class="setting-status" id="systemStatus">讀取中...</div>
+
+      <div class="setting-status" style="margin-top:14px;">
+        <div style="font-weight:900;margin-bottom:8px;">每日營業時間</div>
+        <div class="form-grid">
+          <input id="openTime" type="time" value="08:30">
+          <input id="closeTime" type="time" value="19:00">
+        </div>
+
+        <div style="font-weight:900;margin-top:14px;margin-bottom:8px;">每月固定公休日</div>
+        <input id="closedDays" placeholder="例如：1,8,15,22">
+
+        <div class="btn-row">
+          <button class="btn done" onclick="saveCafeSchedule()">儲存營業設定</button>
+          <button class="btn danger" onclick="clearWaitingOrders()">清除等待接單</button>
+        </div>
+      </div>
+
       <div class="btn-row">
         <button class="btn done" onclick="setCafeOpen(true)">開放點餐</button>
         <button class="btn danger" onclick="setCafeOpen(false)">關閉點餐</button>
@@ -265,7 +275,8 @@ import {
   orderBy,
   setDoc,
   getDoc,
-  where
+  where,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={
@@ -284,7 +295,6 @@ const db=getFirestore(app);
 
 let menuCache=[];
 let categoryCache=[];
-let currentCounterCategory="全部";
 let newOptionGroups=[];
 let editOptionGroups=[];
 let knownOrderIds=new Set();
@@ -298,6 +308,31 @@ let counterGranted=0;
 let counterStored=0;
 let counterCart=[];
 let counterCurrentItem=null;
+let currentCounterCategory="全部";
+let ordersUnsubscribe=null;
+
+function getTaipeiNow(){
+  return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
+}
+
+function timeToMinutes(t){
+  const p=String(t||"").split(":");
+  return Number(p[0]||0)*60+Number(p[1]||0);
+}
+
+function isCafeOpenBySetting(setting){
+  const now=getTaipeiNow();
+  const day=now.getDate();
+  const minutes=now.getHours()*60+now.getMinutes();
+  const openTime=setting.open_time||"08:30";
+  const closeTime=setting.close_time||"19:00";
+  const closedDays=Array.isArray(setting.closed_days)?setting.closed_days:[];
+
+  if(setting.open===false)return false;
+  if(closedDays.includes(day))return false;
+
+  return minutes>=timeToMinutes(openTime)&&minutes<timeToMinutes(closeTime);
+}
 
 window.enableSound=async()=>{
   const audio=document.getElementById("newOrderAudio");
@@ -333,7 +368,7 @@ onAuthStateChanged(auth,async user=>{
   listenOrders();
   await loadMenu();
   await loadSeatsForCounter();
-  loadSettings();
+  await loadSettings();
 });
 
 window.showTab=(tab,btn)=>{
@@ -379,8 +414,13 @@ function formatItems(items){
 }
 
 function listenOrders(){
+  if(ordersUnsubscribe){
+    ordersUnsubscribe();
+  }
+
   const q=query(collection(db,"orders"),orderBy("created_at","desc"));
-  onSnapshot(q,snap=>{
+
+  ordersUnsubscribe=onSnapshot(q,snap=>{
     waitingOrders.innerHTML="";
     makingOrders.innerHTML="";
     doneOrders.innerHTML="";
@@ -391,12 +431,17 @@ function listenOrders(){
       return;
     }
 
+    let waitingCount=0;
+    let makingCount=0;
+    let doneCount=0;
+
     snap.forEach(d=>{
       const o=d.data();
+      const status=o.status||"等待接單";
       const isNew=!knownOrderIds.has(d.id);
       knownOrderIds.add(d.id);
 
-      if(!firstSnapshot && isNew && (o.status||"等待接單")==="等待接單"){
+      if(!firstSnapshot && isNew && status==="等待接單"){
         playNewOrderSound();
       }
 
@@ -411,7 +456,7 @@ function listenOrders(){
             <div class="meta">金額：NT$ ${o.total||0}</div>
             ${o.created_by?`<div class="meta">建立來源：${o.created_by}</div>`:""}
           </div>
-          <div class="badge ${statusClass(o.status)}">${o.status||"等待接單"}</div>
+          <div class="badge ${statusClass(status)}">${status}</div>
         </div>
         ${formatItems(o.items||[])}
         <div class="btn-row">
@@ -421,17 +466,39 @@ function listenOrders(){
         </div>
       `;
 
-      if(o.status==="等待接單"||!o.status) waitingOrders.appendChild(div);
-      else if(o.status==="製作中") makingOrders.appendChild(div);
-      else doneOrders.appendChild(div);
+      if(status==="等待接單"){
+        waitingCount++;
+        waitingOrders.appendChild(div);
+      }else if(status==="製作中"){
+        makingCount++;
+        makingOrders.appendChild(div);
+      }else{
+        doneCount++;
+        doneOrders.appendChild(div);
+      }
     });
 
+    if(waitingCount===0)waitingOrders.innerHTML=`<div class="empty">目前沒有等待接單</div>`;
+    if(makingCount===0)makingOrders.innerHTML=`<div class="empty">目前沒有製作中訂單</div>`;
+    if(doneCount===0)doneOrders.innerHTML=`<div class="empty">目前沒有已完成 / 已取消訂單</div>`;
+
     firstSnapshot=false;
+  },error=>{
+    console.error(error);
+    alert("訂單讀取失敗："+error.message);
   });
 }
 
 window.updateOrder=async(id,status)=>{
-  await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()});
+  try{
+    await updateDoc(doc(db,"orders",id),{
+      status,
+      updated_at:new Date().toISOString()
+    });
+  }catch(error){
+    console.error(error);
+    alert("更新訂單失敗："+error.message);
+  }
 };
 
 window.addNewOptionGroup=function(){
@@ -487,10 +554,45 @@ function getCleanOptions(groups){
     .filter(group=>group.title&&group.choices.length>0);
 }
 
+window.syncCategoryInput=()=>{
+  if(mCategorySelect.value){
+    mCategory.value=mCategorySelect.value;
+  }
+};
+
+function renderCategorySelects(){
+  const selects=[
+    document.getElementById("mCategorySelect"),
+    document.getElementById("counterCategoryFilter")
+  ];
+
+  if(selects[0]){
+    selects[0].innerHTML=`<option value="">選擇既有分類</option>`;
+    categoryCache.forEach(c=>{
+      selects[0].innerHTML+=`<option value="${c}">${c}</option>`;
+    });
+  }
+
+  if(selects[1]){
+    const old=currentCounterCategory;
+    selects[1].innerHTML=`<option value="全部">全部分類</option>`;
+    categoryCache.forEach(c=>{
+      selects[1].innerHTML+=`<option value="${c}">${c}</option>`;
+    });
+    selects[1].value=categoryCache.includes(old)?old:"全部";
+    currentCounterCategory=selects[1].value;
+  }
+}
+
+window.changeCounterCategory=(category)=>{
+  currentCounterCategory=category;
+  renderCounterMenu();
+};
+
 window.addMenu=async()=>{
   const name=mName.value.trim();
   const price=Number(mPrice.value);
-  const category=(mCategory.value || mCategorySelect.value).trim();
+  const category=(mCategory.value||mCategorySelect.value).trim();
   const image=mImage.value.trim();
   const note=mNote.value.trim();
 
@@ -510,7 +612,7 @@ window.addMenu=async()=>{
   mName.value="";
   mPrice.value="";
   mCategory.value="";
-  if(document.getElementById("mCategorySelect")) mCategorySelect.value="";
+  mCategorySelect.value="";
   mImage.value="";
   mNote.value="";
   newOptionGroups=[];
@@ -537,7 +639,7 @@ async function loadMenu(){
     const m={id:d.id,...d.data()};
     menuCache.push(m);
 
-    if(m.category && !categoryCache.includes(m.category)){
+    if(m.category&&!categoryCache.includes(m.category)){
       categoryCache.push(m.category);
     }
 
@@ -669,43 +771,116 @@ async function loadSettings(){
   const s=await getDoc(ref);
 
   if(!s.exists()){
-    await setDoc(ref,{open:true});
-    systemStatus.innerText="目前狀態：開放點餐";
-  }else{
-    systemStatus.innerText="目前狀態："+(s.data().open===false?"關閉點餐":"開放點餐");
+    await setDoc(ref,{
+      open:true,
+      open_time:"08:30",
+      close_time:"19:00",
+      closed_days:[]
+    },{merge:true});
+
+    systemStatus.innerText="目前狀態：開放點餐｜自動營業 08:30–19:00";
+    openTime.value="08:30";
+    closeTime.value="19:00";
+    closedDays.value="";
+    return;
   }
+
+  const data=s.data();
+  const effectiveOpen=isCafeOpenBySetting(data);
+
+  systemStatus.innerText=
+    "目前狀態："+(effectiveOpen?"開放點餐":"關閉點餐")+
+    "｜自動營業 "+(data.open_time||"08:30")+"–"+(data.close_time||"19:00")+
+    "｜公休日："+((data.closed_days||[]).join(",")||"無");
+
+  openTime.value=data.open_time||"08:30";
+  closeTime.value=data.close_time||"19:00";
+  closedDays.value=Array.isArray(data.closed_days)?data.closed_days.join(","):"";
 }
 
 window.setCafeOpen=async(open)=>{
-  await setDoc(doc(db,"settings","cafe"),{open},{merge:true});
-  systemStatus.innerText="目前狀態："+(open?"開放點餐":"關閉點餐");
+  await setDoc(doc(db,"settings","cafe"),{
+    open,
+    open_time:openTime.value||"08:30",
+    close_time:closeTime.value||"19:00"
+  },{merge:true});
+
+  await loadSettings();
+  alert(open?"已手動開放點餐":"已手動關閉點餐");
+};
+
+window.saveCafeSchedule=async()=>{
+  const raw=closedDays.value.trim();
+  const days=raw
+    ? raw.split(",").map(x=>Number(x.trim())).filter(x=>x>=1&&x<=31)
+    : [];
+
+  await setDoc(doc(db,"settings","cafe"),{
+    open_time:openTime.value||"08:30",
+    close_time:closeTime.value||"19:00",
+    closed_days:days
+  },{merge:true});
+
+  await loadSettings();
+  alert("營業設定已儲存");
+};
+
+window.clearWaitingOrders=async()=>{
+  if(!confirm("確定清除所有等待接單？此動作不能復原。"))return;
+
+  const q=query(collection(db,"orders"),where("status","==","等待接單"));
+  const snap=await getDocs(q);
+
+  if(snap.empty){
+    alert("目前沒有等待接單");
+    return;
+  }
+
+  const batch=writeBatch(db);
+  snap.forEach(d=>{
+    batch.update(doc(db,"orders",d.id),{
+      status:"已取消",
+      updated_at:new Date().toISOString(),
+      cancel_reason:"櫃台清除等待接單"
+    });
+  });
+
+  await batch.commit();
+  alert("等待接單已清除");
 };
 
 async function loadSeatsForCounter(){
   const seatSelect=document.getElementById("counterSeat");
-  seatSelect.innerHTML=`<option value="">請選擇座位</option>`;
+  seatSelect.innerHTML=`
+    <option value="">請選擇座位</option>
 
-  try{
-    const snap=await getDocs(collection(db,"seats"));
+    <optgroup label="A區">
+      <option value="A1">A1</option>
+      <option value="A2">A2</option>
+      <option value="A3">A3</option>
+      <option value="A4">A4</option>
+    </optgroup>
 
-    if(snap.empty){
-      ["A1","A2","A3","A4","B1","B2","B3","B4"].forEach(s=>{
-        seatSelect.innerHTML+=`<option value="${s}">${s}</option>`;
-      });
-      return;
-    }
+    <optgroup label="B區">
+      <option value="B1">B1</option>
+      <option value="B2">B2</option>
+      <option value="B3">B3</option>
+      <option value="B4">B4</option>
+      <option value="B5">B5</option>
+      <option value="B6">B6</option>
+      <option value="B7">B7</option>
+      <option value="B8">B8</option>
+    </optgroup>
 
-    snap.forEach(d=>{
-      const s=d.data();
-      if(s.available===false)return;
-      const name=s.seatId||s.name||d.id;
-      seatSelect.innerHTML+=`<option value="${name}">${name}</option>`;
-    });
-  }catch(e){
-    ["A1","A2","A3","A4"].forEach(s=>{
-      seatSelect.innerHTML+=`<option value="${s}">${s}</option>`;
-    });
-  }
+    <optgroup label="C區">
+      <option value="C1">C1</option>
+      <option value="C2">C2</option>
+      <option value="C3">C3</option>
+      <option value="C4">C4</option>
+      <option value="C5">C5</option>
+      <option value="C6">C6</option>
+    </optgroup>
+  `;
 }
 
 window.toggleCounterSeat=()=>{
@@ -993,51 +1168,6 @@ window.submitCounterOrder=async()=>{
   renderCounterCart();
 };
 
-
-function renderCategorySelects(){
-  const select=document.getElementById("mCategorySelect");
-  const counterSelect=document.getElementById("counterCategoryFilter");
-
-  categoryCache.sort((a,b)=>a.localeCompare(b,"zh-Hant"));
-
-  if(select){
-    const currentValue=select.value;
-    select.innerHTML=`<option value="">選擇既有分類</option>`;
-    categoryCache.forEach(c=>{
-      select.innerHTML+=`<option value="${c}">${c}</option>`;
-    });
-    if(categoryCache.includes(currentValue)){
-      select.value=currentValue;
-    }
-  }
-
-  if(counterSelect){
-    const currentValue=currentCounterCategory || "全部";
-    counterSelect.innerHTML=`<option value="全部">全部分類</option>`;
-    categoryCache.forEach(c=>{
-      counterSelect.innerHTML+=`<option value="${c}">${c}</option>`;
-    });
-
-    if(currentValue==="全部" || categoryCache.includes(currentValue)){
-      counterSelect.value=currentValue;
-    }else{
-      currentCounterCategory="全部";
-      counterSelect.value="全部";
-    }
-  }
-}
-
-window.syncCategoryInput=()=>{
-  if(mCategorySelect.value){
-    mCategory.value=mCategorySelect.value;
-  }
-};
-
-window.changeCounterCategory=(category)=>{
-  currentCounterCategory=category || "全部";
-  renderCounterMenu();
-};
-
 editModalBg.addEventListener("click",e=>{
   if(e.target===editModalBg)closeEditModal();
 });
@@ -1051,6 +1181,8 @@ logoutBtn.addEventListener("click",async()=>{
   localStorage.removeItem("zh_user");
   location.href="index.html";
 });
+
+setInterval(loadSettings,60000);
 </script>
 
 </body>
