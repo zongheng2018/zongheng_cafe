@@ -1,322 +1,236 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>物業櫃台｜昭揚縱橫</title>
-
-<style>
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
-body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f}
-body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);backdrop-filter:blur(5px);z-index:-1}
-.header{height:72px;background:rgba(255,255,255,.88);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
-.brand{display:flex;align-items:center;gap:12px}
-.brand img{width:72px;opacity:.82}
-.title{font-size:22px;letter-spacing:2px;font-weight:700;color:#6d6258}
-.logout{border:1px solid #c9c0b7;background:rgba(255,255,255,.88);color:#6d6258;border-radius:10px;padding:9px 16px}
-.container{max-width:1120px;margin:22px auto;padding:0 16px 40px}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
-.tab{border:none;background:rgba(255,255,255,.88);color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06)}
-.tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
-.card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
-.section-title{font-size:26px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
-.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-input,select{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
-.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.btn{border:none;border-radius:13px;padding:10px 16px;font-weight:800;color:white;background:#9c8e81;cursor:pointer}
-.btn.primary{background:#6d6258}
-.btn.done{background:#6b8b61}
-.btn.danger{background:#c86b62}
-.resident-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.resident-card{background:rgba(255,255,255,.96);border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
-.resident-name{font-size:20px;font-weight:900;color:#5f574f;margin-bottom:8px}
-.meta{font-size:14px;color:#777;line-height:1.7}
-.point-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
-.point-box{background:#f8f5f1;border-radius:14px;padding:12px;text-align:center}
-.point-label{font-size:13px;color:#8b8178}
-.point-value{font-size:22px;font-weight:900;color:#6f4f40}
-.small-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.hidden{display:none}
-.empty{text-align:center;color:#999;padding:40px}
-.note{background:#f8f5f1;border-radius:16px;padding:14px;line-height:1.8;color:#6d6258;margin-top:12px}
-@media(max-width:800px){.tabs{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.small-form{grid-template-columns:1fr}.title{font-size:18px}.brand img{width:60px}.point-grid{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8">
+  <title>物業櫃檯 昭揚宗恆 咖啡廳點餐系統</title>
 </head>
-
 <body>
-<div class="header">
-  <div class="brand">
-    <img src="logo.png">
-    <div class="title">物業櫃台</div>
-  </div>
-  <button class="logout" id="logoutBtn">登出</button>
-</div>
+  <h2>物業櫃檯管理</h2>
 
-<div class="container">
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('residents',this)">住戶管理</button>
-    <button class="tab" onclick="showTab('points',this)">點數管理</button>
-    <button class="tab" onclick="showTab('orders',this)">訂單總覽</button>
-  </div>
+  <!-- 新增公告 -->
+  <h3>新增公告</h3>
+  <input id="title" placeholder="公告標題">
+  <input id="content" placeholder="公告內容">
+  <button onclick="addAnnouncement()">新增公告</button>
 
-  <section id="residentsTab">
-    <div class="card">
-      <div class="section-title">新增住戶帳號</div>
-      <div class="form-grid">
-        <input id="newUsername" placeholder="住戶帳號 / 戶號，例如 A102">
-        <input id="newPassword" placeholder="初始密碼">
-        <input id="newEmail" placeholder="Auth Email，例如 a102@zongheng.local">
-        <input id="newUnit" placeholder="戶號，例如 A102">
-      </div>
-      <div class="btn-row">
-        <button class="btn primary" onclick="createResident()">新增住戶</button>
-      </div>
-      <div class="note">
-        新增後請到 Firebase Authentication 補同一組 Email / Password。正式版可再升級為自動建立。
-      </div>
-    </div>
+  <!-- 公告列表 -->
+  <h3>公告列表</h3>
+  <ul id="announcements"></ul>
 
-    <div class="card">
-      <div class="section-title">住戶清單</div>
-      <div id="residentList" class="resident-grid"></div>
-    </div>
-  </section>
+  <!-- 新增住戶帳號 -->
+  <h3>新增住戶帳號</h3>
 
-  <section id="pointsTab" class="hidden">
-    <div class="card">
-      <div class="section-title">點數管理</div>
-      <div id="pointList" class="resident-grid"></div>
-    </div>
-  </section>
+  <input id="new_username" placeholder="帳號">
+  <input id="new_password" placeholder="密碼">
 
-  <section id="ordersTab" class="hidden">
-    <div class="card">
-      <div class="section-title">訂單總覽</div>
-      <div id="orderList"></div>
-    </div>
-  </section>
-</div>
+  <input id="new_floor" placeholder="樓層">
+  <input id="new_room" placeholder="房號">
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore,collection,getDocs,addDoc,doc,updateDoc,query,where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  <button onclick="createResident()">
+    建立住戶帳號
+  </button>
 
-const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
+  <!-- 住戶帳號列表 -->
+  <h3>住戶帳號</h3>
+  <ul id="accounts"></ul>
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+  <!-- Firebase SDK -->
+  <script type="module">
 
-let residents=[];
-let balances=[];
+    import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
-onAuthStateChanged(auth,async user=>{
-  if(!user){location.href="index.html";return}
-  const raw=localStorage.getItem("zh_user");
-  if(!raw){location.href="index.html";return}
-  const profile=JSON.parse(raw);
-  if(profile.role!=="property"){alert("沒有權限");location.href="index.html";return}
-  await loadResidents();
-  await loadOrders();
-});
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc
+    }
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-window.showTab=(tab,btn)=>{
-  residentsTab.classList.add("hidden");
-  pointsTab.classList.add("hidden");
-  ordersTab.classList.add("hidden");
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  btn.classList.add("active");
-  document.getElementById(tab+"Tab").classList.remove("hidden");
-  if(tab==="points") renderPointList();
-};
+    import {
+      getFunctions,
+      httpsCallable
+    }
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
 
-async function loadResidents(){
-  residents=[];
-  balances=[];
+    const firebaseConfig = {
+      apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+      authDomain: "zonghengcafe.firebaseapp.com",
+      projectId: "zonghengcafe",
+      storageBucket: "zonghengcafe.firebasestorage.app",
+      messagingSenderId: "207027108121",
+      appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+      measurementId: "G-8ZE4SE2T7T"
+    };
 
-  const accSnap=await getDocs(collection(db,"accounts"));
-  accSnap.forEach(d=>{
-    const x=d.data();
-    if(x.role==="resident") residents.push({docId:d.id,...x});
-  });
+    const app = initializeApp(firebaseConfig);
 
-  const balSnap=await getDocs(collection(db,"balances"));
-  balSnap.forEach(d=>balances.push({docId:d.id,...d.data()}));
+    const db = getFirestore(app);
 
-  renderResidents();
-  renderPointList();
-}
+    const functions =
+    getFunctions(app, "asia-east1");
 
-function getBalance(username){
-  return balances.find(b=>b.uid===username)||null;
-}
+    // 新增公告
+    async function addAnnouncement() {
 
-function renderResidents(){
-  residentList.innerHTML="";
-  if(residents.length===0){
-    residentList.innerHTML='<div class="empty">目前沒有住戶</div>';
-    return;
-  }
+      const title =
+      document.getElementById("title").value;
 
-  residents.forEach(r=>{
-    const b=getBalance(r.username);
-    const granted=Number(b?.granted_amount||0);
-    const stored=Number(b?.stored_amount||0);
+      const content =
+      document.getElementById("content").value;
 
-    const div=document.createElement("div");
-    div.className="resident-card";
-    div.innerHTML=`
-      <div class="resident-name">${r.username}</div>
-      <div class="meta">戶號：${r.unit_number||r.username}</div>
-      <div class="meta">Auth Email：${r.auth_email||"尚未設定"}</div>
-      <div class="point-grid">
-        <div class="point-box"><div class="point-label">配發</div><div class="point-value">${granted}</div></div>
-        <div class="point-box"><div class="point-label">儲值</div><div class="point-value">${stored}</div></div>
-        <div class="point-box"><div class="point-label">總計</div><div class="point-value">${granted+stored}</div></div>
-      </div>
-      <div class="small-form">
-        <input id="pw-${r.docId}" value="${r.password||""}" placeholder="新密碼">
-        <button class="btn primary" onclick="updateResidentPassword('${r.docId}')">改密碼</button>
-      </div>
-    `;
-    residentList.appendChild(div);
-  });
-}
+      const date =
+      new Date().toLocaleDateString();
 
-function renderPointList(){
-  pointList.innerHTML="";
-  if(residents.length===0){
-    pointList.innerHTML='<div class="empty">目前沒有住戶</div>';
-    return;
-  }
+      await addDoc(
+        collection(db,"announcements"),
+        {
+          title,
+          content,
+          date
+        }
+      );
 
-  residents.forEach(r=>{
-    const b=getBalance(r.username);
-    const granted=Number(b?.granted_amount||0);
-    const stored=Number(b?.stored_amount||0);
+      alert("公告已新增！");
 
-    const div=document.createElement("div");
-    div.className="resident-card";
-    div.innerHTML=`
-      <div class="resident-name">${r.username}</div>
-      <div class="meta">戶號：${r.unit_number||r.username}</div>
-      <div class="point-grid">
-        <div class="point-box"><div class="point-label">配發</div><div class="point-value">${granted}</div></div>
-        <div class="point-box"><div class="point-label">儲值</div><div class="point-value">${stored}</div></div>
-        <div class="point-box"><div class="point-label">總計</div><div class="point-value">${granted+stored}</div></div>
-      </div>
-      <div class="small-form">
-        <input id="grant-${b?.docId}" type="number" placeholder="新增配發點數">
-        <input id="store-${b?.docId}" type="number" placeholder="新增儲值點數">
-      </div>
-      <div class="btn-row">
-        <button class="btn done" onclick="updatePoints('${b?.docId}')">儲存點數</button>
-      </div>
-    `;
-    pointList.appendChild(div);
-  });
-}
+      loadAnnouncements();
 
-window.createResident=async()=>{
-  const username=newUsername.value.trim();
-  const password=newPassword.value.trim();
-  const auth_email=newEmail.value.trim();
-  const unit_number=(newUnit.value.trim()||username);
+    }
 
-  if(!username||!password||!auth_email){
-    alert("請填住戶帳號、密碼、Auth Email");
-    return;
-  }
+    // 安全建立住戶帳號
+    async function createResident() {
 
-  await addDoc(collection(db,"accounts"),{
-    username,
-    password,
-    role:"resident",
-    auth_email,
-    unit_number,
-    created_at:new Date().toISOString()
-  });
+      const username =
+      document.getElementById("new_username").value.trim();
 
-  await addDoc(collection(db,"balances"),{
-    uid:username,
-    unit_number,
-    granted_amount:0,
-    stored_amount:0
-  });
+      const password =
+      document.getElementById("new_password").value.trim();
 
-  alert("住戶已新增，請記得去 Authentication 補同一組 Email / Password。");
+      const floor =
+      document.getElementById("new_floor").value.trim();
 
-  newUsername.value="";
-  newPassword.value="";
-  newEmail.value="";
-  newUnit.value="";
+      const room =
+      document.getElementById("new_room").value.trim();
 
-  await loadResidents();
-};
+      if(!username || !password){
 
-window.updateResidentPassword=async(docId)=>{
-  const value=document.getElementById(`pw-${docId}`).value.trim();
-  if(!value){alert("請輸入密碼");return}
-  await updateDoc(doc(db,"accounts",docId),{password:value});
-  alert("Firestore 密碼已更新，Authentication 密碼仍需手動同步。");
-  await loadResidents();
-};
+        alert("請輸入帳號密碼");
+        return;
 
-window.updatePoints=async(balanceDocId)=>{
-  if(!balanceDocId||balanceDocId==="undefined"){
-    alert("此住戶尚無點數資料");
-    return;
-  }
+      }
 
-  const addGrant=Number(document.getElementById(`grant-${balanceDocId}`).value||0);
-  const addStore=Number(document.getElementById(`store-${balanceDocId}`).value||0);
+      try{
 
-  const b=balances.find(x=>x.docId===balanceDocId);
-  const currentGrant=Number(b?.granted_amount||0);
-  const currentStore=Number(b?.stored_amount||0);
+        const createAccount =
+        httpsCallable(functions, "createAccount");
 
-  await updateDoc(doc(db,"balances",balanceDocId),{
-    granted_amount:currentGrant+addGrant,
-    stored_amount:currentStore+addStore
-  });
+        await createAccount({
 
-  alert("點數已更新");
-  await loadResidents();
-};
+          username: username,
+          password: password,
 
-async function loadOrders(){
-  const snap=await getDocs(collection(db,"orders"));
-  let orders=[];
-  snap.forEach(d=>orders.push({id:d.id,...d.data()}));
-  orders.sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
+          role: "resident",
 
-  if(orders.length===0){
-    orderList.innerHTML='<div class="empty">目前沒有訂單</div>';
-    return;
-  }
+          floor: floor,
+          room: room,
 
-  orderList.innerHTML="";
-  orders.forEach(o=>{
-    const div=document.createElement("div");
-    div.className="resident-card";
-    const items=(o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
-    div.innerHTML=`
-      <div class="resident-name">${o.order_id||o.id}</div>
-      <div class="meta">住戶：${o.uid||""}｜狀態：${o.status||""}</div>
-      <div class="meta">${items}</div>
-      <div class="meta">金額：NT$ ${o.total||0}</div>
-      <div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
-    `;
-    orderList.appendChild(div);
-  });
-}
+          granted_amount: 0,
+          stored_amount: 0
 
-logoutBtn.addEventListener("click",async()=>{
-  await signOut(auth);
-  localStorage.removeItem("zh_user");
-  location.href="index.html";
-});
-</script>
+        });
+
+        alert("住戶帳號建立成功！");
+
+        document.getElementById("new_username").value = "";
+        document.getElementById("new_password").value = "";
+        document.getElementById("new_floor").value = "";
+        document.getElementById("new_room").value = "";
+
+        loadAccounts();
+
+      }catch(error){
+
+        console.error(error);
+
+        alert("建立失敗：" + error.message);
+
+      }
+
+    }
+
+    // 載入公告
+    async function loadAnnouncements() {
+
+      const snapshot =
+      await getDocs(collection(db,"announcements"));
+
+      const list =
+      document.getElementById("announcements");
+
+      list.innerHTML = "";
+
+      snapshot.forEach(doc => {
+
+        const ann = doc.data();
+
+        const li =
+        document.createElement("li");
+
+        li.innerText =
+        ann.date +
+        " - " +
+        ann.title +
+        "：" +
+        ann.content;
+
+        list.appendChild(li);
+
+      });
+
+    }
+
+    // 載入住戶帳號
+    async function loadAccounts() {
+
+      const snapshot =
+      await getDocs(collection(db,"accounts"));
+
+      const list =
+      document.getElementById("accounts");
+
+      list.innerHTML = "";
+
+      snapshot.forEach(doc => {
+
+        const acc = doc.data();
+
+        const li =
+        document.createElement("li");
+
+        li.innerText =
+        acc.username +
+        "（角色：" +
+        acc.role +
+        "）";
+
+        list.appendChild(li);
+
+      });
+
+    }
+
+    loadAnnouncements();
+
+    loadAccounts();
+
+    window.addAnnouncement =
+    addAnnouncement;
+
+    window.createResident =
+    createResident;
+
+  </script>
+
 </body>
 </html>
