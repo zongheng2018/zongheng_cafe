@@ -112,12 +112,28 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
 
       <div class="form-grid" style="margin-top:16px;">
-        <input id="edit_granted" type="number" placeholder="配發點數">
-        <input id="edit_stored" type="number" placeholder="儲值點數">
+        <input id="edit_granted" type="number" placeholder="目前配發點數">
+        <input id="edit_stored" type="number" placeholder="目前儲值點數">
       </div>
 
       <div class="btn-row">
-        <button class="btn done" onclick="saveResidentPoints()">儲存點數</button>
+        <button class="btn done" onclick="saveResidentPoints()">直接儲存目前數值</button>
+      </div>
+
+      <div class="status-box" style="margin-top:18px;">
+        <div style="font-weight:900;margin-bottom:10px;">快速新增 / 扣除點數</div>
+
+        <div class="form-grid">
+          <input id="add_granted" type="number" placeholder="新增配發點數">
+          <input id="add_stored" type="number" placeholder="新增儲值點數">
+          <input id="minus_granted" type="number" placeholder="扣除配發點數">
+          <input id="minus_stored" type="number" placeholder="扣除儲值點數">
+        </div>
+
+        <div class="btn-row">
+          <button class="btn done" onclick="addResidentPoints()">新增點數</button>
+          <button class="btn danger" onclick="minusResidentPoints()">扣除點數</button>
+        </div>
       </div>
     </div>
   </section>
@@ -180,6 +196,8 @@ const functions = getFunctions(app, "asia-east1");
 let propertyProfile = null;
 let currentBalanceDocId = null;
 let currentPointUser = null;
+let currentGranted = 0;
+let currentStored = 0;
 
 onAuthStateChanged(auth, async user => {
   if (!user) {
@@ -368,6 +386,22 @@ window.quickLoadPoint = async username => {
   await loadResidentPoints();
 };
 
+function renderPointInfo(username, granted, stored) {
+  pointInfo.innerHTML = `
+    帳號：${username}<br>
+    配發點數：${granted}<br>
+    儲值點數：${stored}<br>
+    總點數：${Number(granted) + Number(stored)}
+  `;
+}
+
+function clearPointDeltaInputs() {
+  add_granted.value = "";
+  add_stored.value = "";
+  minus_granted.value = "";
+  minus_stored.value = "";
+}
+
 window.loadResidentPoints = async () => {
   const username = point_username.value.trim();
 
@@ -382,6 +416,8 @@ window.loadResidentPoints = async () => {
   if (snap.empty) {
     currentBalanceDocId = null;
     currentPointUser = username;
+    currentGranted = 0;
+    currentStored = 0;
 
     pointInfo.innerHTML = `
       帳號：${username}<br>
@@ -390,6 +426,7 @@ window.loadResidentPoints = async () => {
 
     edit_granted.value = 0;
     edit_stored.value = 0;
+    clearPointDeltaInputs();
 
     return;
   }
@@ -399,19 +436,17 @@ window.loadResidentPoints = async () => {
 
   currentBalanceDocId = d.id;
   currentPointUser = username;
+  currentGranted = Number(data.granted_amount || 0);
+  currentStored = Number(data.stored_amount || 0);
 
-  edit_granted.value = Number(data.granted_amount || 0);
-  edit_stored.value = Number(data.stored_amount || 0);
+  edit_granted.value = currentGranted;
+  edit_stored.value = currentStored;
 
-  pointInfo.innerHTML = `
-    帳號：${username}<br>
-    配發點數：${edit_granted.value}<br>
-    儲值點數：${edit_stored.value}<br>
-    總點數：${Number(edit_granted.value) + Number(edit_stored.value)}
-  `;
+  renderPointInfo(username, currentGranted, currentStored);
+  clearPointDeltaInputs();
 };
 
-window.saveResidentPoints = async () => {
+async function savePointValues(granted, stored) {
   const username = point_username.value.trim();
 
   if (!username) {
@@ -419,8 +454,10 @@ window.saveResidentPoints = async () => {
     return;
   }
 
-  const granted = Number(edit_granted.value || 0);
-  const stored = Number(edit_stored.value || 0);
+  if (granted < 0 || stored < 0) {
+    alert("點數不能小於 0");
+    return;
+  }
 
   if (!currentBalanceDocId) {
     const ref = await addDoc(collection(db, "balances"), {
@@ -428,6 +465,7 @@ window.saveResidentPoints = async () => {
       granted_amount: granted,
       stored_amount: stored,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       updated_by: propertyProfile?.username || "property"
     });
 
@@ -441,8 +479,92 @@ window.saveResidentPoints = async () => {
     });
   }
 
+  currentPointUser = username;
+  currentGranted = granted;
+  currentStored = stored;
+
+  edit_granted.value = granted;
+  edit_stored.value = stored;
+
+  renderPointInfo(username, granted, stored);
+}
+
+window.saveResidentPoints = async () => {
+  const granted = Number(edit_granted.value || 0);
+  const stored = Number(edit_stored.value || 0);
+
+  await savePointValues(granted, stored);
+
   alert("點數已更新");
-  await loadResidentPoints();
+};
+
+window.addResidentPoints = async () => {
+  const username = point_username.value.trim();
+
+  if (!username) {
+    alert("請先載入住戶點數");
+    return;
+  }
+
+  if (!currentPointUser || currentPointUser !== username) {
+    await loadResidentPoints();
+  }
+
+  const addGranted = Number(add_granted.value || 0);
+  const addStored = Number(add_stored.value || 0);
+
+  if (addGranted <= 0 && addStored <= 0) {
+    alert("請輸入要新增的點數");
+    return;
+  }
+
+  const newGranted = currentGranted + addGranted;
+  const newStored = currentStored + addStored;
+
+  await savePointValues(newGranted, newStored);
+
+  clearPointDeltaInputs();
+
+  alert("點數已新增");
+};
+
+window.minusResidentPoints = async () => {
+  const username = point_username.value.trim();
+
+  if (!username) {
+    alert("請先載入住戶點數");
+    return;
+  }
+
+  if (!currentPointUser || currentPointUser !== username) {
+    await loadResidentPoints();
+  }
+
+  const minusGranted = Number(minus_granted.value || 0);
+  const minusStored = Number(minus_stored.value || 0);
+
+  if (minusGranted <= 0 && minusStored <= 0) {
+    alert("請輸入要扣除的點數");
+    return;
+  }
+
+  const newGranted = currentGranted - minusGranted;
+  const newStored = currentStored - minusStored;
+
+  if (newGranted < 0 || newStored < 0) {
+    alert("扣除後點數不能小於 0");
+    return;
+  }
+
+  if (!confirm("確定要扣除點數？")) {
+    return;
+  }
+
+  await savePointValues(newGranted, newStored);
+
+  clearPointDeltaInputs();
+
+  alert("點數已扣除");
 };
 
 async function loadSystemStatus() {
