@@ -25,19 +25,23 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .order-id{font-size:20px;font-weight:900}
 .meta{font-size:14px;color:#777;line-height:1.7}
 .badge{display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:800}
-.wait{background:#fff1d9;color:#9b681f}.making{background:#e6f0ff;color:#426f9c}.done{background:#e8f5e9;color:#3f7f47}.cancel{background:#fde8e6;color:#b3514a}
+.wait{background:#fff1d9;color:#9b681f}
+.making{background:#e6f0ff;color:#426f9c}
+.done{background:#e8f5e9;color:#3f7f47}
+.cancel{background:#fde8e6;color:#b3514a}
 .order-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
 .order-item{padding:10px 0;border-bottom:1px solid #eee}
 .item-name{font-weight:900}
 .item-detail{font-size:14px;color:#777;line-height:1.6}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81}
-.btn.primary{background:#6d6258}.btn.done{background:#6b8b61}.btn.danger{background:#c86b62}.btn.light{background:#f0e8df;color:#7a6b60}
+.btn.primary{background:#6d6258}
+.btn.done{background:#6b8b61}
+.btn.danger{background:#c86b62}
+.btn.light{background:#f0e8df;color:#7a6b60}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 input,textarea,select{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
 textarea{height:86px;resize:none;grid-column:1/-1}
-.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-.check{background:#f8f5f1;border-radius:14px;padding:12px}
 .menu-row{display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #eee5dd}
 .menu-img{width:80px;height:80px;object-fit:cover;border-radius:16px;background:#eee}
 .menu-name{font-size:18px;font-weight:900}
@@ -45,9 +49,21 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .hidden{display:none}
 .empty{text-align:center;color:#999;padding:40px}
 .setting-status{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
+.option-editor{margin-top:14px;background:#f8f5f1;border-radius:16px;padding:16px}
+.option-title{font-size:18px;font-weight:900;color:#6d6258;margin-bottom:12px}
+.option-group-box{background:white;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #eee5dd}
+.option-choice-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
+.small-btn{border:none;border-radius:10px;padding:8px 12px;background:#9c8e81;color:white;font-weight:800}
+.small-btn.danger{background:#c86b62}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99;padding:18px}
-.modal{background:white;width:100%;max-width:620px;border-radius:24px;padding:22px;max-height:90vh;overflow:auto}
-@media(max-width:760px){.tabs{grid-template-columns:1fr}.form-grid,.checks{grid-template-columns:1fr}.menu-row{grid-template-columns:1fr}.brand img{width:60px}.title{font-size:18px}}
+.modal{background:white;width:100%;max-width:680px;border-radius:24px;padding:22px;max-height:90vh;overflow:auto}
+@media(max-width:760px){
+  .tabs{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .menu-row{grid-template-columns:1fr}
+  .brand img{width:60px}
+  .title{font-size:18px}
+}
 </style>
 </head>
 
@@ -96,10 +112,17 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <textarea id="mNote" placeholder="品項備註，可空白"></textarea>
       </div>
 
-      <div class="checks">
-        <label class="check"><input type="checkbox" id="mIce" checked> 需要冰度</label>
-        <label class="check"><input type="checkbox" id="mSugar" checked> 需要糖度</label>
-        <label class="check"><input type="checkbox" id="mAllowNote" checked> 開放備註</label>
+      <div class="option-editor">
+        <div class="option-title">自訂選項</div>
+        <div id="newOptionList"></div>
+
+        <button class="btn light" type="button" onclick="addNewOptionGroup()">
+          ＋新增選項群組
+        </button>
+
+        <div class="meta" style="margin-top:10px;">
+          例如：群組名稱填「冰度」，選項填「去冰、正常冰、微冰」。
+        </div>
       </div>
 
       <div class="btn-row">
@@ -140,10 +163,13 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <textarea id="editNote" placeholder="品項備註"></textarea>
     </div>
 
-    <div class="checks">
-      <label class="check"><input type="checkbox" id="editIce"> 需要冰度</label>
-      <label class="check"><input type="checkbox" id="editSugar"> 需要糖度</label>
-      <label class="check"><input type="checkbox" id="editAllowNote"> 開放備註</label>
+    <div class="option-editor">
+      <div class="option-title">自訂選項</div>
+      <div id="editOptionList"></div>
+
+      <button class="btn light" type="button" onclick="addEditOptionGroup()">
+        ＋新增選項群組
+      </button>
     </div>
 
     <div class="btn-row">
@@ -173,6 +199,8 @@ const auth=getAuth(app);
 const db=getFirestore(app);
 
 let menuCache=[];
+let newOptionGroups=[];
+let editOptionGroups=[];
 
 onAuthStateChanged(auth,user=>{
   if(!user){location.href="index.html";return}
@@ -207,7 +235,15 @@ function formatItems(items){
   return items.map(x=>`
     <div class="order-item">
       <div class="item-name">${x.name} × ${x.qty}</div>
-      <div class="item-detail">冰度：${x.ice||"無"}｜糖度：${x.sugar||"無"}</div>
+      ${
+        x.options
+        ? Object.entries(x.options).map(([k,v])=>`
+            <div class="item-detail">${k}：${v}</div>
+          `).join("")
+        : `
+          <div class="item-detail">冰度：${x.ice||"無"}｜糖度：${x.sugar||"無"}</div>
+        `
+      }
       <div class="item-detail">備註：${x.note||"無"}</div>
     </div>
   `).join("");
@@ -239,9 +275,7 @@ function listenOrders(){
           </div>
           <div class="badge ${statusClass(o.status)}">${o.status||"等待接單"}</div>
         </div>
-
         ${formatItems(o.items||[])}
-
         <div class="btn-row">
           <button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button>
           <button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button>
@@ -263,6 +297,59 @@ window.updateOrder=async(id,status)=>{
   });
 };
 
+window.addNewOptionGroup=function(){
+  newOptionGroups.push({title:"",choices:[""]});
+  renderNewOptionGroups();
+};
+
+function renderNewOptionGroups(){
+  newOptionList.innerHTML="";
+  newOptionGroups.forEach((group,gIndex)=>{
+    const div=document.createElement("div");
+    div.className="option-group-box";
+    div.innerHTML=`
+      <input placeholder="群組名稱，例如：冰度" value="${group.title}" oninput="updateNewOptionTitle(${gIndex},this.value)">
+      <div id="newChoices-${gIndex}"></div>
+      <div class="btn-row">
+        <button class="small-btn" type="button" onclick="addNewChoice(${gIndex})">＋新增選項</button>
+        <button class="small-btn danger" type="button" onclick="removeNewOptionGroup(${gIndex})">刪除此群組</button>
+      </div>
+    `;
+    newOptionList.appendChild(div);
+    renderNewChoices(gIndex);
+  });
+}
+
+function renderNewChoices(gIndex){
+  const group=newOptionGroups[gIndex];
+  const box=document.getElementById(`newChoices-${gIndex}`);
+  box.innerHTML="";
+  group.choices.forEach((choice,cIndex)=>{
+    const row=document.createElement("div");
+    row.className="option-choice-row";
+    row.innerHTML=`
+      <input placeholder="選項，例如：去冰" value="${choice}" oninput="updateNewChoice(${gIndex},${cIndex},this.value)">
+      <button class="small-btn danger" type="button" onclick="removeNewChoice(${gIndex},${cIndex})">刪除</button>
+    `;
+    box.appendChild(row);
+  });
+}
+
+window.updateNewOptionTitle=(gIndex,value)=>{newOptionGroups[gIndex].title=value};
+window.addNewChoice=(gIndex)=>{newOptionGroups[gIndex].choices.push("");renderNewOptionGroups()};
+window.updateNewChoice=(gIndex,cIndex,value)=>{newOptionGroups[gIndex].choices[cIndex]=value};
+window.removeNewChoice=(gIndex,cIndex)=>{newOptionGroups[gIndex].choices.splice(cIndex,1);renderNewOptionGroups()};
+window.removeNewOptionGroup=(gIndex)=>{newOptionGroups.splice(gIndex,1);renderNewOptionGroups()};
+
+function getCleanOptions(groups){
+  return groups
+    .map(group=>({
+      title:String(group.title||"").trim(),
+      choices:group.choices.map(x=>String(x||"").trim()).filter(x=>x)
+    }))
+    .filter(group=>group.title && group.choices.length>0);
+}
+
 window.addMenu=async()=>{
   const name=mName.value.trim();
   const price=Number(mPrice.value);
@@ -282,9 +369,8 @@ window.addMenu=async()=>{
     image,
     note,
     enabled:true,
-    ice_enabled:mIce.checked,
-    sugar_enabled:mSugar.checked,
-    note_enabled:mAllowNote.checked,
+    custom_options:getCleanOptions(newOptionGroups),
+    note_enabled:true,
     created_at:new Date().toISOString()
   });
 
@@ -293,9 +379,8 @@ window.addMenu=async()=>{
   mCategory.value="";
   mImage.value="";
   mNote.value="";
-  mIce.checked=true;
-  mSugar.checked=true;
-  mAllowNote.checked=true;
+  newOptionGroups=[];
+  renderNewOptionGroups();
 
   alert("菜單已新增");
   loadMenu();
@@ -315,6 +400,10 @@ async function loadMenu(){
     const m={id:d.id,...d.data()};
     menuCache.push(m);
 
+    const optionsText=(m.custom_options||[])
+      .map(o=>`${o.title}：${(o.choices||[]).join("、")}`)
+      .join("<br>");
+
     const row=document.createElement("div");
     row.className="menu-row";
     row.innerHTML=`
@@ -324,9 +413,7 @@ async function loadMenu(){
         <div class="menu-meta">
           ${m.category||""}｜NT$ ${m.price||0}｜
           ${m.enabled===false?"暫停供應":"供應中"}<br>
-          冰度：${m.ice_enabled===false?"否":"是"}｜
-          糖度：${m.sugar_enabled===false?"否":"是"}｜
-          備註：${m.note_enabled===false?"否":"是"}
+          ${optionsText || "未設定自訂選項"}
         </div>
       </div>
       <div class="btn-row">
@@ -351,16 +438,58 @@ window.openEditMenu=(id)=>{
   editCategory.value=m.category||"";
   editImage.value=m.image||"";
   editNote.value=m.note||"";
-  editIce.checked=m.ice_enabled!==false;
-  editSugar.checked=m.sugar_enabled!==false;
-  editAllowNote.checked=m.note_enabled!==false;
-
+  editOptionGroups=JSON.parse(JSON.stringify(m.custom_options||[]));
+  renderEditOptionGroups();
   editModalBg.style.display="flex";
 };
 
 window.closeEditModal=()=>{
   editModalBg.style.display="none";
 };
+
+window.addEditOptionGroup=function(){
+  editOptionGroups.push({title:"",choices:[""]});
+  renderEditOptionGroups();
+};
+
+function renderEditOptionGroups(){
+  editOptionList.innerHTML="";
+  editOptionGroups.forEach((group,gIndex)=>{
+    const div=document.createElement("div");
+    div.className="option-group-box";
+    div.innerHTML=`
+      <input placeholder="群組名稱，例如：冰度" value="${group.title}" oninput="updateEditOptionTitle(${gIndex},this.value)">
+      <div id="editChoices-${gIndex}"></div>
+      <div class="btn-row">
+        <button class="small-btn" type="button" onclick="addEditChoice(${gIndex})">＋新增選項</button>
+        <button class="small-btn danger" type="button" onclick="removeEditOptionGroup(${gIndex})">刪除此群組</button>
+      </div>
+    `;
+    editOptionList.appendChild(div);
+    renderEditChoices(gIndex);
+  });
+}
+
+function renderEditChoices(gIndex){
+  const group=editOptionGroups[gIndex];
+  const box=document.getElementById(`editChoices-${gIndex}`);
+  box.innerHTML="";
+  group.choices.forEach((choice,cIndex)=>{
+    const row=document.createElement("div");
+    row.className="option-choice-row";
+    row.innerHTML=`
+      <input placeholder="選項，例如：去冰" value="${choice}" oninput="updateEditChoice(${gIndex},${cIndex},this.value)">
+      <button class="small-btn danger" type="button" onclick="removeEditChoice(${gIndex},${cIndex})">刪除</button>
+    `;
+    box.appendChild(row);
+  });
+}
+
+window.updateEditOptionTitle=(gIndex,value)=>{editOptionGroups[gIndex].title=value};
+window.addEditChoice=(gIndex)=>{editOptionGroups[gIndex].choices.push("");renderEditOptionGroups()};
+window.updateEditChoice=(gIndex,cIndex,value)=>{editOptionGroups[gIndex].choices[cIndex]=value};
+window.removeEditChoice=(gIndex,cIndex)=>{editOptionGroups[gIndex].choices.splice(cIndex,1);renderEditOptionGroups()};
+window.removeEditOptionGroup=(gIndex)=>{editOptionGroups.splice(gIndex,1);renderEditOptionGroups()};
 
 window.saveEditMenu=async()=>{
   const id=editId.value;
@@ -371,9 +500,8 @@ window.saveEditMenu=async()=>{
     category:editCategory.value.trim(),
     image:editImage.value.trim(),
     note:editNote.value.trim(),
-    ice_enabled:editIce.checked,
-    sugar_enabled:editSugar.checked,
-    note_enabled:editAllowNote.checked,
+    custom_options:getCleanOptions(editOptionGroups),
+    note_enabled:true,
     updated_at:new Date().toISOString()
   });
 
