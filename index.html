@@ -248,32 +248,30 @@ import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
 import {
-getAuth,
-signInWithEmailAndPassword,
-setPersistence,
-browserLocalPersistence,
-browserSessionPersistence
+  getAuth,
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
 }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
-getFirestore,
-collection,
-query,
-where,
-getDocs
+  getFirestore,
+  doc,
+  getDoc
 }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
 
-apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-authDomain: "zonghengcafe.firebaseapp.com",
-projectId: "zonghengcafe",
-storageBucket: "zonghengcafe.firebasestorage.app",
-messagingSenderId: "207027108121",
-appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-measurementId: "G-8ZE4SE2T7T"
+  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+  authDomain: "zonghengcafe.firebaseapp.com",
+  projectId: "zonghengcafe",
+  storageBucket: "zonghengcafe.firebasestorage.app",
+  messagingSenderId: "207027108121",
+  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+  measurementId: "G-8ZE4SE2T7T"
 
 };
 
@@ -290,116 +288,179 @@ localStorage.getItem("rememberUser");
 
 if(rememberedUser){
 
-document.getElementById("username").value =
-rememberedUser;
+  document.getElementById("username").value =
+  rememberedUser;
 
-document.getElementById("rememberMe").checked = true;
+  document.getElementById("rememberMe").checked = true;
+
+}
+
+function makeEmail(username){
+
+  return `${username}@zongheng.local`;
 
 }
 
 loginBtn.addEventListener("click", async ()=>{
 
-const username =
-document.getElementById("username").value.trim();
+  const username =
+  document.getElementById("username").value.trim();
 
-const password =
-document.getElementById("password").value.trim();
+  const password =
+  document.getElementById("password").value.trim();
 
-const remember =
-document.getElementById("rememberMe").checked;
+  const remember =
+  document.getElementById("rememberMe").checked;
 
-if(!username || !password){
+  if(!username || !password){
 
-alert("請輸入帳號密碼");
-return;
+    alert("請輸入帳號密碼");
+    return;
 
-}
+  }
 
-try{
+  loginBtn.disabled = true;
+  loginBtn.innerText = "登入中";
 
-const q = query(
-collection(db,"accounts"),
-where("username","==",username)
-);
+  try{
 
-const snapshot = await getDocs(q);
+    await setPersistence(
+      auth,
+      remember
+      ? browserLocalPersistence
+      : browserSessionPersistence
+    );
 
-if(snapshot.empty){
+    const email =
+    makeEmail(username);
 
-alert("帳號不存在");
-return;
+    const result =
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
 
-}
+    const user =
+    result.user;
 
-const userData =
-snapshot.docs[0].data();
+    const tokenResult =
+    await user.getIdTokenResult(true);
 
-await setPersistence(
-auth,
-remember
-? browserLocalPersistence
-: browserSessionPersistence
-);
+    let role =
+    tokenResult.claims.role || "";
 
-await signInWithEmailAndPassword(
-auth,
-userData.auth_email,
-password
-);
+    let finalUsername =
+    tokenResult.claims.username || username;
 
-localStorage.setItem(
-"zh_user",
-JSON.stringify({
-username: username,
-role: userData.role
-})
-);
+    let accountData = null;
 
-if(remember){
+    try{
 
-localStorage.setItem(
-"rememberUser",
-username
-);
+      const accountRef =
+      doc(db,"accounts",user.uid);
 
-}else{
+      const accountSnap =
+      await getDoc(accountRef);
 
-localStorage.removeItem(
-"rememberUser"
-);
+      if(accountSnap.exists()){
 
-}
+        accountData =
+        accountSnap.data();
 
-switch(userData.role){
+        role =
+        accountData.role || role;
 
-case "engineer":
-window.location.href = "engineer.html";
-break;
+        finalUsername =
+        accountData.username || finalUsername;
 
-case "cafe":
-window.location.href = "cafe.html";
-break;
+      }
 
-case "property":
-window.location.href = "property.html";
-break;
+    }catch(e){
 
-case "resident":
-window.location.href = "resident.html";
-break;
+      console.warn("讀取 accounts 失敗，改用 token claims。", e);
 
-default:
-alert("未知角色");
+    }
 
-}
+    if(!role){
 
-}catch(error){
+      alert("登入失敗：此帳號尚未設定角色權限");
+      return;
 
-console.error(error);
+    }
 
-alert("登入失敗");
+    localStorage.setItem(
+      "zh_user",
+      JSON.stringify({
+        uid: user.uid,
+        username: finalUsername,
+        email: email,
+        role: role
+      })
+    );
 
-}
+    if(remember){
+
+      localStorage.setItem(
+        "rememberUser",
+        username
+      );
+
+    }else{
+
+      localStorage.removeItem(
+        "rememberUser"
+      );
+
+    }
+
+    switch(role){
+
+      case "engineer":
+      window.location.href = "engineer.html";
+      break;
+
+      case "cafe":
+      window.location.href = "cafe.html";
+      break;
+
+      case "property":
+      window.location.href = "property.html";
+      break;
+
+      case "resident":
+      window.location.href = "resident.html";
+      break;
+
+      default:
+      alert("未知角色");
+
+    }
+
+  }catch(error){
+
+    console.error(error);
+
+    alert("登入失敗：" + error.message);
+
+  }finally{
+
+    loginBtn.disabled = false;
+    loginBtn.innerText = "登入";
+
+  }
+
+});
+
+document
+.getElementById("password")
+.addEventListener("keydown", function(e){
+
+  if(e.key === "Enter"){
+
+    loginBtn.click();
+
+  }
 
 });
 
