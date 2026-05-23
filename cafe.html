@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>咖啡廳櫃台｜昭揚縱橫</title>
+<title>咖啡廳櫃台｜昭揚縱橫 咖啡廳點餐系統</title>
 
 <style>
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
@@ -334,6 +334,22 @@ function isCafeOpenBySetting(setting){
   return minutes>=timeToMinutes(openTime)&&minutes<timeToMinutes(closeTime);
 }
 
+function formatOrderTime(value){
+  if(!value)return "-";
+
+  const d=new Date(value);
+
+  if(isNaN(d.getTime()))return value;
+
+  return d.toLocaleString("zh-TW",{
+    timeZone:"Asia/Taipei",
+    month:"2-digit",
+    day:"2-digit",
+    hour:"2-digit",
+    minute:"2-digit"
+  });
+}
+
 window.enableSound=async()=>{
   const audio=document.getElementById("newOrderAudio");
   try{
@@ -454,6 +470,7 @@ function listenOrders(){
             <div class="meta">住戶：${o.uid||""}</div>
             <div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
             <div class="meta">金額：NT$ ${o.total||0}</div>
+            <div class="meta">下單時間：${formatOrderTime(o.created_at)}</div>
             ${o.created_by?`<div class="meta">建立來源：${o.created_by}</div>`:""}
           </div>
           <div class="badge ${statusClass(status)}">${status}</div>
