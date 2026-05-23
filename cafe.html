@@ -3,20 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>咖啡廳櫃台｜昭揚縱橫 咖啡廳點餐系統</title>
+<title>咖啡廳櫃台｜昭揚縱橫</title>
 
 <style>
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
 body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f}
 body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);backdrop-filter:blur(5px);z-index:-1}
 .header{height:72px;background:rgba(255,255,255,.88);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
-.brand{display:flex;align-items:center;gap:12px}.brand img{width:72px;opacity:.82}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:72px;opacity:.82}
 .title{font-size:22px;letter-spacing:2px;font-weight:700;color:#6d6258}
 .header-actions{display:flex;gap:10px;align-items:center}
 .logout,.sound-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:9px 14px;font-weight:800}
 .sound-btn.on{background:#6b8b61;color:white;border-color:#6b8b61}
 .container{max-width:1180px;margin:22px auto;padding:0 16px 40px}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
 .tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06)}
 .tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 .card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
@@ -25,29 +26,49 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .order-card{background:white;border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
 .order-card.new{animation:pulse 1.2s ease-in-out 4;border:2px solid #d8b56d}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
-.order-id{font-size:20px;font-weight:900}.meta{font-size:14px;color:#777;line-height:1.7}
+.order-id{font-size:20px;font-weight:900}
+.meta{font-size:14px;color:#777;line-height:1.7}
 .badge{display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:800}
-.wait{background:#fff1d9;color:#9b681f}.making{background:#e6f0ff;color:#426f9c}.done{background:#e8f5e9;color:#3f7f47}.cancel{background:#fde8e6;color:#b3514a}
+.wait{background:#fff1d9;color:#9b681f}
+.making{background:#e6f0ff;color:#426f9c}
+.done{background:#e8f5e9;color:#3f7f47}
+.cancel{background:#fde8e6;color:#b3514a}
 .order-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
-.order-item{padding:10px 0;border-bottom:1px solid #eee}.item-name{font-weight:900}.item-detail{font-size:14px;color:#777;line-height:1.6}
+.order-item{padding:10px 0;border-bottom:1px solid #eee}
+.item-name{font-weight:900}
+.item-detail{font-size:14px;color:#777;line-height:1.6}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81}
-.btn.primary{background:#6d6258}.btn.done{background:#6b8b61}.btn.danger{background:#c86b62}.btn.light{background:#f0e8df;color:#7a6b60}
+.btn.primary{background:#6d6258}
+.btn.done{background:#6b8b61}
+.btn.danger{background:#c86b62}
+.btn.light{background:#f0e8df;color:#7a6b60}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 input,textarea,select{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
 textarea{height:86px;resize:none;grid-column:1/-1}
 .menu-row{display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #eee5dd}
 .menu-img{width:80px;height:80px;object-fit:cover;border-radius:16px;background:#eee}
-.menu-name{font-size:18px;font-weight:900}.menu-meta{font-size:14px;color:#777;margin-top:4px}
-.hidden{display:none}.empty{text-align:center;color:#999;padding:40px}.setting-status{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
+.menu-name{font-size:18px;font-weight:900}
+.menu-meta{font-size:14px;color:#777;margin-top:4px}
+.hidden{display:none}
+.empty{text-align:center;color:#999;padding:40px}
+.setting-status{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
 .option-editor{margin-top:14px;background:#f8f5f1;border-radius:16px;padding:16px}
 .option-title{font-size:18px;font-weight:900;color:#6d6258;margin-bottom:12px}
 .option-group-box{background:white;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #eee5dd}
 .option-choice-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
-.small-btn{border:none;border-radius:10px;padding:8px 12px;background:#9c8e81;color:white;font-weight:800}.small-btn.danger{background:#c86b62}
+.small-btn{border:none;border-radius:10px;padding:8px 12px;background:#9c8e81;color:white;font-weight:800}
+.small-btn.danger{background:#c86b62}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99;padding:18px}
 .modal{background:white;width:100%;max-width:680px;border-radius:24px;padding:22px;max-height:90vh;overflow:auto}
-@media(max-width:760px){.tabs{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.menu-row{grid-template-columns:1fr}.brand img{width:60px}.title{font-size:18px}.header{padding:0 12px}.sound-btn{font-size:13px;padding:8px}}
+.counter-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+.counter-menu-list{max-height:560px;overflow:auto}
+.counter-cart-item{background:#f8f5f1;border-radius:16px;padding:14px;margin-bottom:12px}
+.counter-total{font-size:24px;font-weight:900;color:#6d6258;margin-top:14px}
+.counter-mini-img{width:64px;height:64px;border-radius:14px;object-fit:cover;background:#eee}
+.counter-menu-row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #eee5dd}
+@media(max-width:900px){.counter-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.menu-row{grid-template-columns:1fr}.counter-menu-row{grid-template-columns:64px 1fr}.counter-menu-row .btn{grid-column:1/-1}.brand img{width:60px}.title{font-size:18px}.header{padding:0 12px}.sound-btn{font-size:13px;padding:8px}}
 </style>
 </head>
 
@@ -69,9 +90,11 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 </div>
 
 <div class="container">
+
   <div class="tabs">
     <button class="tab active" onclick="showTab('orders',this)">訂單管理</button>
     <button class="tab" onclick="showTab('menu',this)">菜單管理</button>
+    <button class="tab" onclick="showTab('counter',this)">代客點餐</button>
     <button class="tab" onclick="showTab('settings',this)">系統設定</button>
   </div>
 
@@ -105,6 +128,51 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="card">
       <div class="section-title">菜單列表</div>
       <div id="menuList"></div>
+    </div>
+  </section>
+
+  <section id="counterTab" class="hidden">
+    <div class="card">
+      <div class="section-title">代客點餐</div>
+
+      <div class="form-grid">
+        <input id="counterResidentInput" placeholder="輸入住戶帳號，例如 A001">
+        <button class="btn primary" onclick="loadCounterResident()">載入住戶</button>
+      </div>
+
+      <div class="setting-status" id="counterResidentInfo" style="margin-top:16px;">
+        尚未選擇住戶
+      </div>
+    </div>
+
+    <div class="counter-grid">
+      <div class="card">
+        <div class="section-title">菜單</div>
+        <div id="counterMenuList" class="counter-menu-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">櫃台購物車</div>
+        <div id="counterCartList"></div>
+
+        <div class="form-grid" style="margin-top:14px;">
+          <select id="counterDining" onchange="toggleCounterSeat()">
+            <option value="內用">內用</option>
+            <option value="外帶">外帶</option>
+          </select>
+
+          <select id="counterSeat">
+            <option value="">請選擇座位</option>
+          </select>
+        </div>
+
+        <div class="counter-total" id="counterTotal">NT$ 0</div>
+
+        <div class="btn-row">
+          <button class="btn danger" onclick="clearCounterCart()">清空購物車</button>
+          <button class="btn primary" onclick="submitCounterOrder()">送出訂單</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -146,10 +214,46 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </div>
 </div>
 
+<div class="modal-bg" id="counterItemModalBg">
+  <div class="modal">
+    <div class="section-title" id="counterItemTitle">選擇品項</div>
+    <div id="counterOptionArea"></div>
+
+    <div style="margin-top:12px;">
+      <textarea id="counterItemNote" placeholder="備註，可空白"></textarea>
+    </div>
+
+    <div class="form-grid" style="margin-top:12px;">
+      <button class="btn light" onclick="counterChangeQty(-1)">−</button>
+      <input id="counterItemQty" type="number" value="1" min="1">
+      <button class="btn light" onclick="counterChangeQty(1)">＋</button>
+      <button class="btn primary" onclick="addCounterItemToCart()">加入購物車</button>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn light" onclick="closeCounterItemModal()">取消</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore,collection,getDocs,addDoc,doc,updateDoc,deleteDoc,onSnapshot,query,orderBy,setDoc,getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  setDoc,
+  getDoc,
+  where
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={
   apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
@@ -171,6 +275,14 @@ let editOptionGroups=[];
 let knownOrderIds=new Set();
 let firstSnapshot=true;
 let soundEnabled=false;
+let cafeProfile=null;
+
+let counterResident=null;
+let counterBalanceDocId=null;
+let counterGranted=0;
+let counterStored=0;
+let counterCart=[];
+let counterCurrentItem=null;
 
 window.enableSound=async()=>{
   const audio=document.getElementById("newOrderAudio");
@@ -197,24 +309,32 @@ function playNewOrderSound(){
   }catch(e){}
 }
 
-onAuthStateChanged(auth,user=>{
+onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
   const raw=localStorage.getItem("zh_user");
   if(!raw){location.href="index.html";return}
-  const profile=JSON.parse(raw);
-  if(profile.role!=="cafe"){alert("沒有權限");location.href="index.html";return}
+  cafeProfile=JSON.parse(raw);
+  if(cafeProfile.role!=="cafe"){alert("沒有權限");location.href="index.html";return}
   listenOrders();
-  loadMenu();
+  await loadMenu();
+  await loadSeatsForCounter();
   loadSettings();
 });
 
 window.showTab=(tab,btn)=>{
   ordersTab.classList.add("hidden");
   menuTab.classList.add("hidden");
+  counterTab.classList.add("hidden");
   settingsTab.classList.add("hidden");
+
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   btn.classList.add("active");
   document.getElementById(tab+"Tab").classList.remove("hidden");
+
+  if(tab==="counter"){
+    renderCounterMenu();
+    renderCounterCart();
+  }
 };
 
 function statusClass(status){
@@ -227,17 +347,20 @@ function statusClass(status){
 
 function formatItems(items){
   if(!items.length)return`<div class="meta">無品項</div>`;
-  return items.map(x=>`
-    <div class="order-item">
-      <div class="item-name">${x.name} × ${x.qty}</div>
-      ${
-        x.options
-        ? Object.entries(x.options).map(([k,v])=>`<div class="item-detail">${k}：${v}</div>`).join("")
-        : `<div class="item-detail">冰度：${x.ice||"無"}｜糖度：${x.sugar||"無"}</div>`
-      }
-      <div class="item-detail">備註：${x.note||"無"}</div>
-    </div>
-  `).join("");
+
+  return items.map(x=>{
+    const optionHtml=x.options
+      ? Object.entries(x.options).map(([k,v])=>`<div class="item-detail">${k}：${v}</div>`).join("")
+      : `<div class="item-detail">冰度：${x.ice||"無"}｜糖度：${x.sugar||"無"}</div>`;
+
+    return `
+      <div class="order-item">
+        <div class="item-name">${x.name} × ${x.qty}</div>
+        ${optionHtml}
+        <div class="item-detail">備註：${x.note||"無"}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 function listenOrders(){
@@ -271,6 +394,7 @@ function listenOrders(){
             <div class="meta">住戶：${o.uid||""}</div>
             <div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
             <div class="meta">金額：NT$ ${o.total||0}</div>
+            ${o.created_by?`<div class="meta">建立來源：${o.created_by}</div>`:""}
           </div>
           <div class="badge ${statusClass(o.status)}">${o.status||"等待接單"}</div>
         </div>
@@ -295,7 +419,10 @@ window.updateOrder=async(id,status)=>{
   await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()});
 };
 
-window.addNewOptionGroup=function(){newOptionGroups.push({title:"",choices:[""]});renderNewOptionGroups();};
+window.addNewOptionGroup=function(){
+  newOptionGroups.push({title:"",choices:[""]});
+  renderNewOptionGroups();
+};
 
 function renderNewOptionGroups(){
   newOptionList.innerHTML="";
@@ -337,10 +464,12 @@ window.removeNewChoice=(gIndex,cIndex)=>{newOptionGroups[gIndex].choices.splice(
 window.removeNewOptionGroup=(gIndex)=>{newOptionGroups.splice(gIndex,1);renderNewOptionGroups()};
 
 function getCleanOptions(groups){
-  return groups.map(group=>({
-    title:String(group.title||"").trim(),
-    choices:group.choices.map(x=>String(x||"").trim()).filter(x=>x)
-  })).filter(group=>group.title&&group.choices.length>0);
+  return groups
+    .map(group=>({
+      title:String(group.title||"").trim(),
+      choices:(group.choices||[]).map(x=>String(x||"").trim()).filter(x=>x)
+    }))
+    .filter(group=>group.title&&group.choices.length>0);
 }
 
 window.addMenu=async()=>{
@@ -350,7 +479,10 @@ window.addMenu=async()=>{
   const image=mImage.value.trim();
   const note=mNote.value.trim();
 
-  if(!name||!price||!category){alert("請填名稱、價格、分類");return}
+  if(!name||!price||!category){
+    alert("請填名稱、價格、分類");
+    return;
+  }
 
   await addDoc(collection(db,"menu"),{
     name,price,category,image,note,
@@ -360,11 +492,17 @@ window.addMenu=async()=>{
     created_at:new Date().toISOString()
   });
 
-  mName.value="";mPrice.value="";mCategory.value="";mImage.value="";mNote.value="";
+  mName.value="";
+  mPrice.value="";
+  mCategory.value="";
+  mImage.value="";
+  mNote.value="";
   newOptionGroups=[];
   renderNewOptionGroups();
+
   alert("菜單已新增");
-  loadMenu();
+  await loadMenu();
+  renderCounterMenu();
 };
 
 async function loadMenu(){
@@ -381,7 +519,9 @@ async function loadMenu(){
     const m={id:d.id,...d.data()};
     menuCache.push(m);
 
-    const optionsText=(m.custom_options||[]).map(o=>`${o.title}：${(o.choices||[]).join("、")}`).join("<br>");
+    const optionsText=(m.custom_options||[])
+      .map(o=>`${o.title}：${(o.choices||[]).join("、")}`)
+      .join("<br>");
 
     const row=document.createElement("div");
     row.className="menu-row";
@@ -407,6 +547,7 @@ async function loadMenu(){
 window.openEditMenu=(id)=>{
   const m=menuCache.find(x=>x.id===id);
   if(!m)return;
+
   editId.value=m.id;
   editName.value=m.name||"";
   editPrice.value=m.price||0;
@@ -418,9 +559,14 @@ window.openEditMenu=(id)=>{
   editModalBg.style.display="flex";
 };
 
-window.closeEditModal=()=>{editModalBg.style.display="none";};
+window.closeEditModal=()=>{
+  editModalBg.style.display="none";
+};
 
-window.addEditOptionGroup=function(){editOptionGroups.push({title:"",choices:[""]});renderEditOptionGroups();};
+window.addEditOptionGroup=function(){
+  editOptionGroups.push({title:"",choices:[""]});
+  renderEditOptionGroups();
+};
 
 function renderEditOptionGroups(){
   editOptionList.innerHTML="";
@@ -463,6 +609,7 @@ window.removeEditOptionGroup=(gIndex)=>{editOptionGroups.splice(gIndex,1);render
 
 window.saveEditMenu=async()=>{
   const id=editId.value;
+
   await updateDoc(doc(db,"menu",id),{
     name:editName.value.trim(),
     price:Number(editPrice.value),
@@ -473,25 +620,30 @@ window.saveEditMenu=async()=>{
     note_enabled:true,
     updated_at:new Date().toISOString()
   });
+
   editModalBg.style.display="none";
   alert("品項已更新");
-  loadMenu();
+  await loadMenu();
+  renderCounterMenu();
 };
 
 window.toggleMenu=async(id,enabled)=>{
   await updateDoc(doc(db,"menu",id),{enabled:!enabled});
-  loadMenu();
+  await loadMenu();
+  renderCounterMenu();
 };
 
 window.deleteMenu=async(id)=>{
   if(!confirm("確定刪除此品項？"))return;
   await deleteDoc(doc(db,"menu",id));
-  loadMenu();
+  await loadMenu();
+  renderCounterMenu();
 };
 
 async function loadSettings(){
   const ref=doc(db,"settings","cafe");
   const s=await getDoc(ref);
+
   if(!s.exists()){
     await setDoc(ref,{open:true});
     systemStatus.innerText="目前狀態：開放點餐";
@@ -505,8 +657,320 @@ window.setCafeOpen=async(open)=>{
   systemStatus.innerText="目前狀態："+(open?"開放點餐":"關閉點餐");
 };
 
+async function loadSeatsForCounter(){
+  const seatSelect=document.getElementById("counterSeat");
+  seatSelect.innerHTML=`<option value="">請選擇座位</option>`;
+
+  try{
+    const snap=await getDocs(collection(db,"seats"));
+
+    if(snap.empty){
+      ["A1","A2","A3","A4","B1","B2","B3","B4"].forEach(s=>{
+        seatSelect.innerHTML+=`<option value="${s}">${s}</option>`;
+      });
+      return;
+    }
+
+    snap.forEach(d=>{
+      const s=d.data();
+      if(s.available===false)return;
+      const name=s.seatId||s.name||d.id;
+      seatSelect.innerHTML+=`<option value="${name}">${name}</option>`;
+    });
+  }catch(e){
+    ["A1","A2","A3","A4"].forEach(s=>{
+      seatSelect.innerHTML+=`<option value="${s}">${s}</option>`;
+    });
+  }
+}
+
+window.toggleCounterSeat=()=>{
+  counterSeat.style.display=counterDining.value==="內用"?"block":"none";
+};
+
+window.loadCounterResident=async()=>{
+  const username=counterResidentInput.value.trim();
+
+  if(!username){
+    alert("請輸入住戶帳號");
+    return;
+  }
+
+  const aq=query(collection(db,"accounts"),where("username","==",username));
+  const asnap=await getDocs(aq);
+
+  if(asnap.empty){
+    alert("找不到住戶帳號");
+    return;
+  }
+
+  const acc=asnap.docs[0].data();
+
+  if(acc.role!=="resident"){
+    alert("此帳號不是住戶");
+    return;
+  }
+
+  counterResident=acc;
+
+  const bq=query(collection(db,"balances"),where("uid","==",username));
+  const bsnap=await getDocs(bq);
+
+  if(bsnap.empty){
+    counterBalanceDocId=null;
+    counterGranted=0;
+    counterStored=0;
+    counterResidentInfo.innerHTML=`
+      帳號：${username}<br>
+      找不到點數資料，請洽物業。
+    `;
+    return;
+  }
+
+  const bdoc=bsnap.docs[0];
+  const b=bdoc.data();
+
+  counterBalanceDocId=bdoc.id;
+  counterGranted=Number(b.granted_amount||0);
+  counterStored=Number(b.stored_amount||0);
+
+  counterResidentInfo.innerHTML=`
+    帳號：${username}<br>
+    配發點數：${counterGranted}<br>
+    儲值點數：${counterStored}<br>
+    總點數：${counterGranted+counterStored}
+  `;
+
+  renderCounterCart();
+};
+
+function renderCounterMenu(){
+  const box=document.getElementById("counterMenuList");
+  if(!box)return;
+
+  box.innerHTML="";
+
+  const list=menuCache.filter(x=>x.enabled!==false);
+
+  if(!list.length){
+    box.innerHTML=`<div class="empty">目前沒有可供應品項</div>`;
+    return;
+  }
+
+  list.forEach(m=>{
+    const row=document.createElement("div");
+    row.className="counter-menu-row";
+    row.innerHTML=`
+      <img class="counter-mini-img" src="${m.image||""}">
+      <div>
+        <div class="menu-name">${m.name||""}</div>
+        <div class="menu-meta">${m.category||""}｜NT$ ${m.price||0}</div>
+      </div>
+      <button class="btn primary" onclick="openCounterItemModal('${m.id}')">加入</button>
+    `;
+    box.appendChild(row);
+  });
+}
+
+window.openCounterItemModal=(id)=>{
+  counterCurrentItem=menuCache.find(x=>x.id===id);
+  if(!counterCurrentItem)return;
+
+  counterItemTitle.innerText=counterCurrentItem.name||"選擇品項";
+  counterItemQty.value=1;
+  counterItemNote.value="";
+  renderCounterOptions();
+  counterItemModalBg.style.display="flex";
+};
+
+window.closeCounterItemModal=()=>{
+  counterItemModalBg.style.display="none";
+};
+
+function renderCounterOptions(){
+  counterOptionArea.innerHTML="";
+  const opts=Array.isArray(counterCurrentItem.custom_options)?counterCurrentItem.custom_options:[];
+
+  if(!opts.length){
+    counterOptionArea.innerHTML=`<div class="setting-status">此品項沒有自訂選項</div>`;
+    return;
+  }
+
+  opts.forEach((group,index)=>{
+    const title=group.title||"";
+    const choices=Array.isArray(group.choices)?group.choices:[];
+    if(!title||!choices.length)return;
+
+    const div=document.createElement("div");
+    div.style.marginBottom="12px";
+    div.innerHTML=`
+      <label style="display:block;font-weight:900;margin-bottom:8px;">${title}</label>
+      <select id="counterOpt_${index}">
+        ${choices.map(c=>`<option value="${c}">${c}</option>`).join("")}
+      </select>
+    `;
+    counterOptionArea.appendChild(div);
+  });
+}
+
+window.counterChangeQty=(n)=>{
+  let q=Number(counterItemQty.value||1);
+  q=Math.max(1,q+n);
+  counterItemQty.value=q;
+};
+
+window.addCounterItemToCart=()=>{
+  if(!counterCurrentItem)return;
+
+  const options={};
+  const opts=Array.isArray(counterCurrentItem.custom_options)?counterCurrentItem.custom_options:[];
+
+  opts.forEach((group,index)=>{
+    const el=document.getElementById(`counterOpt_${index}`);
+    if(el&&group.title){
+      options[group.title]=el.value;
+    }
+  });
+
+  counterCart.push({
+    id:counterCurrentItem.id,
+    name:counterCurrentItem.name,
+    price:Number(counterCurrentItem.price||0),
+    qty:Number(counterItemQty.value||1),
+    options,
+    note:counterItemNote.value.trim()
+  });
+
+  closeCounterItemModal();
+  renderCounterCart();
+};
+
+function renderCounterCart(){
+  const box=document.getElementById("counterCartList");
+  if(!box)return;
+
+  if(!counterCart.length){
+    box.innerHTML=`<div class="empty">購物車目前是空的</div>`;
+    counterTotal.innerText="NT$ 0";
+    return;
+  }
+
+  box.innerHTML="";
+  let total=0;
+
+  counterCart.forEach((item,index)=>{
+    total+=item.price*item.qty;
+    const optionsText=Object.entries(item.options||{}).map(([k,v])=>`${k}：${v}`).join("<br>");
+
+    const div=document.createElement("div");
+    div.className="counter-cart-item";
+    div.innerHTML=`
+      <div class="item-name">${item.name} × ${item.qty}</div>
+      <div class="item-detail">
+        ${optionsText||"無自訂選項"}<br>
+        備註：${item.note||"無"}<br>
+        小計：NT$ ${item.price*item.qty}
+      </div>
+      <button class="small-btn danger" onclick="removeCounterCartItem(${index})">刪除</button>
+    `;
+    box.appendChild(div);
+  });
+
+  counterTotal.innerText=`NT$ ${total}`;
+};
+
+window.removeCounterCartItem=(index)=>{
+  counterCart.splice(index,1);
+  renderCounterCart();
+};
+
+window.clearCounterCart=()=>{
+  if(!confirm("確定清空代客點餐購物車？"))return;
+  counterCart=[];
+  renderCounterCart();
+};
+
+window.submitCounterOrder=async()=>{
+  if(!counterResident){
+    alert("請先載入住戶");
+    return;
+  }
+
+  if(!counterBalanceDocId){
+    alert("找不到住戶點數資料");
+    return;
+  }
+
+  if(!counterCart.length){
+    alert("購物車是空的");
+    return;
+  }
+
+  const dining=counterDining.value;
+  const seat=counterSeat.value;
+
+  if(dining==="內用"&&!seat){
+    alert("請選擇座位");
+    return;
+  }
+
+  const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0);
+
+  if(counterGranted+counterStored<total){
+    alert("住戶點數不足");
+    return;
+  }
+
+  let newGranted=counterGranted;
+  let newStored=counterStored;
+
+  if(newGranted>=total){
+    newGranted-=total;
+  }else{
+    const rest=total-newGranted;
+    newGranted=0;
+    newStored-=rest;
+  }
+
+  await addDoc(collection(db,"orders"),{
+    order_id:"ZH"+Date.now(),
+    uid:counterResident.username,
+    created_by:cafeProfile?.username||"cafe",
+    items:counterCart,
+    total,
+    dining_type:dining,
+    seat:dining==="內用"?seat:"",
+    status:"等待接單",
+    created_at:new Date().toISOString()
+  });
+
+  await updateDoc(doc(db,"balances",counterBalanceDocId),{
+    granted_amount:newGranted,
+    stored_amount:newStored
+  });
+
+  alert("代客訂單已送出");
+
+  counterCart=[];
+  counterGranted=newGranted;
+  counterStored=newStored;
+
+  counterResidentInfo.innerHTML=`
+    帳號：${counterResident.username}<br>
+    配發點數：${counterGranted}<br>
+    儲值點數：${counterStored}<br>
+    總點數：${counterGranted+counterStored}
+  `;
+
+  renderCounterCart();
+};
+
 editModalBg.addEventListener("click",e=>{
   if(e.target===editModalBg)closeEditModal();
+});
+
+counterItemModalBg.addEventListener("click",e=>{
+  if(e.target===counterItemModalBg)closeCounterItemModal();
 });
 
 logoutBtn.addEventListener("click",async()=>{
