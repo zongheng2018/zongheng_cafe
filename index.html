@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>昭揚縱橫 咖啡廳點餐系統</title>
 
+  <link rel="manifest" href="manifest.json">
+
+  <meta name="theme-color" content="#9c8e81">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="縱橫點餐">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <link rel="apple-touch-icon" href="logo.png">
+
   <style>
 
     body {
@@ -461,6 +471,27 @@ document
   }
 
 });
+
+if ("serviceWorker" in navigator) {
+
+  window.addEventListener("load", () => {
+
+    navigator.serviceWorker
+      .register("./service-worker.js")
+      .then(() => {
+
+        console.log("PWA 已啟用");
+
+      })
+      .catch(err => {
+
+        console.error("PWA 啟用失敗", err);
+
+      });
+
+  });
+
+}
 
 </script>
 
