@@ -80,14 +80,14 @@ textarea{height:100px;resize:none}
       <div class="section-title">新增帳號</div>
       <div class="form-grid">
         <input id="newUsername" placeholder="帳號">
-        <input id="newPassword" placeholder="密碼">
+        <input id="newPassword" placeholder="密碼，至少 6 碼">
         <select id="newRole">
           <option value="resident">住戶 resident</option>
           <option value="cafe">咖啡廳 cafe</option>
           <option value="property">物業 property</option>
           <option value="engineer">工程師 engineer</option>
         </select>
-        <input id="newEmail" placeholder="Auth Email">
+        <input id="newEmail" placeholder="Auth Email，可空白">
         <input id="newUnit" placeholder="戶號，可空白">
       </div>
       <div class="btn-row">
@@ -144,12 +144,17 @@ textarea{height:100px;resize:none}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getFirestore,collection,getDocs,addDoc,doc,updateDoc,deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFunctions,httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
+const functions=getFunctions(app,"asia-east1");
+
+const createAccountFn=httpsCallable(functions,"createAccount");
+const updateAccountPasswordFn=httpsCallable(functions,"updateAccountPassword");
 
 let accounts=[];
 
@@ -212,10 +217,10 @@ async function loadAccounts(){
     div.innerHTML=`
       <div class="item-title">${x.username||""}</div>
       <div class="meta">角色：<span class="badge">${x.role||""}</span></div>
-      <div class="meta">Auth Email：${x.auth_email||"未設定"}</div>
-      <div class="meta">戶號：${x.unit_number||""}</div>
+      <div class="meta">Auth Email：${x.auth_email||x.email||"未設定"}</div>
+      <div class="meta">戶號：${x.unit_number||x.room||""}</div>
       <div class="small-form">
-        <input id="pw-${x.docId}" value="${x.password||""}">
+        <input id="pw-${x.docId}" value="${x.password||""}" placeholder="新密碼，至少 6 碼">
         <button class="btn primary" onclick="savePassword('${x.docId}')">儲存</button>
       </div>
     `;
@@ -227,42 +232,82 @@ window.addAccount=async()=>{
   const username=newUsername.value.trim();
   const password=newPassword.value.trim();
   const role=newRole.value;
-  const auth_email=newEmail.value.trim();
   const unit_number=newUnit.value.trim();
 
-  if(!username||!password||!role||!auth_email){
-    alert("請填帳號、密碼、角色、Auth Email");
+  if(!username||!password||!role){
+    alert("請填帳號、密碼、角色");
     return;
   }
 
-  await addDoc(collection(db,"accounts"),{
-    username,password,role,auth_email,unit_number,created_at:new Date().toISOString()
-  });
+  if(password.length<6){
+    alert("密碼至少 6 碼");
+    return;
+  }
 
-  if(role==="resident"){
-    await addDoc(collection(db,"balances"),{
-      uid:username,
-      unit_number:unit_number||username,
+  try{
+    await createAccountFn({
+      username,
+      password,
+      role,
+      floor:"",
+      room:unit_number,
       granted_amount:0,
       stored_amount:0
     });
+
+    alert("帳號已建立，Firebase Auth 與 Firestore 已同步");
+
+    newUsername.value="";
+    newPassword.value="";
+    newEmail.value="";
+    newUnit.value="";
+
+    await loadAll();
+
+  }catch(error){
+    console.error(error);
+    alert("建立失敗："+(error.message||error));
   }
-
-  alert("Firestore 帳號已新增。Authentication 請手動新增同一組 Email / Password。");
-
-  newUsername.value="";
-  newPassword.value="";
-  newEmail.value="";
-  newUnit.value="";
-
-  await loadAll();
 };
 
 window.savePassword=async(id)=>{
+  const acc=accounts.find(x=>x.docId===id);
+
+  if(!acc||!acc.username){
+    alert("找不到帳號資料");
+    return;
+  }
+
   const value=document.getElementById(`pw-${id}`).value.trim();
-  await updateDoc(doc(db,"accounts",id),{password:value});
-  alert("已更新 Firestore 密碼欄位，Authentication 密碼需手動同步。");
-  await loadAccounts();
+
+  if(!value){
+    alert("請輸入密碼");
+    return;
+  }
+
+  if(value.length<6){
+    alert("密碼至少 6 碼");
+    return;
+  }
+
+  if(!confirm(`確定要同步修改 ${acc.username} 的密碼？`)){
+    return;
+  }
+
+  try{
+    await updateAccountPasswordFn({
+      username:acc.username,
+      newPassword:value
+    });
+
+    alert("密碼已同步更新 Firebase Auth 與 Firestore");
+
+    await loadAccounts();
+
+  }catch(error){
+    console.error(error);
+    alert("更新失敗："+(error.message||error));
+  }
 };
 
 async function loadAnnouncements(){
