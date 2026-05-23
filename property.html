@@ -301,7 +301,7 @@ window.createResident = async () => {
   }
 
   if (password.length < 4) {
-    alert("密碼至少 4 碼");
+    alert("密碼至少 6 碼");
     return;
   }
 
@@ -358,7 +358,7 @@ async function loadAccounts() {
         <div class="row-title">${acc.username || ""}</div>
         <div class="row-meta">
           角色：${acc.role || ""}<br>
-          樓層：${acc.floor || "-"}｜房號：${acc.room || "-"}
+          樓層：${acc.floor || "-"}｜戶號：${acc.room || "-"}
         </div>
       </div>
 
