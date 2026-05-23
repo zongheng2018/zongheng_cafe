@@ -248,30 +248,30 @@ import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  setPersistence,
-  browserLocalPersistence,
-  browserSessionPersistence
+getAuth,
+signInWithEmailAndPassword,
+setPersistence,
+browserLocalPersistence,
+browserSessionPersistence
 }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
-  getFirestore,
-  doc,
-  getDoc
+getFirestore,
+doc,
+getDoc
 }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-  authDomain: "zonghengcafe.firebaseapp.com",
-  projectId: "zonghengcafe",
-  storageBucket: "zonghengcafe.firebasestorage.app",
-  messagingSenderId: "207027108121",
-  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-  measurementId: "G-8ZE4SE2T7T"
+apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+authDomain: "zonghengcafe.firebaseapp.com",
+projectId: "zonghengcafe",
+storageBucket: "zonghengcafe.firebasestorage.app",
+messagingSenderId: "207027108121",
+appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+measurementId: "G-8ZE4SE2T7T"
 
 };
 
@@ -288,167 +288,170 @@ localStorage.getItem("rememberUser");
 
 if(rememberedUser){
 
-  document.getElementById("username").value =
-  rememberedUser;
+document.getElementById("username").value =
+rememberedUser;
 
-  document.getElementById("rememberMe").checked = true;
+document.getElementById("rememberMe").checked = true;
 
 }
 
 function makeEmail(username){
 
-  return `${username}@zongheng.local`;
+return `${username}@zongheng.local`;
 
 }
 
 loginBtn.addEventListener("click", async ()=>{
 
-  const username =
-  document.getElementById("username").value.trim();
+const username =
+document.getElementById("username").value.trim();
 
-  const password =
-  document.getElementById("password").value.trim();
+const password =
+document.getElementById("password").value.trim();
 
-  const remember =
-  document.getElementById("rememberMe").checked;
+const remember =
+document.getElementById("rememberMe").checked;
 
-  if(!username || !password){
+if(!username || !password){
 
-    alert("請輸入帳號密碼");
-    return;
+alert("請輸入帳號密碼");
+return;
 
-  }
+}
 
-  loginBtn.disabled = true;
-  loginBtn.innerText = "登入中";
+loginBtn.disabled = true;
+loginBtn.innerText = "登入中";
 
-  try{
+try{
 
-    await setPersistence(
-      auth,
-      remember
-      ? browserLocalPersistence
-      : browserSessionPersistence
-    );
+await setPersistence(
+auth,
+remember
+? browserLocalPersistence
+: browserSessionPersistence
+);
 
-    const email =
-    makeEmail(username);
+const email =
+makeEmail(username);
 
-    const result =
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
+const result =
+await signInWithEmailAndPassword(
+auth,
+email,
+password
+);
 
-    const user =
-    result.user;
+const user =
+result.user;
 
-    const tokenResult =
-    await user.getIdTokenResult(true);
+await user.getIdToken(true);
 
-    let role =
-    tokenResult.claims.role || "";
+const tokenResult =
+await user.getIdTokenResult(true);
 
-    let finalUsername =
-    tokenResult.claims.username || username;
+console.log("登入 UID：", user.uid);
+console.log("登入 Claims：", tokenResult.claims);
 
-    let accountData = null;
+let role =
+tokenResult.claims.role || "";
 
-    try{
+let finalUsername =
+tokenResult.claims.username || username;
 
-      const accountRef =
-      doc(db,"accounts",user.uid);
+try{
 
-      const accountSnap =
-      await getDoc(accountRef);
+const accountRef =
+doc(db,"accounts",user.uid);
 
-      if(accountSnap.exists()){
+const accountSnap =
+await getDoc(accountRef);
 
-        accountData =
-        accountSnap.data();
+if(accountSnap.exists()){
 
-        role =
-        accountData.role || role;
+const accountData =
+accountSnap.data();
 
-        finalUsername =
-        accountData.username || finalUsername;
+role =
+accountData.role || role;
 
-      }
+finalUsername =
+accountData.username || finalUsername;
 
-    }catch(e){
+}
 
-      console.warn("讀取 accounts 失敗，改用 token claims。", e);
+}catch(e){
 
-    }
+console.warn("讀取 accounts 失敗，改用 token claims。", e);
 
-    if(!role){
+}
 
-      alert("登入失敗：此帳號尚未設定角色權限");
-      return;
+if(!role){
 
-    }
+alert("登入失敗：此帳號尚未設定角色權限");
+return;
 
-    localStorage.setItem(
-      "zh_user",
-      JSON.stringify({
-        uid: user.uid,
-        username: finalUsername,
-        email: email,
-        role: role
-      })
-    );
+}
 
-    if(remember){
+localStorage.setItem(
+"zh_user",
+JSON.stringify({
+uid: user.uid,
+username: finalUsername,
+email: email,
+role: role
+})
+);
 
-      localStorage.setItem(
-        "rememberUser",
-        username
-      );
+if(remember){
 
-    }else{
+localStorage.setItem(
+"rememberUser",
+username
+);
 
-      localStorage.removeItem(
-        "rememberUser"
-      );
+}else{
 
-    }
+localStorage.removeItem(
+"rememberUser"
+);
 
-    switch(role){
+}
 
-      case "engineer":
-      window.location.href = "engineer.html";
-      break;
+switch(role){
 
-      case "cafe":
-      window.location.href = "cafe.html";
-      break;
+case "engineer":
+window.location.href = "engineer.html";
+break;
 
-      case "property":
-      window.location.href = "property.html";
-      break;
+case "cafe":
+window.location.href = "cafe.html";
+break;
 
-      case "resident":
-      window.location.href = "resident.html";
-      break;
+case "property":
+window.location.href = "property.html";
+break;
 
-      default:
-      alert("未知角色");
+case "resident":
+window.location.href = "resident.html";
+break;
 
-    }
+default:
+alert("未知角色");
 
-  }catch(error){
+}
 
-    console.error(error);
+}catch(error){
 
-    alert("登入失敗：" + error.message);
+console.error(error);
 
-  }finally{
+alert("登入失敗：" + error.message);
 
-    loginBtn.disabled = false;
-    loginBtn.innerText = "登入";
+}finally{
 
-  }
+loginBtn.disabled = false;
+loginBtn.innerText = "登入";
+
+}
 
 });
 
@@ -456,11 +459,11 @@ document
 .getElementById("password")
 .addEventListener("keydown", function(e){
 
-  if(e.key === "Enter"){
+if(e.key === "Enter"){
 
-    loginBtn.click();
+loginBtn.click();
 
-  }
+}
 
 });
 
