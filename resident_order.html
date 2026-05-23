@@ -175,12 +175,43 @@ let stored=0;
 let cafeOpen=true;
 let submittingOrder=false;
 
+function getTaipeiNow(){
+  return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
+}
+
+function timeToMinutes(t){
+  const parts=String(t||"").split(":");
+  return Number(parts[0]||0)*60+Number(parts[1]||0);
+}
+
+function isCafeOpenBySetting(setting){
+  const now=getTaipeiNow();
+  const day=now.getDate();
+  const minutes=now.getHours()*60+now.getMinutes();
+
+  const openTime=setting.open_time||"08:30";
+  const closeTime=setting.close_time||"19:00";
+  const closedDays=Array.isArray(setting.closed_days)?setting.closed_days:[];
+
+  if(setting.open===false)return false;
+  if(closedDays.includes(day))return false;
+
+  return minutes>=timeToMinutes(openTime)&&minutes<timeToMinutes(closeTime);
+}
+
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
+
   const raw=localStorage.getItem("zh_user");
   if(!raw){location.href="index.html";return}
+
   profile=JSON.parse(raw);
-  if(profile.role!=="resident"){alert("沒有權限");location.href="index.html";return}
+
+  if(profile.role!=="resident"){
+    alert("沒有權限");
+    location.href="index.html";
+    return;
+  }
 
   await loadCafeStatus();
   await loadMenu();
@@ -190,7 +221,7 @@ onAuthStateChanged(auth,async user=>{
 async function loadCafeStatus(){
   try{
     const s=await getDoc(doc(db,"settings","cafe"));
-    cafeOpen=!s.exists()||s.data().open!==false;
+    cafeOpen=!s.exists()||isCafeOpenBySetting(s.data());
   }catch(e){
     cafeOpen=true;
   }
@@ -371,6 +402,7 @@ function updateCart(){
 window.openCart=async()=>{
   renderCart();
   document.getElementById("cartModalBg").style.display="flex";
+  await loadCafeStatus();
   await loadBalance();
 };
 
@@ -417,6 +449,7 @@ function renderCart(){
 window.removeCart=(i)=>{
   cart.splice(i,1);
   updateCart();
+  renderCart();
 };
 
 async function loadSeats(){
@@ -489,12 +522,20 @@ async function submitOrder(){
   submittingOrder=true;
 
   const btn=document.getElementById("submitOrderBtn");
+
   if(btn){
     btn.disabled=true;
     btn.innerText="送出中...";
   }
 
   try{
+    await loadCafeStatus();
+
+    if(!cafeOpen){
+      alert("目前未開放點餐");
+      return;
+    }
+
     if(!cart.length){
       alert("購物車是空的");
       return;
@@ -518,6 +559,15 @@ async function submitOrder(){
       alert("點數不足");
       return;
     }
+
+    const lockKey=`zh_order_lock_${profile.username}`;
+
+    if(sessionStorage.getItem(lockKey)){
+      alert("訂單正在送出，請不要重複按送出訂單");
+      return;
+    }
+
+    sessionStorage.setItem(lockKey,"1");
 
     let newGranted=granted;
     let newStored=stored;
@@ -551,13 +601,18 @@ async function submitOrder(){
     cart=[];
     updateCart();
     closeCart();
+
     location.href="resident.html";
 
   }catch(error){
     console.error(error);
-    alert("送出失敗：" + error.message);
+    alert("送出失敗："+error.message);
   }finally{
     submittingOrder=false;
+
+    if(profile){
+      sessionStorage.removeItem(`zh_order_lock_${profile.username}`);
+    }
 
     if(btn){
       btn.disabled=false;
