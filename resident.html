@@ -148,6 +148,17 @@ input{
   line-height:1.8;
 }
 
+.password-toggle{
+  margin-top:18px;
+}
+
+.password-box{
+  display:none;
+  margin-top:18px;
+  padding-top:18px;
+  border-top:1px solid #eee5dd;
+}
+
 @media(max-width:700px){
 
   .grid{
@@ -200,9 +211,9 @@ input{
       </button>
 
       <button class="menu-btn"
-        onclick="location.href='resident_history.html'">
+        onclick="location.href='resident_order.html'">
 
-        歷史訂單
+        我的訂單
 
       </button>
 
@@ -223,59 +234,63 @@ input{
 
     </div>
 
-  </div>
+    <div class="password-toggle">
 
-  <div class="card">
+      <button class="primary-btn"
+        onclick="togglePasswordBox()">
 
-    <div class="section-title">
-      更改密碼
-    </div>
+        更改密碼
 
-    <div class="field">
-
-      <label>
-        目前密碼
-      </label>
-
-      <input
-        type="password"
-        id="oldPassword">
+      </button>
 
     </div>
 
-    <div class="field">
+    <div class="password-box"
+      id="passwordBox">
 
-      <label>
-        新密碼
-      </label>
+      <div class="field">
 
-      <input
-        type="password"
-        id="newPassword">
+        <label>
+          目前密碼
+        </label>
 
-    </div>
+        <input
+          type="password"
+          id="oldPassword">
 
-    <div class="field">
+      </div>
 
-      <label>
-        再次輸入新密碼
-      </label>
+      <div class="field">
 
-      <input
-        type="password"
-        id="confirmPassword">
+        <label>
+          新密碼
+        </label>
 
-    </div>
+        <input
+          type="password"
+          id="newPassword">
 
-    <button class="primary-btn"
-      onclick="changePassword()">
+      </div>
 
-      更新密碼
+      <div class="field">
 
-    </button>
+        <label>
+          再次輸入新密碼
+        </label>
 
-    <div class="notice">
-      密碼更新後，下次登入請使用新密碼。
+        <input
+          type="password"
+          id="confirmPassword">
+
+      </div>
+
+      <button class="primary-btn"
+        onclick="changePassword()">
+
+        更新密碼
+
+      </button>
+
     </div>
 
   </div>
@@ -290,7 +305,10 @@ from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getAuth,
   onAuthStateChanged,
-  signOut
+  signOut,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential
 }
 from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
@@ -354,8 +372,6 @@ onAuthStateChanged(auth, async user=>{
 
   if(profile.role!=="resident"){
 
-    alert("沒有權限");
-
     location.href="index.html";
 
     return;
@@ -401,12 +417,23 @@ async function loadProfile(){
   document.getElementById("profileInfo")
     .innerHTML = `
       帳號：${data.username || ""}<br>
-      身分：住戶<br>
       樓層：${data.floor || "-"}<br>
       房號：${data.room || "-"}
     `;
 
 }
+
+window.togglePasswordBox = ()=>{
+
+  const box =
+  document.getElementById("passwordBox");
+
+  box.style.display =
+  box.style.display==="block"
+  ? "none"
+  : "block";
+
+};
 
 window.changePassword = async ()=>{
 
@@ -454,6 +481,37 @@ window.changePassword = async ()=>{
     alert("密碼至少 4 碼");
 
     return;
+
+  }
+
+  try{
+
+    const user =
+    auth.currentUser;
+
+    if(user && user.email){
+
+      const credential =
+      EmailAuthProvider.credential(
+        user.email,
+        oldPw
+      );
+
+      await reauthenticateWithCredential(
+        user,
+        credential
+      );
+
+      await updatePassword(
+        user,
+        newPw
+      );
+
+    }
+
+  }catch(e){
+
+    console.log(e);
 
   }
 
