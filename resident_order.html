@@ -3,387 +3,961 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>昭揚縱橫｜開始點餐</title>
+<title>點餐首頁｜昭揚縱橫</title>
 
 <style>
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
-body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:110px}
-body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);backdrop-filter:blur(5px);z-index:-1}
-.header{height:68px;background:rgba(255,255,255,.88);border-bottom:1px solid rgba(215,207,198,.8);display:flex;align-items:center;justify-content:space-between;padding:0 18px;position:sticky;top:0;z-index:30;box-shadow:0 4px 16px rgba(0,0,0,.06)}
-.icon-btn{width:42px;height:42px;border:none;border-radius:14px;background:rgba(245,241,235,.95);display:flex;align-items:center;justify-content:center;color:#7a6b60;cursor:pointer;position:relative}
-.icon-btn svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.title{font-size:20px;letter-spacing:3px;font-weight:600;color:#6d6258}
-.badge{position:absolute;top:-5px;right:-5px;width:21px;height:21px;border-radius:50%;background:#b95c52;color:white;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
-.closed-banner{display:none;margin:14px 16px 0;background:rgba(255,248,239,.95);border:1px solid #ead7c5;color:#8b5e3c;border-radius:14px;padding:14px;text-align:center;line-height:1.7;font-weight:600}
-.category-bar{display:flex;gap:10px;overflow-x:auto;padding:16px}.category-bar::-webkit-scrollbar{display:none}
-.category-btn{border:none;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.82);color:#7a6b60;font-weight:600;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.05)}
-.category-btn.active{background:#9c8e81;color:white}
-.menu-grid{padding:0 16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:16px}
-.menu-card{background:rgba(255,255,255,.9);border-radius:18px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.07);border:1px solid rgba(230,224,218,.75)}
-.menu-image-wrap{position:relative}.menu-image{width:100%;height:135px;object-fit:cover;display:block}
-.add-mini{position:absolute;right:10px;bottom:10px;width:38px;height:38px;border:none;border-radius:50%;background:rgba(255,255,255,.94);color:#7a6b60;box-shadow:0 4px 12px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center}
-.add-mini svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4}
-.menu-body{padding:13px}.menu-name{font-size:18px;font-weight:700;color:#5f574f;margin-bottom:7px}.menu-price{font-size:17px;color:#9a7851;font-weight:700}
-.floating-cart{position:fixed;left:16px;right:16px;bottom:18px;height:72px;background:rgba(255,255,255,.94);border:1px solid rgba(220,214,207,.8);border-radius:22px;backdrop-filter:blur(12px);box-shadow:0 8px 26px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:40}
-.total{color:#6d6258;font-size:22px;font-weight:800}
-.cart-button{border:none;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;height:48px;padding:0 18px;border-radius:16px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
-.cart-button svg{width:20px;height:20px;stroke:white;fill:none;stroke-width:2.3}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.34);backdrop-filter:blur(8px);display:none;align-items:flex-end;justify-content:center;z-index:100}
-.sheet{width:100%;max-width:560px;max-height:92vh;background:rgba(255,255,255,.96);border-radius:28px 28px 0 0;overflow:auto;animation:rise .22s ease}
-@keyframes rise{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
-.sheet-img{width:100%;height:230px;object-fit:cover}.sheet-body{padding:22px}
-.sheet-title{font-size:27px;color:#5f574f;font-weight:800;margin-bottom:6px}.sheet-price{color:#9a7851;font-size:22px;font-weight:800;margin-bottom:22px}
-.label{color:#6d6258;font-size:16px;font-weight:700;margin:18px 0 10px}
-.option-btn{border:none;background:#f0e8df;color:#7a6b60;border-radius:14px;padding:10px 15px;margin:0 8px 8px 0;font-weight:600}
-.option-btn.active{background:#9c8e81;color:white}
-textarea{width:100%;border:none;outline:none;background:#f5f1eb;border-radius:16px;padding:14px;font-size:15px;color:#5f574f;height:92px;resize:none}
-.sheet-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:24px}
-.qty-box{display:flex;align-items:center;gap:13px}.qty-btn{width:40px;height:40px;border:none;border-radius:50%;background:#9c8e81;color:white;font-size:22px}.qty-num{min-width:24px;text-align:center;font-size:20px;font-weight:800}
-.primary-btn{border:none;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;height:52px;border-radius:17px;padding:0 22px;font-weight:800;font-size:16px}.primary-btn.full{width:100%;margin-top:18px}.primary-btn.disabled{opacity:.45;pointer-events:none}
-.cart-header{padding:22px 22px 10px;font-size:26px;font-weight:800;color:#5f574f}.cart-list{padding:0 22px}.cart-item{padding:16px 0;border-bottom:1px solid #eee5dd}.cart-name{font-size:18px;font-weight:800;margin-bottom:6px}.cart-detail{color:#777;font-size:14px;line-height:1.6}.delete-btn{margin-top:9px;border:none;background:#c86b62;color:white;padding:8px 13px;border-radius:12px}.empty{padding:46px 10px;text-align:center;color:#999}
-.notice{background:#f8f5f1;border-radius:16px;padding:14px;line-height:1.8;color:#6d6258;margin-top:14px}
-.type-row{display:flex;gap:10px;margin-bottom:16px}.type-btn{flex:1;border:none;background:#f0e8df;color:#7a6b60;border-radius:15px;padding:12px;font-weight:700}.type-btn.active{background:#9c8e81;color:white}
+*{
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif
+}
 
-/* Seat picker */
-.seat-map{background:#f8f5f1;border-radius:20px;padding:16px;margin-top:8px}
-.seat-section-title{font-size:13px;color:#9a8d81;margin:12px 0 8px;font-weight:700;letter-spacing:1px}
-.seat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.seat-btn{height:52px;border:none;border-radius:15px;background:white;color:#7a6b60;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.05);border:1px solid #eee2d8}
-.seat-btn.active{background:#9c8e81;color:white;border-color:#9c8e81}
-.seat-btn.unavailable{background:#e8e2dc;color:#aaa;text-decoration:line-through;pointer-events:none}
-.seat-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;color:#8b8178;font-size:13px}
-.dot{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:5px;background:white;border:1px solid #ddd}
-.dot.active{background:#9c8e81}.dot.off{background:#d8d0c8}
-@media(min-width:760px){.overlay{align-items:center}.sheet{border-radius:28px}}
+body{
+  margin:0;
+  background:url("bg.jpg") center center/cover fixed no-repeat;
+  color:#5f574f;
+  min-height:100vh;
+  padding-bottom:120px;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(5px);
+  z-index:-1;
+}
+
+.header{
+  height:72px;
+  background:rgba(255,255,255,.88);
+  border-bottom:1px solid #ddd5cc;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.brand img{
+  width:72px;
+  opacity:.84;
+}
+
+.title{
+  font-size:22px;
+  font-weight:700;
+  color:#6d6258;
+  letter-spacing:2px;
+}
+
+.back-btn{
+  border:none;
+  background:#f5f1eb;
+  color:#6d6258;
+  border-radius:12px;
+  padding:10px 16px;
+  font-weight:700;
+}
+
+.container{
+  max-width:1180px;
+  margin:20px auto;
+  padding:0 16px;
+}
+
+.category-row{
+  display:flex;
+  gap:10px;
+  overflow:auto;
+  margin-bottom:20px;
+  padding-bottom:4px;
+}
+
+.category-btn{
+  border:none;
+  background:white;
+  border-radius:999px;
+  padding:10px 18px;
+  white-space:nowrap;
+  font-weight:700;
+  color:#7a6b60;
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+}
+
+.category-btn.active{
+  background:linear-gradient(to bottom,#bcaea1,#9c8e81);
+  color:white;
+}
+
+.menu-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:18px;
+}
+
+.menu-card{
+  background:rgba(255,255,255,.92);
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 10px 24px rgba(0,0,0,.08);
+}
+
+.menu-img{
+  width:100%;
+  height:210px;
+  object-fit:cover;
+  background:#eee;
+}
+
+.menu-body{
+  padding:18px;
+}
+
+.menu-name{
+  font-size:22px;
+  font-weight:900;
+  color:#5f574f;
+}
+
+.menu-price{
+  font-size:18px;
+  color:#9c8e81;
+  margin-top:6px;
+  font-weight:700;
+}
+
+.menu-note{
+  margin-top:10px;
+  color:#777;
+  line-height:1.7;
+  font-size:14px;
+}
+
+.option{
+  margin-top:14px;
+}
+
+.option label{
+  display:block;
+  margin-bottom:6px;
+  font-size:14px;
+  font-weight:700;
+  color:#6d6258;
+}
+
+select,textarea,input{
+  width:100%;
+  border:none;
+  background:#f5f1eb;
+  border-radius:12px;
+  padding:12px;
+  font-size:15px;
+  outline:none;
+  color:#5f574f;
+}
+
+textarea{
+  resize:none;
+  height:72px;
+}
+
+.qty-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:16px;
+}
+
+.qty-box{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.qty-btn{
+  width:34px;
+  height:34px;
+  border:none;
+  border-radius:50%;
+  background:#9c8e81;
+  color:white;
+  font-size:18px;
+}
+
+.add-btn{
+  border:none;
+  border-radius:14px;
+  background:#6d6258;
+  color:white;
+  padding:12px 18px;
+  font-weight:800;
+}
+
+.cart-bar{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  background:rgba(255,255,255,.95);
+  backdrop-filter:blur(10px);
+  border-top:1px solid #ddd5cc;
+  padding:14px 18px;
+  z-index:20;
+  box-shadow:0 -8px 22px rgba(0,0,0,.08);
+}
+
+.cart-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.cart-total{
+  font-size:24px;
+  font-weight:900;
+  color:#6d6258;
+}
+
+.cart-count{
+  color:#888;
+}
+
+.cart-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.cart-btn{
+  border:none;
+  border-radius:14px;
+  padding:14px;
+  font-size:16px;
+  font-weight:800;
+}
+
+.primary{
+  background:#6d6258;
+  color:white;
+}
+
+.light{
+  background:#f3eee8;
+  color:#6d6258;
+}
+
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.36);
+  backdrop-filter:blur(5px);
+  display:none;
+  align-items:flex-end;
+  z-index:50;
+}
+
+.modal{
+  background:white;
+  width:100%;
+  border-radius:28px 28px 0 0;
+  padding:24px;
+  max-height:90vh;
+  overflow:auto;
+}
+
+.section-title{
+  font-size:26px;
+  font-weight:900;
+  color:#6d6258;
+  margin-bottom:18px;
+}
+
+.cart-item{
+  background:#f8f5f1;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+}
+
+.cart-item-title{
+  font-size:18px;
+  font-weight:800;
+}
+
+.cart-item-detail{
+  color:#777;
+  line-height:1.7;
+  margin-top:6px;
+  font-size:14px;
+}
+
+.checkout-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:18px;
+}
+
+.empty{
+  text-align:center;
+  padding:40px;
+  color:#999;
+}
+
+@media(max-width:760px){
+
+  .checkout-grid{
+    grid-template-columns:1fr;
+  }
+
+  .brand img{
+    width:58px;
+  }
+
+  .title{
+    font-size:18px;
+  }
+
+}
 </style>
 </head>
 
 <body>
 
 <div class="header">
-  <button class="icon-btn" onclick="location.href='resident.html'">
-    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
-  </button>
-  <div class="title">開始點餐</div>
-  <button class="icon-btn" onclick="openCart()">
-    <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.7L23 6H6"></path></svg>
-    <div class="badge" id="cartCount">0</div>
-  </button>
-</div>
+  <div class="brand">
+    <img src="logo.png">
+    <div class="title">點餐首頁</div>
+  </div>
 
-<div class="closed-banner" id="closedBanner">現在為咖啡廳休息時間，可查看菜單但無法點餐。</div>
-<div class="category-bar" id="categoryBar"></div>
-<div class="menu-grid" id="menuGrid"></div>
-
-<div class="floating-cart">
-  <div class="total" id="totalPrice">NT$ 0</div>
-  <button class="cart-button" onclick="openCart()">
-    <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.7L23 6H6"></path></svg>
-    購物車
+  <button class="back-btn" onclick="location.href='resident.html'">
+    返回
   </button>
 </div>
 
-<div class="overlay" id="itemOverlay">
-  <div class="sheet">
-    <img class="sheet-img" id="itemImage">
-    <div class="sheet-body">
-      <div class="sheet-title" id="itemName"></div>
-      <div class="sheet-price" id="itemPrice"></div>
-      <div class="label">冰度</div><div id="iceOptions"></div>
-      <div class="label">糖度</div><div id="sugarOptions"></div>
-      <div class="label">備註</div>
-      <textarea id="noteInput" placeholder="例如：少冰、不要太燙、餐後上"></textarea>
-      <div class="sheet-bottom">
-        <div class="qty-box">
-          <button class="qty-btn" onclick="changeQty(-1)">−</button>
-          <div class="qty-num" id="qtyText">1</div>
-          <button class="qty-btn" onclick="changeQty(1)">＋</button>
-        </div>
-        <button class="primary-btn" id="addBtn" onclick="addCart()">加入購物車</button>
-      </div>
-    </div>
-  </div>
+<div class="container">
+
+  <div class="category-row" id="categoryRow"></div>
+
+  <div class="menu-grid" id="menuGrid"></div>
+
 </div>
 
-<div class="overlay" id="cartOverlay">
-  <div class="sheet">
-    <div class="cart-header">購物車</div>
-    <div class="cart-list" id="cartList"></div>
-    <div style="padding:0 22px 22px;">
-      <button class="primary-btn full" onclick="openCheckout()">下一步</button>
+<div class="cart-bar">
+
+  <div class="cart-top">
+    <div>
+      <div class="cart-total" id="cartTotal">
+        NT$ 0
+      </div>
+
+      <div class="cart-count" id="cartCount">
+        0 件商品
+      </div>
     </div>
+
+    <button class="cart-btn light" onclick="openCart()">
+      購物車
+    </button>
   </div>
+
+  <div class="cart-actions">
+    <button class="cart-btn light" onclick="clearCart()">
+      清空購物車
+    </button>
+
+    <button class="cart-btn primary" onclick="openCart()">
+      前往結帳
+    </button>
+  </div>
+
 </div>
 
-<div class="overlay" id="checkoutOverlay">
-  <div class="sheet">
-    <div class="sheet-body">
-      <div class="sheet-title">確認訂單</div>
+<div class="modal-bg" id="cartModalBg">
 
-      <div class="label">用餐方式</div>
-      <div class="type-row">
-        <button class="type-btn active" id="dineInBtn" onclick="setDining('內用')">內用</button>
-        <button class="type-btn" id="takeOutBtn" onclick="setDining('外帶')">外帶</button>
-      </div>
+  <div class="modal">
 
-      <div id="seatArea">
-        <div class="label">選擇座位</div>
-        <div class="seat-map" id="seatMap"></div>
-      </div>
-
-      <div class="label">餐點完成是否需要通知？</div>
-      <label><input type="checkbox" id="needNotify" checked> 需要通知</label>
-
-      <div class="notice" id="pointInfo">讀取點數中...</div>
-      <button class="primary-btn full" onclick="submitOrder()">送出訂單</button>
+    <div class="section-title">
+      購物車
     </div>
+
+    <div id="cartList"></div>
+
+    <div class="checkout-grid">
+
+      <select id="diningType">
+        <option value="內用">內用</option>
+        <option value="外帶">外帶</option>
+      </select>
+
+      <select id="seatSelect">
+        <option value="">請選擇座位</option>
+      </select>
+
+    </div>
+
+    <div style="margin-top:18px;">
+      <button
+        class="cart-btn primary"
+        style="width:100%;"
+        onclick="submitOrder()">
+
+        送出訂單
+
+      </button>
+    </div>
+
+    <div style="margin-top:10px;">
+      <button
+        class="cart-btn light"
+        style="width:100%;"
+        onclick="closeCart()">
+
+        關閉
+
+      </button>
+    </div>
+
   </div>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore,collection,getDocs,query,where,addDoc,doc,updateDoc,getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+import {
+  getAuth,
+  onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-let profile=null,menu=[],cart=[],currentItem=null;
-let qty=1,ice="正常冰",sugar="全糖",dining="內用";
-let cafeOpen=true,balanceDocId=null,granted=0,stored=0;
-let seats=[],selectedSeat="";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where
+}
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-onAuthStateChanged(auth,async user=>{
-  if(!user){location.href="index.html";return;}
-  const raw=localStorage.getItem("zh_user");
-  if(!raw){location.href="index.html";return;}
+const firebaseConfig = {
+  apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+  authDomain:"zonghengcafe.firebaseapp.com",
+  projectId:"zonghengcafe",
+  storageBucket:"zonghengcafe.firebasestorage.app",
+  messagingSenderId:"207027108121",
+  appId:"1:207027108121:web:e7a39e19982ed77f9aed88",
+  measurementId:"G-8ZE4SE2T7T"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let profile=null;
+let menuCache=[];
+let cart=[];
+let currentCategory="全部";
+
+onAuthStateChanged(auth,user=>{
+
+  if(!user){
+    location.href="index.html";
+    return;
+  }
+
+  const raw=
+  localStorage.getItem("zh_user");
+
+  if(!raw){
+    location.href="index.html";
+    return;
+  }
+
   profile=JSON.parse(raw);
-  if(profile.role!=="resident"){alert("沒有權限");location.href="index.html";return;}
-  await loadCafeStatus();
-  await loadMenu();
-  await loadSeats();
+
+  loadMenu();
+  loadSeats();
+
 });
 
-async function loadCafeStatus(){
-  try{
-    const s=await getDoc(doc(db,"settings","cafe"));
-    cafeOpen=!s.exists()||s.data().open!==false;
-  }catch(e){cafeOpen=true;}
-  if(!cafeOpen) closedBanner.style.display="block";
+async function loadSeats(){
+
+  const snap=
+  await getDocs(collection(db,"seats"));
+
+  seatSelect.innerHTML=
+  '<option value="">請選擇座位</option>';
+
+  snap.forEach(d=>{
+
+    const s=d.data();
+
+    seatSelect.innerHTML+=`
+      <option value="${s.name}">
+        ${s.name}
+      </option>
+    `;
+
+  });
+
 }
 
 async function loadMenu(){
-  const snap=await getDocs(collection(db,"menu"));
-  menu=[];
-  snap.forEach(d=>{const x=d.data();if(x.enabled) menu.push({id:d.id,...x});});
-  renderCategories();renderMenu("全部");
+
+  const snap=
+  await getDocs(collection(db,"menu"));
+
+  menuCache=[];
+
+  snap.forEach(d=>{
+
+    const m={
+      id:d.id,
+      ...d.data()
+    };
+
+    if(m.enabled===false) return;
+
+    menuCache.push(m);
+
+  });
+
+  renderCategories();
+  renderMenu();
+
 }
 
 function renderCategories(){
-  const cats=["全部",...new Set(menu.map(x=>x.category||"未分類"))];
-  categoryBar.innerHTML="";
-  cats.forEach((cat,i)=>{
-    const b=document.createElement("button");
-    b.className="category-btn"+(i===0?" active":"");
-    b.innerText=cat;
-    b.onclick=()=>{document.querySelectorAll(".category-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderMenu(cat);};
-    categoryBar.appendChild(b);
+
+  const cats=[
+    "全部",
+    ...new Set(
+      menuCache.map(x=>x.category)
+    )
+  ];
+
+  categoryRow.innerHTML="";
+
+  cats.forEach(c=>{
+
+    categoryRow.innerHTML+=`
+
+      <button
+        class="category-btn ${currentCategory===c?"active":""}"
+        onclick="changeCategory('${c}')">
+
+        ${c}
+
+      </button>
+
+    `;
+
   });
+
 }
 
-function renderMenu(cat){
-  menuGrid.innerHTML="";
-  const list=cat==="全部"?menu:menu.filter(x=>(x.category||"未分類")===cat);
-  list.forEach(item=>{
-    const div=document.createElement("div");
-    div.className="menu-card";
-    div.innerHTML=`
-      <div class="menu-image-wrap">
-        <img class="menu-image" src="${item.image||""}">
-        <button class="add-mini" onclick="event.stopPropagation();openItemById('${item.id}')">
-          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
+window.changeCategory=(c)=>{
+
+  currentCategory=c;
+
+  renderCategories();
+  renderMenu();
+
+};
+
+function renderMenu(){
+
+  const list=
+  currentCategory==="全部"
+  ? menuCache
+  : menuCache.filter(
+      x=>x.category===currentCategory
+    );
+
+  if(!list.length){
+
+    menuGrid.innerHTML=`
+      <div class="empty">
+        目前沒有品項
       </div>
+    `;
+
+    return;
+
+  }
+
+  menuGrid.innerHTML="";
+
+  list.forEach(m=>{
+
+    const div=document.createElement("div");
+
+    div.className="menu-card";
+
+    div.innerHTML=`
+
+      <img
+        class="menu-img"
+        src="${m.image||''}">
+
       <div class="menu-body">
-        <div class="menu-name">${item.name||""}</div>
-        <div class="menu-price">NT$ ${Number(item.price||0)}</div>
-      </div>`;
-    div.onclick=()=>openItem(item);
+
+        <div class="menu-name">
+          ${m.name}
+        </div>
+
+        <div class="menu-price">
+          NT$ ${m.price}
+        </div>
+
+        <div class="menu-note">
+          ${m.note||""}
+        </div>
+
+        ${
+          m.ice_enabled!==false
+          ? `
+            <div class="option">
+              <label>冰度</label>
+              <select id="ice_${m.id}">
+                <option>正常冰</option>
+                <option>少冰</option>
+                <option>微冰</option>
+                <option>去冰</option>
+              </select>
+            </div>
+          `
+          : ""
+        }
+
+        ${
+          m.sugar_enabled!==false
+          ? `
+            <div class="option">
+              <label>糖度</label>
+              <select id="sugar_${m.id}">
+                <option>正常糖</option>
+                <option>少糖</option>
+                <option>半糖</option>
+                <option>微糖</option>
+                <option>無糖</option>
+              </select>
+            </div>
+          `
+          : ""
+        }
+
+        ${
+          m.note_enabled!==false
+          ? `
+            <div class="option">
+              <label>備註</label>
+              <textarea id="note_${m.id}"></textarea>
+            </div>
+          `
+          : ""
+        }
+
+        <div class="qty-row">
+
+          <div class="qty-box">
+
+            <button
+              class="qty-btn"
+              onclick="changeQty('${m.id}',-1)">
+              −
+            </button>
+
+            <span id="qty_${m.id}">
+              1
+            </span>
+
+            <button
+              class="qty-btn"
+              onclick="changeQty('${m.id}',1)">
+              ＋
+            </button>
+
+          </div>
+
+          <button
+            class="add-btn"
+            onclick="addToCart('${m.id}')">
+
+            加入購物車
+
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
     menuGrid.appendChild(div);
+
   });
+
 }
 
-window.openItemById=id=>{const item=menu.find(x=>x.id===id);if(item)openItem(item);};
+window.changeQty=(id,diff)=>{
 
-function openItem(item){
-  currentItem=item;qty=1;ice="正常冰";sugar="全糖";
-  itemImage.src=item.image||"";itemName.innerText=item.name||"";itemPrice.innerText=`NT$ ${Number(item.price||0)}`;
-  qtyText.innerText=qty;noteInput.value="";
-  renderOptions("iceOptions",["正常冰","少冰","去冰","熱"],"ice");
-  renderOptions("sugarOptions",["全糖","半糖","微糖","無糖"],"sugar");
-  if(!cafeOpen){addBtn.innerText="目前休息中";addBtn.classList.add("disabled");}
-  else{addBtn.innerText="加入購物車";addBtn.classList.remove("disabled");}
-  itemOverlay.style.display="flex";
-}
+  const el=
+  document.getElementById(`qty_${id}`);
 
-function renderOptions(id,list,type){
-  const box=document.getElementById(id);box.innerHTML="";
-  list.forEach(v=>{
-    const b=document.createElement("button");
-    b.className="option-btn "+((type==="ice"?ice:sugar)===v?"active":"");
-    b.innerText=v;
-    b.onclick=()=>{if(type==="ice")ice=v;else sugar=v;renderOptions(id,list,type);};
-    box.appendChild(b);
+  let q=
+  Number(el.innerText);
+
+  q+=diff;
+
+  if(q<1) q=1;
+
+  el.innerText=q;
+
+};
+
+window.addToCart=(id)=>{
+
+  const m=
+  menuCache.find(x=>x.id===id);
+
+  if(!m) return;
+
+  const qty=
+  Number(
+    document.getElementById(`qty_${id}`).innerText
+  );
+
+  const ice=
+  m.ice_enabled!==false
+  ? document.getElementById(`ice_${id}`).value
+  : "";
+
+  const sugar=
+  m.sugar_enabled!==false
+  ? document.getElementById(`sugar_${id}`).value
+  : "";
+
+  const note=
+  m.note_enabled!==false
+  ? document.getElementById(`note_${id}`).value
+  : "";
+
+  cart.push({
+    id:m.id,
+    name:m.name,
+    price:m.price,
+    qty,
+    ice,
+    sugar,
+    note
   });
-}
 
-window.changeQty=n=>{qty=Math.max(1,qty+n);qtyText.innerText=qty;};
+  updateCart();
 
-window.addCart=()=>{
-  if(!cafeOpen){alert("現在為咖啡廳休息時間，僅可查看菜單。");return;}
-  cart.push({id:currentItem.id,name:currentItem.name,price:Number(currentItem.price||0),qty,ice,sugar,note:noteInput.value||""});
-  itemOverlay.style.display="none";updateCart();
+  alert("已加入購物車");
+
 };
 
 function updateCart(){
-  const count=cart.reduce((s,x)=>s+x.qty,0);
-  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
-  cartCount.innerText=count;totalPrice.innerText=`NT$ ${total}`;renderCart();
+
+  let total=0;
+  let count=0;
+
+  cart.forEach(x=>{
+
+    total+=x.price*x.qty;
+    count+=x.qty;
+
+  });
+
+  cartTotal.innerText=
+  `NT$ ${total}`;
+
+  cartCount.innerText=
+  `${count} 件商品`;
+
 }
 
-window.openCart=()=>{renderCart();cartOverlay.style.display="flex";};
+window.clearCart=()=>{
+
+  if(!confirm("確定清空購物車？"))
+    return;
+
+  cart=[];
+
+  updateCart();
+
+};
+
+window.openCart=()=>{
+
+  cartModalBg.style.display="flex";
+
+  renderCart();
+
+};
+
+window.closeCart=()=>{
+
+  cartModalBg.style.display="none";
+
+};
 
 function renderCart(){
-  if(cart.length===0){cartList.innerHTML=`<div class="empty">購物車目前沒有商品</div>`;return;}
-  cartList.innerHTML="";
-  cart.forEach((x,i)=>{
-    const div=document.createElement("div");
-    div.className="cart-item";
-    div.innerHTML=`
-      <div class="cart-name">${x.name} × ${x.qty}</div>
-      <div class="cart-detail">冰度：${x.ice}｜糖度：${x.sugar}</div>
-      <div class="cart-detail">備註：${x.note||"無"}</div>
-      <div class="cart-detail">NT$ ${x.price*x.qty}</div>
-      <button class="delete-btn" onclick="deleteCart(${i})">刪除</button>`;
-    cartList.appendChild(div);
-  });
-}
 
-window.deleteCart=i=>{cart.splice(i,1);updateCart();};
+  if(!cart.length){
 
-window.openCheckout=async()=>{
-  if(!cafeOpen){alert("現在為咖啡廳休息時間，不能送出訂單。");return;}
-  if(cart.length===0){alert("購物車是空的");return;}
-  cartOverlay.style.display="none";
-  checkoutOverlay.style.display="flex";
-  renderSeats();
-  await loadBalance();
-};
+    cartList.innerHTML=`
+      <div class="empty">
+        購物車是空的
+      </div>
+    `;
 
-window.setDining=type=>{
-  dining=type;
-  dineInBtn.classList.toggle("active",type==="內用");
-  takeOutBtn.classList.toggle("active",type==="外帶");
-  seatArea.style.display=type==="內用"?"block":"none";
-};
+    return;
 
-async function loadSeats(){
-  seats=[];
-  try{
-    const snap=await getDocs(collection(db,"seats"));
-    if(snap.empty){
-      seats=["A1","A2","A3","A4","B1","B2","B3","B4"].map(id=>({seatId:id,available:true}));
-    }else{
-      snap.forEach(d=>{
-        const s=d.data();
-        seats.push({seatId:s.seatId||d.id,available:s.available!==false});
-      });
-    }
-  }catch(e){
-    seats=["A1","A2","A3","A4","B1","B2","B3","B4"].map(id=>({seatId:id,available:true}));
   }
-  selectedSeat=seats.find(s=>s.available)?.seatId||"";
-}
 
-function renderSeats(){
-  seatMap.innerHTML="";
-  const groups={};
-  seats.forEach(s=>{
-    const group=(s.seatId||"其他").charAt(0).toUpperCase();
-    if(!groups[group])groups[group]=[];
-    groups[group].push(s);
+  cartList.innerHTML="";
+
+  cart.forEach((x,i)=>{
+
+    cartList.innerHTML+=`
+
+      <div class="cart-item">
+
+        <div class="cart-item-title">
+          ${x.name} × ${x.qty}
+        </div>
+
+        <div class="cart-item-detail">
+          冰度：${x.ice||"無"}<br>
+          糖度：${x.sugar||"無"}<br>
+          備註：${x.note||"無"}
+        </div>
+
+        <div
+          style="margin-top:10px;font-weight:800;">
+
+          NT$ ${x.price*x.qty}
+
+        </div>
+
+        <div style="margin-top:10px;">
+
+          <button
+            class="cart-btn light"
+            onclick="removeCart(${i})">
+
+            刪除
+
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
   });
 
-  Object.keys(groups).sort().forEach(g=>{
-    const title=document.createElement("div");
-    title.className="seat-section-title";
-    title.innerText=`${g} 區`;
-    seatMap.appendChild(title);
-
-    const grid=document.createElement("div");
-    grid.className="seat-grid";
-    groups[g].forEach(s=>{
-      const b=document.createElement("button");
-      b.className="seat-btn"+(s.seatId===selectedSeat?" active":"")+(s.available===false?" unavailable":"");
-      b.innerText=s.seatId;
-      b.onclick=()=>{selectedSeat=s.seatId;renderSeats();};
-      grid.appendChild(b);
-    });
-    seatMap.appendChild(grid);
-  });
-
-  const legend=document.createElement("div");
-  legend.className="seat-legend";
-  legend.innerHTML=`<span><i class="dot"></i>可選</span><span><i class="dot active"></i>已選</span><span><i class="dot off"></i>不可用</span>`;
-  seatMap.appendChild(legend);
 }
 
-async function loadBalance(){
-  const q=query(collection(db,"balances"),where("uid","==",profile.username));
-  const snap=await getDocs(q);
-  if(snap.empty){pointInfo.innerText="找不到點數資料，請洽物業櫃台。";return;}
-  const d=snap.docs[0];balanceDocId=d.id;
-  granted=Number(d.data().granted_amount||0);stored=Number(d.data().stored_amount||0);
-  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
-  pointInfo.innerHTML=`配發點數：${granted}<br>儲值點數：${stored}<br>訂單金額：${total}`;
-}
+window.removeCart=(i)=>{
+
+  cart.splice(i,1);
+
+  updateCart();
+  renderCart();
+
+};
 
 window.submitOrder=async()=>{
-  if(!cafeOpen){alert("現在為咖啡廳休息時間，不能送出訂單。");return;}
-  if(dining==="內用"&&!selectedSeat){alert("請選擇座位");return;}
-  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
-  if(granted+stored<total){alert("點數不足，請洽物業櫃台儲值。");return;}
 
-  let newGranted=granted,newStored=stored;
-  if(newGranted>=total)newGranted-=total;
-  else{const rest=total-newGranted;newGranted=0;newStored-=rest;}
+  if(!cart.length){
 
-  const orderId="ZH"+Date.now();
+    alert("購物車是空的");
 
-  await addDoc(collection(db,"orders"),{
-    order_id:orderId,
-    uid:profile.username,
-    items:cart,
-    total,
-    dining_type:dining,
-    seat:dining==="內用"?selectedSeat:"",
-    need_notify:needNotify.checked,
-    status:"等待接單",
-    created_at:new Date().toISOString()
+    return;
+
+  }
+
+  const diningType=
+  diningType.value;
+
+  const seat=
+  seatSelect.value;
+
+  if(
+    diningType==="內用" &&
+    !seat
+  ){
+
+    alert("請選擇座位");
+
+    return;
+
+  }
+
+  let total=0;
+
+  cart.forEach(x=>{
+    total+=x.price*x.qty;
   });
 
-  await updateDoc(doc(db,"balances",balanceDocId),{granted_amount:newGranted,stored_amount:newStored});
+  const orderId=
+  "ZH"+
+  Date.now();
 
-  alert("訂單已送出！");
-  cart=[];updateCart();checkoutOverlay.style.display="none";location.href="resident.html";
+  await addDoc(
+    collection(db,"orders"),
+    {
+      order_id:orderId,
+      uid:profile.username,
+      items:cart,
+      total,
+      dining_type:diningType,
+      seat:seat||"",
+      status:"等待接單",
+      created_at:new Date().toISOString()
+    }
+  );
+
+  alert("訂單已送出");
+
+  cart=[];
+
+  updateCart();
+
+  closeCart();
+
 };
 
-[itemOverlay,cartOverlay,checkoutOverlay].forEach(el=>{
-  el.addEventListener("click",e=>{if(e.target===el)el.style.display="none";});
+cartModalBg.addEventListener("click",e=>{
+
+  if(e.target===cartModalBg){
+
+    closeCart();
+
+  }
+
 });
+
 </script>
+
 </body>
 </html>
