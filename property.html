@@ -1,236 +1,483 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>物業櫃檯 昭揚宗恆 咖啡廳點餐系統</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物業櫃檯｜昭揚縱橫</title>
+
+<style>
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
+body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f}
+body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);backdrop-filter:blur(5px);z-index:-1}
+.header{height:72px;background:rgba(255,255,255,.88);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:72px;opacity:.82}
+.title{font-size:22px;letter-spacing:2px;font-weight:700;color:#6d6258}
+.logout{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:9px 14px;font-weight:800}
+.container{max-width:1180px;margin:22px auto;padding:0 16px 40px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
+.card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
+.section-title{font-size:26px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input,textarea,select{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
+textarea{height:86px;resize:none;grid-column:1/-1}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81}
+.btn.primary{background:#6d6258}
+.btn.done{background:#6b8b61}
+.btn.danger{background:#c86b62}
+.btn.light{background:#f0e8df;color:#7a6b60}
+.hidden{display:none}
+.empty{text-align:center;color:#999;padding:40px}
+.list-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #eee5dd}
+.row-title{font-size:18px;font-weight:900;color:#5f574f}
+.row-meta{font-size:14px;color:#777;line-height:1.7;margin-top:4px}
+.status-box{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
+.point-box{background:white;border:1px solid #eee5dd;border-radius:18px;padding:16px;margin-bottom:14px}
+@media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.list-row{grid-template-columns:1fr}.brand img{width:60px}.title{font-size:18px}.header{padding:0 12px}}
+</style>
 </head>
+
 <body>
-  <h2>物業櫃檯管理</h2>
 
-  <!-- 新增公告 -->
-  <h3>新增公告</h3>
-  <input id="title" placeholder="公告標題">
-  <input id="content" placeholder="公告內容">
-  <button onclick="addAnnouncement()">新增公告</button>
+<div class="header">
+  <div class="brand">
+    <img src="logo.png">
+    <div class="title">物業櫃檯</div>
+  </div>
+  <button class="logout" id="logoutBtn">登出</button>
+</div>
 
-  <!-- 公告列表 -->
-  <h3>公告列表</h3>
-  <ul id="announcements"></ul>
+<div class="container">
 
-  <!-- 新增住戶帳號 -->
-  <h3>新增住戶帳號</h3>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('announcements',this)">公告管理</button>
+    <button class="tab" onclick="showTab('accounts',this)">住戶帳號</button>
+    <button class="tab" onclick="showTab('points',this)">點數管理</button>
+    <button class="tab" onclick="showTab('settings',this)">系統狀態</button>
+  </div>
 
-  <input id="new_username" placeholder="帳號">
-  <input id="new_password" placeholder="密碼">
+  <section id="announcementsTab">
+    <div class="card">
+      <div class="section-title">新增公告</div>
+      <div class="form-grid">
+        <input id="title" placeholder="公告標題">
+        <input id="content" placeholder="公告內容">
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="addAnnouncement()">新增公告</button>
+      </div>
+    </div>
 
-  <input id="new_floor" placeholder="樓層">
-  <input id="new_room" placeholder="房號">
+    <div class="card">
+      <div class="section-title">公告列表</div>
+      <div id="announcements"></div>
+    </div>
+  </section>
 
-  <button onclick="createResident()">
-    建立住戶帳號
-  </button>
+  <section id="accountsTab" class="hidden">
+    <div class="card">
+      <div class="section-title">新增住戶帳號</div>
+      <div class="form-grid">
+        <input id="new_username" placeholder="帳號，例如 A001">
+        <input id="new_password" placeholder="密碼，至少 6 碼">
+        <input id="new_floor" placeholder="樓層">
+        <input id="new_room" placeholder="房號">
+        <input id="new_granted" type="number" placeholder="初始配發點數，可空白">
+        <input id="new_stored" type="number" placeholder="初始儲值點數，可空白">
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="createResident()">建立住戶帳號</button>
+      </div>
+    </div>
 
-  <!-- 住戶帳號列表 -->
-  <h3>住戶帳號</h3>
-  <ul id="accounts"></ul>
+    <div class="card">
+      <div class="section-title">住戶帳號列表</div>
+      <div id="accounts"></div>
+    </div>
+  </section>
 
-  <!-- Firebase SDK -->
-  <script type="module">
+  <section id="pointsTab" class="hidden">
+    <div class="card">
+      <div class="section-title">點數管理</div>
+      <div class="form-grid">
+        <input id="point_username" placeholder="住戶帳號，例如 A001">
+        <button class="btn primary" onclick="loadResidentPoints()">載入住戶點數</button>
+      </div>
 
-    import { initializeApp }
-    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+      <div id="pointInfo" class="status-box" style="margin-top:16px;">
+        尚未選擇住戶
+      </div>
 
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      addDoc
+      <div class="form-grid" style="margin-top:16px;">
+        <input id="edit_granted" type="number" placeholder="配發點數">
+        <input id="edit_stored" type="number" placeholder="儲值點數">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn done" onclick="saveResidentPoints()">儲存點數</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="settingsTab" class="hidden">
+    <div class="card">
+      <div class="section-title">系統狀態</div>
+      <div class="status-box" id="systemStatus">
+        讀取中...
+      </div>
+      <div class="btn-row">
+        <button class="btn light" onclick="reloadAll()">重新載入資料</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  updateDoc,
+  query,
+  where,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+import {
+  getFunctions,
+  httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
+  authDomain: "zonghengcafe.firebaseapp.com",
+  projectId: "zonghengcafe",
+  storageBucket: "zonghengcafe.firebasestorage.app",
+  messagingSenderId: "207027108121",
+  appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
+  measurementId: "G-8ZE4SE2T7T"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const functions = getFunctions(app, "asia-east1");
+
+let propertyProfile = null;
+let currentBalanceDocId = null;
+let currentPointUser = null;
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    location.href = "index.html";
+    return;
+  }
+
+  const raw = localStorage.getItem("zh_user");
+
+  if (!raw) {
+    location.href = "index.html";
+    return;
+  }
+
+  propertyProfile = JSON.parse(raw);
+
+  if (propertyProfile.role !== "property" && propertyProfile.role !== "engineer") {
+    alert("沒有權限");
+    location.href = "index.html";
+    return;
+  }
+
+  await reloadAll();
+});
+
+window.showTab = (tab, btn) => {
+  announcementsTab.classList.add("hidden");
+  accountsTab.classList.add("hidden");
+  pointsTab.classList.add("hidden");
+  settingsTab.classList.add("hidden");
+
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  btn.classList.add("active");
+
+  document.getElementById(tab + "Tab").classList.remove("hidden");
+};
+
+window.addAnnouncement = async () => {
+  const titleValue = title.value.trim();
+  const contentValue = content.value.trim();
+
+  if (!titleValue || !contentValue) {
+    alert("請輸入公告標題與內容");
+    return;
+  }
+
+  await addDoc(collection(db, "announcements"), {
+    title: titleValue,
+    content: contentValue,
+    date: new Date().toLocaleDateString("zh-TW"),
+    created_at: new Date().toISOString(),
+    created_by: propertyProfile?.username || "property"
+  });
+
+  title.value = "";
+  content.value = "";
+
+  alert("公告已新增");
+  loadAnnouncements();
+};
+
+async function loadAnnouncements() {
+  const snapshot = await getDocs(collection(db, "announcements"));
+  announcements.innerHTML = "";
+
+  if (snapshot.empty) {
+    announcements.innerHTML = `<div class="empty">目前沒有公告</div>`;
+    return;
+  }
+
+  snapshot.forEach(d => {
+    const ann = d.data();
+
+    const row = document.createElement("div");
+    row.className = "list-row";
+    row.innerHTML = `
+      <div>
+        <div class="row-title">${ann.title || ""}</div>
+        <div class="row-meta">
+          ${ann.date || ""}<br>
+          ${ann.content || ""}
+        </div>
+      </div>
+    `;
+
+    announcements.appendChild(row);
+  });
+}
+
+window.createResident = async () => {
+  const username = new_username.value.trim();
+  const password = new_password.value.trim();
+  const floor = new_floor.value.trim();
+  const room = new_room.value.trim();
+  const grantedAmount = Number(new_granted.value || 0);
+  const storedAmount = Number(new_stored.value || 0);
+
+  if (!username || !password) {
+    alert("請輸入帳號與密碼");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("密碼至少 6 碼");
+    return;
+  }
+
+  try {
+    const createAccount = httpsCallable(functions, "createAccount");
+
+    await createAccount({
+      username,
+      password,
+      role: "resident",
+      floor,
+      room,
+      granted_amount: grantedAmount,
+      stored_amount: storedAmount
+    });
+
+    alert("住戶帳號建立成功");
+
+    new_username.value = "";
+    new_password.value = "";
+    new_floor.value = "";
+    new_room.value = "";
+    new_granted.value = "";
+    new_stored.value = "";
+
+    await loadAccounts();
+
+  } catch (error) {
+    console.error(error);
+    alert("建立失敗：" + error.message);
+  }
+};
+
+async function loadAccounts() {
+  const snapshot = await getDocs(collection(db, "accounts"));
+  accounts.innerHTML = "";
+
+  if (snapshot.empty) {
+    accounts.innerHTML = `<div class="empty">目前沒有帳號</div>`;
+    return;
+  }
+
+  snapshot.forEach(d => {
+    const acc = d.data();
+
+    if (acc.role !== "resident") {
+      return;
     }
-    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    import {
-      getFunctions,
-      httpsCallable
+    const row = document.createElement("div");
+    row.className = "list-row";
+    row.innerHTML = `
+      <div>
+        <div class="row-title">${acc.username || ""}</div>
+        <div class="row-meta">
+          角色：${acc.role || ""}<br>
+          樓層：${acc.floor || "-"}｜房號：${acc.room || "-"}
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn light" onclick="quickLoadPoint('${acc.username || ""}')">點數</button>
+      </div>
+    `;
+
+    accounts.appendChild(row);
+  });
+}
+
+window.quickLoadPoint = async username => {
+  point_username.value = username;
+
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  const tabs = document.querySelectorAll(".tab");
+  tabs[2].classList.add("active");
+
+  announcementsTab.classList.add("hidden");
+  accountsTab.classList.add("hidden");
+  settingsTab.classList.add("hidden");
+  pointsTab.classList.remove("hidden");
+
+  await loadResidentPoints();
+};
+
+window.loadResidentPoints = async () => {
+  const username = point_username.value.trim();
+
+  if (!username) {
+    alert("請輸入住戶帳號");
+    return;
+  }
+
+  const q = query(collection(db, "balances"), where("uid", "==", username));
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    currentBalanceDocId = null;
+    currentPointUser = username;
+
+    pointInfo.innerHTML = `
+      帳號：${username}<br>
+      找不到點數資料，可儲存後建立。
+    `;
+
+    edit_granted.value = 0;
+    edit_stored.value = 0;
+
+    return;
+  }
+
+  const d = snap.docs[0];
+  const data = d.data();
+
+  currentBalanceDocId = d.id;
+  currentPointUser = username;
+
+  edit_granted.value = Number(data.granted_amount || 0);
+  edit_stored.value = Number(data.stored_amount || 0);
+
+  pointInfo.innerHTML = `
+    帳號：${username}<br>
+    配發點數：${edit_granted.value}<br>
+    儲值點數：${edit_stored.value}<br>
+    總點數：${Number(edit_granted.value) + Number(edit_stored.value)}
+  `;
+};
+
+window.saveResidentPoints = async () => {
+  const username = point_username.value.trim();
+
+  if (!username) {
+    alert("請先輸入住戶帳號");
+    return;
+  }
+
+  const granted = Number(edit_granted.value || 0);
+  const stored = Number(edit_stored.value || 0);
+
+  if (!currentBalanceDocId) {
+    const ref = await addDoc(collection(db, "balances"), {
+      uid: username,
+      granted_amount: granted,
+      stored_amount: stored,
+      created_at: new Date().toISOString(),
+      updated_by: propertyProfile?.username || "property"
+    });
+
+    currentBalanceDocId = ref.id;
+  } else {
+    await updateDoc(doc(db, "balances", currentBalanceDocId), {
+      granted_amount: granted,
+      stored_amount: stored,
+      updated_at: new Date().toISOString(),
+      updated_by: propertyProfile?.username || "property"
+    });
+  }
+
+  alert("點數已更新");
+  await loadResidentPoints();
+};
+
+async function loadSystemStatus() {
+  let cafeText = "尚未設定";
+
+  try {
+    const s = await getDoc(doc(db, "settings", "cafe"));
+
+    if (s.exists()) {
+      const data = s.data();
+
+      cafeText =
+        "點餐開關：" + (data.open === false ? "關閉" : "開放") +
+        "<br>營業時間：" + (data.open_time || "08:30") + "–" + (data.close_time || "19:00") +
+        "<br>公休日：" + ((data.closed_days || []).join(",") || "無");
     }
-    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+  } catch (e) {
+    cafeText = "讀取系統狀態失敗";
+  }
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
-      authDomain: "zonghengcafe.firebaseapp.com",
-      projectId: "zonghengcafe",
-      storageBucket: "zonghengcafe.firebasestorage.app",
-      messagingSenderId: "207027108121",
-      appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
-      measurementId: "G-8ZE4SE2T7T"
-    };
+  systemStatus.innerHTML = cafeText;
+}
 
-    const app = initializeApp(firebaseConfig);
+window.reloadAll = async () => {
+  await loadAnnouncements();
+  await loadAccounts();
+  await loadSystemStatus();
+};
 
-    const db = getFirestore(app);
-
-    const functions =
-    getFunctions(app, "asia-east1");
-
-    // 新增公告
-    async function addAnnouncement() {
-
-      const title =
-      document.getElementById("title").value;
-
-      const content =
-      document.getElementById("content").value;
-
-      const date =
-      new Date().toLocaleDateString();
-
-      await addDoc(
-        collection(db,"announcements"),
-        {
-          title,
-          content,
-          date
-        }
-      );
-
-      alert("公告已新增！");
-
-      loadAnnouncements();
-
-    }
-
-    // 安全建立住戶帳號
-    async function createResident() {
-
-      const username =
-      document.getElementById("new_username").value.trim();
-
-      const password =
-      document.getElementById("new_password").value.trim();
-
-      const floor =
-      document.getElementById("new_floor").value.trim();
-
-      const room =
-      document.getElementById("new_room").value.trim();
-
-      if(!username || !password){
-
-        alert("請輸入帳號密碼");
-        return;
-
-      }
-
-      try{
-
-        const createAccount =
-        httpsCallable(functions, "createAccount");
-
-        await createAccount({
-
-          username: username,
-          password: password,
-
-          role: "resident",
-
-          floor: floor,
-          room: room,
-
-          granted_amount: 0,
-          stored_amount: 0
-
-        });
-
-        alert("住戶帳號建立成功！");
-
-        document.getElementById("new_username").value = "";
-        document.getElementById("new_password").value = "";
-        document.getElementById("new_floor").value = "";
-        document.getElementById("new_room").value = "";
-
-        loadAccounts();
-
-      }catch(error){
-
-        console.error(error);
-
-        alert("建立失敗：" + error.message);
-
-      }
-
-    }
-
-    // 載入公告
-    async function loadAnnouncements() {
-
-      const snapshot =
-      await getDocs(collection(db,"announcements"));
-
-      const list =
-      document.getElementById("announcements");
-
-      list.innerHTML = "";
-
-      snapshot.forEach(doc => {
-
-        const ann = doc.data();
-
-        const li =
-        document.createElement("li");
-
-        li.innerText =
-        ann.date +
-        " - " +
-        ann.title +
-        "：" +
-        ann.content;
-
-        list.appendChild(li);
-
-      });
-
-    }
-
-    // 載入住戶帳號
-    async function loadAccounts() {
-
-      const snapshot =
-      await getDocs(collection(db,"accounts"));
-
-      const list =
-      document.getElementById("accounts");
-
-      list.innerHTML = "";
-
-      snapshot.forEach(doc => {
-
-        const acc = doc.data();
-
-        const li =
-        document.createElement("li");
-
-        li.innerText =
-        acc.username +
-        "（角色：" +
-        acc.role +
-        "）";
-
-        list.appendChild(li);
-
-      });
-
-    }
-
-    loadAnnouncements();
-
-    loadAccounts();
-
-    window.addAnnouncement =
-    addAnnouncement;
-
-    window.createResident =
-    createResident;
-
-  </script>
+logoutBtn.addEventListener("click", async () => {
+  await signOut(auth);
+  localStorage.removeItem("zh_user");
+  location.href = "index.html";
+});
+</script>
 
 </body>
 </html>
