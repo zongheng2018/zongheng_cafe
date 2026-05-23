@@ -134,7 +134,13 @@ textarea{height:82px;resize:none}
 
     <div class="notice" id="pointInfo">點數讀取中...</div>
 
-    <button class="primary-btn" style="width:100%;margin-top:12px;" onclick="submitOrder()">送出訂單</button>
+    <button
+      class="primary-btn"
+      style="width:100%;margin-top:12px;"
+      type="button"
+      id="submitOrderBtn">
+      送出訂單
+    </button>
   </div>
 </div>
 
@@ -167,6 +173,7 @@ let balanceDocId=null;
 let granted=0;
 let stored=0;
 let cafeOpen=true;
+let submittingOrder=false;
 
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
@@ -477,61 +484,93 @@ async function loadBalance(){
   `;
 }
 
-window.submitOrder=async()=>{
-  if(!cart.length){
-    alert("購物車是空的");
-    return;
+async function submitOrder(){
+  if(submittingOrder)return;
+  submittingOrder=true;
+
+  const btn=document.getElementById("submitOrderBtn");
+  if(btn){
+    btn.disabled=true;
+    btn.innerText="送出中...";
   }
 
-  const dining=document.getElementById("diningType").value;
-  const seat=document.getElementById("seatSelect").value;
+  try{
+    if(!cart.length){
+      alert("購物車是空的");
+      return;
+    }
 
-  if(dining==="內用"&&!seat){
-    alert("請選擇座位");
-    return;
+    const dining=document.getElementById("diningType").value;
+    const seat=document.getElementById("seatSelect").value;
+
+    if(dining==="內用"&&!seat){
+      alert("請選擇座位");
+      return;
+    }
+
+    const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+
+    if(!balanceDocId){
+      await loadBalance();
+    }
+
+    if(granted+stored<total){
+      alert("點數不足");
+      return;
+    }
+
+    let newGranted=granted;
+    let newStored=stored;
+
+    if(newGranted>=total){
+      newGranted-=total;
+    }else{
+      const rest=total-newGranted;
+      newGranted=0;
+      newStored-=rest;
+    }
+
+    await addDoc(collection(db,"orders"),{
+      order_id:"ZH"+Date.now(),
+      uid:profile.username,
+      items:cart,
+      total,
+      dining_type:dining,
+      seat:dining==="內用"?seat:"",
+      status:"等待接單",
+      created_at:new Date().toISOString()
+    });
+
+    await updateDoc(doc(db,"balances",balanceDocId),{
+      granted_amount:newGranted,
+      stored_amount:newStored
+    });
+
+    alert("訂單已送出");
+
+    cart=[];
+    updateCart();
+    closeCart();
+    location.href="resident.html";
+
+  }catch(error){
+    console.error(error);
+    alert("送出失敗：" + error.message);
+  }finally{
+    submittingOrder=false;
+
+    if(btn){
+      btn.disabled=false;
+      btn.innerText="送出訂單";
+    }
   }
+}
 
-  const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
-
-  if(granted+stored<total){
-    alert("點數不足");
-    return;
-  }
-
-  let newGranted=granted;
-  let newStored=stored;
-
-  if(newGranted>=total){
-    newGranted-=total;
-  }else{
-    const rest=total-newGranted;
-    newGranted=0;
-    newStored-=rest;
-  }
-
-  await addDoc(collection(db,"orders"),{
-    order_id:"ZH"+Date.now(),
-    uid:profile.username,
-    items:cart,
-    total,
-    dining_type:dining,
-    seat:dining==="內用"?seat:"",
-    status:"等待接單",
-    created_at:new Date().toISOString()
-  });
-
-  await updateDoc(doc(db,"balances",balanceDocId),{
-    granted_amount:newGranted,
-    stored_amount:newStored
-  });
-
-  alert("訂單已送出");
-
-  cart=[];
-  updateCart();
-  closeCart();
-  location.href="resident.html";
-};
+document.getElementById("submitOrderBtn").addEventListener("click",async(e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  await submitOrder();
+});
 
 document.getElementById("itemModalBg").addEventListener("click",e=>{
   if(e.target===document.getElementById("itemModalBg")){
