@@ -6,13 +6,10 @@
 <title>住戶首頁｜昭揚縱橫 咖啡廳點餐系統</title>
 
 <link rel="manifest" href="manifest.json">
-
 <meta name="theme-color" content="#9c8e81">
-
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="縱橫點餐">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
 <link rel="apple-touch-icon" href="logo.png">
 
 <style>
@@ -296,9 +293,9 @@ window.showProfile=async function(){
 
     <div id="passwordBox" style="display:none;margin-top:16px;">
       <input class="input" id="oldPassword" type="password" placeholder="目前密碼">
-      <input class="input" id="newPassword" type="password" placeholder="新密碼">
+      <input class="input" id="newPassword" type="password" placeholder="新密碼，至少 6 碼">
       <input class="input" id="confirmPassword" type="password" placeholder="再次輸入新密碼">
-      <button class="action-btn" onclick="changePassword()">更新密碼</button>
+      <button class="action-btn" onclick="changeResidentPassword()">更新密碼</button>
     </div>
   `;
 };
@@ -309,7 +306,7 @@ window.togglePasswordBox=function(){
   box.style.display=box.style.display==="block"?"none":"block";
 };
 
-window.changePassword=async function(){
+window.changeResidentPassword=async function(){
   const oldPw=document.getElementById("oldPassword").value.trim();
   const newPw=document.getElementById("newPassword").value.trim();
   const confirmPw=document.getElementById("confirmPassword").value.trim();
@@ -319,8 +316,8 @@ window.changePassword=async function(){
     return;
   }
 
-  if(oldPw!==currentPassword){
-    alert("目前密碼錯誤");
+  if(newPw.length<6){
+    alert("新密碼至少 6 碼");
     return;
   }
 
@@ -329,38 +326,58 @@ window.changePassword=async function(){
     return;
   }
 
-  if(newPw.length<4){
-    alert("密碼至少 6 碼");
-    return;
-  }
-
   try{
     const user=auth.currentUser;
-    if(user && user.email){
-      const credential=EmailAuthProvider.credential(user.email,oldPw);
-      await reauthenticateWithCredential(user,credential);
-      await updatePassword(user,newPw);
+
+    if(!user||!user.email){
+      alert("找不到登入帳號，請重新登入");
+      return;
     }
+
+    const credential=EmailAuthProvider.credential(user.email,oldPw);
+
+    await reauthenticateWithCredential(user,credential);
+
+    await updatePassword(user,newPw);
+
+    if(!accountDocId){
+      alert("找不到帳號資料");
+      return;
+    }
+
+    await updateDoc(doc(db,"accounts",accountDocId),{
+      password:newPw,
+      updated_at:new Date().toISOString()
+    });
+
+    currentPassword=newPw;
+
+    document.getElementById("oldPassword").value="";
+    document.getElementById("newPassword").value="";
+    document.getElementById("confirmPassword").value="";
+
+    alert("密碼更新成功，請使用新密碼登入");
+
   }catch(e){
-    console.warn("Firebase Auth 密碼同步失敗，但會更新 Firestore 密碼。",e);
+    console.error(e);
+
+    if(e.code==="auth/invalid-credential" || e.code==="auth/wrong-password"){
+      alert("目前密碼錯誤");
+      return;
+    }
+
+    if(e.code==="auth/weak-password"){
+      alert("新密碼至少 6 碼");
+      return;
+    }
+
+    if(e.code==="auth/requires-recent-login"){
+      alert("請重新登入後再修改密碼");
+      return;
+    }
+
+    alert("密碼更新失敗："+e.message);
   }
-
-  if(!accountDocId){
-    alert("找不到帳號資料");
-    return;
-  }
-
-  await updateDoc(doc(db,"accounts",accountDocId),{
-    password:newPw
-  });
-
-  currentPassword=newPw;
-
-  document.getElementById("oldPassword").value="";
-  document.getElementById("newPassword").value="";
-  document.getElementById("confirmPassword").value="";
-
-  alert("密碼更新成功");
 };
 
 logoutBtn.addEventListener("click",async()=>{
