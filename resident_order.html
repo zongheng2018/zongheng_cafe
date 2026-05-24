@@ -80,7 +80,7 @@ textarea{height:82px;resize:none}
 
 <div class="cart-bar">
   <div>
-    <div class="total" id="cartTotal">NT$ 0</div>
+    <div class="total" id="cartTotal">0 點</div>
     <div id="cartCount" style="font-size:13px;color:#777;">0 件商品</div>
   </div>
   <button class="cart-btn" onclick="openCart()">購物車</button>
@@ -142,7 +142,7 @@ textarea{height:82px;resize:none}
       </select>
     </div>
 
-    <div class="notice" id="pointInfo">點數讀取中...</div>
+    <div class="notice" id="pointInfo">點讀取中...</div>
 
     <button
       class="primary-btn"
@@ -175,6 +175,7 @@ const db=getFirestore(app);
 
 let profile=null;
 let menuCache=[];
+let categoryOrder=["咖啡","茶類","氣泡飲","甜點","輕食","其他"];
 let cart=[];
 let currentCategory="全部";
 let currentItem=null;
@@ -209,6 +210,45 @@ function isCafeOpenBySetting(setting){
   return minutes>=timeToMinutes(openTime)&&minutes<timeToMinutes(closeTime);
 }
 
+function getCategoryRank(category){
+  const idx=categoryOrder.indexOf(category);
+
+  if(idx>=0){
+    return idx+1;
+  }
+
+  const fallback={
+    "咖啡":1,
+    "茶類":2,
+    "氣泡飲":3,
+    "甜點":4,
+    "輕食":5,
+    "其他":99
+  };
+
+  return fallback[category]||999;
+}
+
+function sortMenu(){
+  menuCache.sort((a,b)=>{
+    const ca=getCategoryRank(a.category||"未分類");
+    const cb=getCategoryRank(b.category||"未分類");
+
+    if(ca!==cb){
+      return ca-cb;
+    }
+
+    const sa=Number(a.sort_order||999);
+    const sb=Number(b.sort_order||999);
+
+    if(sa!==sb){
+      return sa-sb;
+    }
+
+    return String(a.name||"").localeCompare(String(b.name||""),"zh-Hant");
+  });
+}
+
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
 
@@ -231,7 +271,20 @@ onAuthStateChanged(auth,async user=>{
 async function loadCafeStatus(){
   try{
     const s=await getDoc(doc(db,"settings","cafe"));
-    cafeOpen=!s.exists()||isCafeOpenBySetting(s.data());
+
+    if(s.exists()){
+      const data=s.data();
+
+      cafeOpen=isCafeOpenBySetting(data);
+
+      if(Array.isArray(data.category_order)&&data.category_order.length){
+        categoryOrder=data.category_order;
+      }
+
+    }else{
+      cafeOpen=true;
+    }
+
   }catch(e){
     cafeOpen=true;
   }
@@ -247,14 +300,33 @@ async function loadMenu(){
     menuCache.push(m);
   });
 
+  sortMenu();
   renderCategories();
   renderMenu();
 }
 
 function renderCategories(){
-  const cats=["全部",...new Set(menuCache.map(x=>x.category||"未分類"))];
+  const rawCategories=[...new Set(menuCache.map(x=>x.category||"未分類"))];
+
+  rawCategories.sort((a,b)=>{
+    const ra=getCategoryRank(a);
+    const rb=getCategoryRank(b);
+
+    if(ra!==rb){
+      return ra-rb;
+    }
+
+    return String(a).localeCompare(String(b),"zh-Hant");
+  });
+
+  const cats=["全部",...rawCategories];
+
   const categoryRow=document.getElementById("categoryRow");
   categoryRow.innerHTML="";
+
+  if(currentCategory!=="全部"&&!rawCategories.includes(currentCategory)){
+    currentCategory="全部";
+  }
 
   cats.forEach(c=>{
     const b=document.createElement("button");
@@ -340,11 +412,6 @@ function renderCustomOptions(){
     opts=[];
   }
 
-  if(!opts.length){
-    optionArea.innerHTML=`<div class="notice">此品項沒有自訂選項</div>`;
-    return;
-  }
-
   let rendered=false;
 
   opts.forEach((group,index)=>{
@@ -366,8 +433,23 @@ function renderCustomOptions(){
     optionArea.appendChild(div);
   });
 
+  if(currentItem.after_meal_enabled===true){
+    rendered=true;
+
+    const div=document.createElement("div");
+    div.className="field";
+    div.innerHTML=`
+      <label>是否餐後上</label>
+      <select id="afterMealOption">
+        <option value="否">否</option>
+        <option value="是">是</option>
+      </select>
+    `;
+    optionArea.appendChild(div);
+  }
+
   if(!rendered){
-    optionArea.innerHTML=`<div class="notice">此品項沒有可用選項</div>`;
+    optionArea.innerHTML=`<div class="notice">此品項沒有自訂選項</div>`;
   }
 }
 
@@ -386,6 +468,12 @@ window.addCurrentToCart=()=>{
     }
   });
 
+  const afterMealEl=document.getElementById("afterMealOption");
+
+  if(afterMealEl){
+    options["是否餐後上"]=afterMealEl.value;
+  }
+
   cart.push({
     id:currentItem.id,
     name:currentItem.name,
@@ -403,7 +491,7 @@ function updateCart(){
   const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
   const count=cart.reduce((s,x)=>s+x.qty,0);
 
-  document.getElementById("cartTotal").innerText=`NT$ ${total}`;
+  document.getElementById("cartTotal").innerText=`${total} 點`;
   document.getElementById("cartCount").innerText=`${count} 件商品`;
 
   renderCart();
@@ -448,7 +536,7 @@ function renderCart(){
       <div class="cart-detail">
         ${optionText||"無自訂選項"}<br>
         備註：${x.note||"無"}<br>
-        小計：NT$ ${x.price*x.qty}
+        小計：${x.price*x.qty} 點
       </div>
       <button class="light-btn" onclick="removeCart(${i})">刪除</button>
     `;
@@ -509,7 +597,7 @@ async function loadBalance(){
   const snap=await getDocs(q);
 
   if(snap.empty){
-    document.getElementById("pointInfo").innerText="找不到點數資料";
+    document.getElementById("pointInfo").innerText="找不到點資料";
     return;
   }
 
@@ -521,9 +609,9 @@ async function loadBalance(){
   const total=cart.reduce((s,x)=>s+x.price*x.qty,0);
 
   document.getElementById("pointInfo").innerHTML=`
-    配發點數：${granted}<br>
-    儲值點數：${stored}<br>
-    訂單金額：${total}
+    配發點：${granted}<br>
+    儲值點：${stored}<br>
+    訂單金額：${total} 點
   `;
 }
 
@@ -566,7 +654,7 @@ async function submitOrder(){
     }
 
     if(granted+stored<total){
-      alert("點數不足");
+      alert("點不足");
       return;
     }
 
