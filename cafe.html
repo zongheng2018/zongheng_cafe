@@ -143,12 +143,10 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   <section id="counterTab" class="hidden">
     <div class="card">
       <div class="section-title">代客點餐</div>
-
       <div class="form-grid">
         <input id="counterResidentInput" placeholder="輸入住戶帳號，例如 A001">
         <button class="btn primary" onclick="loadCounterResident()">載入住戶</button>
       </div>
-
       <div class="setting-status" id="counterResidentInfo" style="margin-top:16px;">
         尚未選擇住戶
       </div>
@@ -336,6 +334,16 @@ function timeToMinutes(t){
 }
 
 function isCafeOpenBySetting(setting){
+  const manualMode=setting.manual_mode||"auto";
+
+  if(manualMode==="force_open"){
+    return true;
+  }
+
+  if(manualMode==="force_closed"){
+    return false;
+  }
+
   const now=getTaipeiNow();
   const day=now.getDate();
   const minutes=now.getHours()*60+now.getMinutes();
@@ -351,9 +359,7 @@ function isCafeOpenBySetting(setting){
 
 function formatOrderTime(value){
   if(!value)return "-";
-
   const d=new Date(value);
-
   if(isNaN(d.getTime()))return value;
 
   return d.toLocaleString("zh-TW",{
@@ -392,12 +398,10 @@ function sortMenuAndCategories(){
   menuCache.sort((a,b)=>{
     const ca=getCategoryRank(a.category||"未分類");
     const cb=getCategoryRank(b.category||"未分類");
-
     if(ca!==cb)return ca-cb;
 
     const sa=Number(a.sort_order||999);
     const sb=Number(b.sort_order||999);
-
     if(sa!==sb)return sa-sb;
 
     return String(a.name||"").localeCompare(String(b.name||""),"zh-Hant");
@@ -435,12 +439,20 @@ function playNewOrderSound(){
 
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
+
   const raw=localStorage.getItem("zh_user");
   if(!raw){location.href="index.html";return}
+
   cafeProfile=JSON.parse(raw);
-  if(cafeProfile.role!=="cafe"){alert("沒有權限");location.href="index.html";return}
+
+  if(cafeProfile.role!=="cafe"){
+    alert("沒有權限");
+    location.href="index.html";
+    return;
+  }
 
   const savedSound=localStorage.getItem("cafe_sound");
+
   if(savedSound==="off"){
     soundEnabled=false;
     soundBtn.classList.remove("on");
@@ -878,6 +890,7 @@ async function loadSettings(){
   if(!s.exists()){
     await setDoc(ref,{
       open:true,
+      manual_mode:"auto",
       open_time:"08:30",
       close_time:"19:00",
       closed_days:[],
@@ -885,7 +898,7 @@ async function loadSettings(){
     },{merge:true});
 
     categoryOrder=["咖啡","茶類","氣泡飲","甜點","輕食","其他"];
-    systemStatus.innerText="目前狀態：開放點餐｜自動營業 08:30–19:00";
+    systemStatus.innerText="目前狀態：自動模式｜開放點餐｜自動營業 08:30–19:00";
     openTime.value="08:30";
     closeTime.value="19:00";
     closedDays.value="";
@@ -900,8 +913,15 @@ async function loadSettings(){
     ? data.category_order
     : ["咖啡","茶類","氣泡飲","甜點","輕食","其他"];
 
+  const modeText=
+    data.manual_mode==="force_open"
+    ? "手動開放"
+    : data.manual_mode==="force_closed"
+    ? "手動關閉"
+    : "自動模式";
+
   systemStatus.innerText=
-    "目前狀態："+(effectiveOpen?"開放點餐":"關閉點餐")+
+    "目前狀態："+modeText+"｜"+(effectiveOpen?"開放點餐":"關閉點餐")+
     "｜自動營業 "+(data.open_time||"08:30")+"–"+(data.close_time||"19:00")+
     "｜公休日："+((data.closed_days||[]).join(",")||"無")+
     "｜分類順序："+categoryOrder.join("、");
@@ -915,6 +935,7 @@ async function loadSettings(){
 window.setCafeOpen=async(open)=>{
   await setDoc(doc(db,"settings","cafe"),{
     open,
+    manual_mode:open?"force_open":"force_closed",
     open_time:openTime.value||"08:30",
     close_time:closeTime.value||"19:00"
   },{merge:true});
@@ -935,6 +956,8 @@ window.saveCafeSchedule=async()=>{
     : ["咖啡","茶類","氣泡飲","甜點","輕食","其他"];
 
   await setDoc(doc(db,"settings","cafe"),{
+    open:true,
+    manual_mode:"auto",
     open_time:openTime.value||"08:30",
     close_time:closeTime.value||"19:00",
     closed_days:days,
@@ -944,7 +967,7 @@ window.saveCafeSchedule=async()=>{
   await loadSettings();
   await loadMenu();
   renderCounterMenu();
-  alert("營業與分類設定已儲存");
+  alert("營業與分類設定已儲存，已切回自動模式");
 };
 
 window.clearWaitingOrders=async()=>{
@@ -975,14 +998,12 @@ async function loadSeatsForCounter(){
   const seatSelect=document.getElementById("counterSeat");
   seatSelect.innerHTML=`
     <option value="">請選擇座位</option>
-
     <optgroup label="A區">
       <option value="A1">A1</option>
       <option value="A2">A2</option>
       <option value="A3">A3</option>
       <option value="A4">A4</option>
     </optgroup>
-
     <optgroup label="B區">
       <option value="B1">B1</option>
       <option value="B2">B2</option>
@@ -993,7 +1014,6 @@ async function loadSeatsForCounter(){
       <option value="B7">B7</option>
       <option value="B8">B8</option>
     </optgroup>
-
     <optgroup label="C區">
       <option value="C1">C1</option>
       <option value="C2">C2</option>
