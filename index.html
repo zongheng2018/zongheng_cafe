@@ -6,17 +6,13 @@
   <title>昭揚縱橫 咖啡廳點餐系統</title>
 
   <link rel="manifest" href="manifest.json">
-
   <meta name="theme-color" content="#9c8e81">
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="縱橫點餐">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
   <link rel="apple-touch-icon" href="logo.png">
 
   <style>
-
     body {
       font-family: "-apple-system", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", Arial, sans-serif;
       background: url('bg.jpg') no-repeat center center fixed;
@@ -156,11 +152,7 @@
       padding: 14px;
       border-radius: 4px;
       border: 1px solid #9c9183;
-      background: linear-gradient(
-        to bottom,
-        #bcaea1 0%,
-        #9c8e81 100%
-      );
+      background: linear-gradient(to bottom,#bcaea1 0%,#9c8e81 100%);
       color: white;
       font-size: 18px;
       letter-spacing: 6px;
@@ -188,125 +180,67 @@
     }
 
     @media (max-width: 480px) {
-
-      .top-banner img.logo {
-        width: 150px;
-      }
-
-      .top-banner h1 {
-        font-size: 18px;
-      }
-
-      .login-title {
-        font-size: 22px;
-      }
-
-      .login-box {
-        padding: 25px 20px;
-      }
-
+      .top-banner img.logo { width: 150px; }
+      .top-banner h1 { font-size: 18px; }
+      .login-title { font-size: 22px; }
+      .login-box { padding: 25px 20px; }
     }
-
   </style>
-
 </head>
 
 <body>
 
   <div class="top-banner">
-
-    <img
-      src="logo.png"
-      class="logo"
-      alt="縱橫Logo">
-
-    <h1>
-      昭揚縱橫 咖啡廳點餐系統
-    </h1>
-
+    <img src="logo.png" class="logo" alt="縱橫Logo">
+    <h1>昭揚縱橫 咖啡廳點餐系統</h1>
   </div>
 
   <div class="login-container">
-
     <div class="login-title-wrapper">
-
       <div class="login-title-line"></div>
-
-      <h2 class="login-title">
-        登入
-      </h2>
-
+      <h2 class="login-title">登入</h2>
       <div class="login-title-line right"></div>
-
     </div>
 
     <div class="login-box">
-
       <div class="input-group">
-
         <svg viewBox="0 0 24 24">
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/>
         </svg>
-
-        <input
-          id="username"
-          type="text"
-          placeholder="username"
-          autocomplete="username">
-
+        <input id="username" type="text" placeholder="username" autocomplete="username">
       </div>
 
       <div class="input-group">
-
         <svg viewBox="0 0 24 24">
           <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
         </svg>
-
-        <input
-          id="password"
-          type="password"
-          placeholder="password"
-          autocomplete="current-password">
-
+        <input id="password" type="password" placeholder="password" autocomplete="current-password">
       </div>
 
       <label class="remember" for="rememberMe">
-
         <input type="checkbox" id="rememberMe">
-
         保持登入狀態
-
       </label>
 
-      <button
-        class="btn-login"
-        id="loginBtn">
-
-        登入
-
-      </button>
+      <button class="btn-login" id="loginBtn">登入</button>
 
       <div class="system-credit">
         © 2026 Cody Hsieh · Copilot · ChatGPT
       </div>
-
     </div>
-
   </div>
 
 <script type="module">
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
 import {
   getAuth,
   signInWithEmailAndPassword,
   setPersistence,
   browserLocalPersistence,
-  browserSessionPersistence
-}
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  browserSessionPersistence,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
   getFirestore,
@@ -314,11 +248,9 @@ import {
   query,
   where,
   getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
-
   apiKey: "AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",
   authDomain: "zonghengcafe.firebaseapp.com",
   projectId: "zonghengcafe",
@@ -326,67 +258,162 @@ const firebaseConfig = {
   messagingSenderId: "207027108121",
   appId: "1:207027108121:web:e7a39e19982ed77f9aed88",
   measurementId: "G-8ZE4SE2T7T"
-
 };
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const loginBtn =
-document.getElementById("loginBtn");
-
-const rememberedUser =
-localStorage.getItem("rememberUser");
-
-if(rememberedUser){
-
-  document.getElementById("username").value =
-  rememberedUser;
-
-  document.getElementById("rememberMe").checked = true;
-
-}
+const loginBtn = document.getElementById("loginBtn");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const rememberInput = document.getElementById("rememberMe");
 
 function makeEmail(username){
-
   return `${username}@zongheng.local`;
-
 }
+
+function redirectByRole(role){
+  switch(role){
+    case "engineer":
+      window.location.href = "engineer.html";
+      break;
+    case "cafe":
+      window.location.href = "cafe.html";
+      break;
+    case "property":
+      window.location.href = "property.html";
+      break;
+    case "resident":
+      window.location.href = "resident.html";
+      break;
+    default:
+      alert("未知角色");
+  }
+}
+
+async function getUserDataByUsername(username){
+  const q = query(
+    collection(db,"accounts"),
+    where("username","==",username)
+  );
+
+  const snapshot = await getDocs(q);
+
+  if(snapshot.empty){
+    return null;
+  }
+
+  return snapshot.docs[0].data();
+}
+
+async function getUserDataByEmail(email){
+  const q1 = query(
+    collection(db,"accounts"),
+    where("auth_email","==",email)
+  );
+
+  let snapshot = await getDocs(q1);
+
+  if(!snapshot.empty){
+    return snapshot.docs[0].data();
+  }
+
+  const q2 = query(
+    collection(db,"accounts"),
+    where("email","==",email)
+  );
+
+  snapshot = await getDocs(q2);
+
+  if(!snapshot.empty){
+    return snapshot.docs[0].data();
+  }
+
+  return null;
+}
+
+const rememberedUser = localStorage.getItem("rememberUser");
+const rememberLogin = localStorage.getItem("rememberLogin");
+
+if(rememberedUser){
+  usernameInput.value = rememberedUser;
+}
+
+if(rememberLogin === "yes"){
+  rememberInput.checked = true;
+}
+
+let checkingAutoLogin = true;
+
+onAuthStateChanged(auth, async user => {
+  if(!checkingAutoLogin){
+    return;
+  }
+
+  checkingAutoLogin = false;
+
+  if(!user){
+    return;
+  }
+
+  const remember = localStorage.getItem("rememberLogin");
+
+  if(remember !== "yes"){
+    return;
+  }
+
+  let savedProfile = null;
+
+  try{
+    savedProfile = JSON.parse(localStorage.getItem("zh_user") || "null");
+  }catch(e){
+    savedProfile = null;
+  }
+
+  if(savedProfile && savedProfile.username && savedProfile.role){
+    redirectByRole(savedProfile.role);
+    return;
+  }
+
+  const email = user.email || "";
+  const userData = await getUserDataByEmail(email);
+
+  if(userData && userData.username && userData.role){
+    localStorage.setItem(
+      "zh_user",
+      JSON.stringify({
+        username:userData.username,
+        role:userData.role
+      })
+    );
+
+    localStorage.setItem("rememberUser", userData.username);
+    redirectByRole(userData.role);
+  }
+});
 
 loginBtn.addEventListener("click", async ()=>{
 
-  const username =
-  document.getElementById("username").value.trim();
-
-  const password =
-  document.getElementById("password").value.trim();
-
-  const remember =
-  document.getElementById("rememberMe").checked;
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  const remember = rememberInput.checked;
 
   if(!username || !password){
-
     alert("請輸入帳號密碼");
     return;
-
   }
 
   loginBtn.disabled = true;
   loginBtn.innerText = "登入中";
 
   try{
-
     await setPersistence(
       auth,
-      remember
-      ? browserLocalPersistence
-      : browserSessionPersistence
+      remember ? browserLocalPersistence : browserSessionPersistence
     );
 
-    const email =
-    makeEmail(username);
+    const email = makeEmail(username);
 
     await signInWithEmailAndPassword(
       auth,
@@ -394,23 +421,12 @@ loginBtn.addEventListener("click", async ()=>{
       password
     );
 
-    const q = query(
-      collection(db,"accounts"),
-      where("username","==",username)
-    );
+    const userData = await getUserDataByUsername(username);
 
-    const snapshot =
-    await getDocs(q);
-
-    if(snapshot.empty){
-
+    if(!userData){
       alert("找不到帳號資料");
       return;
-
     }
-
-    const userData =
-    snapshot.docs[0].data();
 
     localStorage.setItem(
       "zh_user",
@@ -421,91 +437,42 @@ loginBtn.addEventListener("click", async ()=>{
     );
 
     if(remember){
-
-      localStorage.setItem(
-        "rememberUser",
-        username
-      );
-
+      localStorage.setItem("rememberLogin","yes");
+      localStorage.setItem("rememberUser", username);
     }else{
-
-      localStorage.removeItem(
-        "rememberUser"
-      );
-
+      localStorage.removeItem("rememberLogin");
+      localStorage.removeItem("rememberUser");
     }
 
-    switch(userData.role){
-
-      case "engineer":
-      window.location.href = "engineer.html";
-      break;
-
-      case "cafe":
-      window.location.href = "cafe.html";
-      break;
-
-      case "property":
-      window.location.href = "property.html";
-      break;
-
-      case "resident":
-      window.location.href = "resident.html";
-      break;
-
-      default:
-      alert("未知角色");
-
-    }
+    redirectByRole(userData.role);
 
   }catch(error){
-
     console.error(error);
-
     alert("登入失敗：" + error.message);
-
   }finally{
-
     loginBtn.disabled = false;
     loginBtn.innerText = "登入";
-
   }
-
 });
 
-document
-.getElementById("password")
-.addEventListener("keydown", function(e){
-
+passwordInput.addEventListener("keydown", function(e){
   if(e.key === "Enter"){
-
     loginBtn.click();
-
   }
-
 });
 
 if ("serviceWorker" in navigator) {
-
   window.addEventListener("load", () => {
-
     navigator.serviceWorker
       .register("./service-worker.js")
       .then(() => {
-
         console.log("PWA 已啟用");
-
       })
       .catch(err => {
-
         console.error("PWA 啟用失敗", err);
-
       });
-
   });
-
 }
-
 </script>
 
 </body>
