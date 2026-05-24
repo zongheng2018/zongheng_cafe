@@ -196,6 +196,16 @@ function timeToMinutes(t){
 }
 
 function isCafeOpenBySetting(setting){
+  const manualMode=setting.manual_mode||"auto";
+
+  if(manualMode==="force_open"){
+    return true;
+  }
+
+  if(manualMode==="force_closed"){
+    return false;
+  }
+
   const now=getTaipeiNow();
   const day=now.getDate();
   const minutes=now.getHours()*60+now.getMinutes();
