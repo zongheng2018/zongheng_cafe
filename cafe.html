@@ -28,17 +28,18 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
 .order-id{font-size:20px;font-weight:900}
 .meta{font-size:14px;color:#777;line-height:1.7}
-.badge{display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:800}
+.badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap;min-width:82px;height:38px;flex-shrink:0}
 .wait{background:#fff1d9;color:#9b681f}
 .making{background:#e6f0ff;color:#426f9c}
 .done{background:#e8f5e9;color:#3f7f47}
 .cancel{background:#fde8e6;color:#b3514a}
-.order-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
+.order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
 .order-item{padding:10px 0;border-bottom:1px solid #eee}
 .item-name{font-weight:900}
 .item-detail{font-size:14px;color:#777;line-height:1.6}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
 .btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81}
+.order-card .btn{min-width:64px}
 .btn.primary{background:#6d6258}
 .btn.done{background:#6b8b61}
 .btn.danger{background:#c86b62}
@@ -84,7 +85,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="title">咖啡廳櫃台</div>
   </div>
   <div class="header-actions">
-    <button class="sound-btn" id="soundBtn" onclick="enableSound()">啟用音效</button>
+    <button class="sound-btn on" id="soundBtn" onclick="enableSound()">音效已啟用</button>
     <button class="logout" id="logoutBtn">登出</button>
   </div>
 </div>
@@ -109,12 +110,17 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="section-title">新增菜單</div>
       <div class="form-grid">
         <input id="mName" placeholder="品項名稱">
-        <input id="mPrice" type="number" placeholder="價格">
+        <input id="mPrice" type="number" placeholder="價格（點）">
         <select id="mCategorySelect" onchange="syncCategoryInput()">
           <option value="">選擇既有分類</option>
         </select>
         <input id="mCategory" placeholder="分類，例如 咖啡">
         <input id="mImage" placeholder="圖片網址">
+        <input id="mSortOrder" type="number" placeholder="品項排序，數字越小越前面">
+        <select id="mAfterMeal">
+          <option value="false">不顯示餐後上</option>
+          <option value="true">顯示餐後上</option>
+        </select>
         <textarea id="mNote" placeholder="品項備註，可空白"></textarea>
       </div>
 
@@ -172,7 +178,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
           </select>
         </div>
 
-        <div class="counter-total" id="counterTotal">NT$ 0</div>
+        <div class="counter-total" id="counterTotal">0 點</div>
 
         <div class="btn-row">
           <button class="btn danger" onclick="clearCounterCart()">清空購物車</button>
@@ -197,6 +203,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <div style="font-weight:900;margin-top:14px;margin-bottom:8px;">每月固定公休日</div>
         <input id="closedDays" placeholder="例如：1,8,15,22">
 
+        <div style="font-weight:900;margin-top:14px;margin-bottom:8px;">分類顯示順序</div>
+        <input id="categoryOrderInput" placeholder="例如：咖啡,茶類,氣泡飲,甜點,輕食,其他">
+
         <div class="btn-row">
           <button class="btn done" onclick="saveCafeSchedule()">儲存營業設定</button>
           <button class="btn danger" onclick="clearWaitingOrders()">清除等待接單</button>
@@ -218,9 +227,14 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
     <div class="form-grid">
       <input id="editName" placeholder="品項名稱">
-      <input id="editPrice" type="number" placeholder="價格">
+      <input id="editPrice" type="number" placeholder="價格（點）">
       <input id="editCategory" placeholder="分類">
       <input id="editImage" placeholder="圖片網址">
+      <input id="editSortOrder" type="number" placeholder="品項排序，數字越小越前面">
+      <select id="editAfterMeal">
+        <option value="false">不顯示餐後上</option>
+        <option value="true">顯示餐後上</option>
+      </select>
       <textarea id="editNote" placeholder="品項備註"></textarea>
     </div>
 
@@ -295,11 +309,12 @@ const db=getFirestore(app);
 
 let menuCache=[];
 let categoryCache=[];
+let categoryOrder=[];
 let newOptionGroups=[];
 let editOptionGroups=[];
 let knownOrderIds=new Set();
 let firstSnapshot=true;
-let soundEnabled=false;
+let soundEnabled=true;
 let cafeProfile=null;
 
 let counterResident=null;
@@ -350,19 +365,62 @@ function formatOrderTime(value){
   });
 }
 
+function getCategoryRank(category){
+  const idx=categoryOrder.indexOf(category);
+  if(idx>=0)return idx+1;
+
+  const fallback={
+    "咖啡":1,
+    "茶類":2,
+    "氣泡飲":3,
+    "甜點":4,
+    "輕食":5,
+    "其他":99
+  };
+
+  return fallback[category]||999;
+}
+
+function sortMenuAndCategories(){
+  categoryCache.sort((a,b)=>{
+    const ra=getCategoryRank(a);
+    const rb=getCategoryRank(b);
+    if(ra!==rb)return ra-rb;
+    return String(a).localeCompare(String(b),"zh-Hant");
+  });
+
+  menuCache.sort((a,b)=>{
+    const ca=getCategoryRank(a.category||"未分類");
+    const cb=getCategoryRank(b.category||"未分類");
+
+    if(ca!==cb)return ca-cb;
+
+    const sa=Number(a.sort_order||999);
+    const sb=Number(b.sort_order||999);
+
+    if(sa!==sb)return sa-sb;
+
+    return String(a.name||"").localeCompare(String(b.name||""),"zh-Hant");
+  });
+}
+
 window.enableSound=async()=>{
   const audio=document.getElementById("newOrderAudio");
+
   try{
     audio.volume=1;
     await audio.play();
     audio.pause();
     audio.currentTime=0;
     soundEnabled=true;
+    localStorage.setItem("cafe_sound","on");
     soundBtn.classList.add("on");
     soundBtn.innerText="音效已啟用";
-    alert("新訂單音效已啟用");
   }catch(e){
-    alert("瀏覽器阻擋音效，請再按一次啟用音效");
+    soundEnabled=true;
+    localStorage.setItem("cafe_sound","on");
+    soundBtn.classList.add("on");
+    soundBtn.innerText="音效已啟用";
   }
 };
 
@@ -371,7 +429,7 @@ function playNewOrderSound(){
   const audio=document.getElementById("newOrderAudio");
   try{
     audio.currentTime=0;
-    audio.play();
+    audio.play().catch(()=>{});
   }catch(e){}
 }
 
@@ -381,10 +439,22 @@ onAuthStateChanged(auth,async user=>{
   if(!raw){location.href="index.html";return}
   cafeProfile=JSON.parse(raw);
   if(cafeProfile.role!=="cafe"){alert("沒有權限");location.href="index.html";return}
+
+  const savedSound=localStorage.getItem("cafe_sound");
+  if(savedSound==="off"){
+    soundEnabled=false;
+    soundBtn.classList.remove("on");
+    soundBtn.innerText="啟用音效";
+  }else{
+    soundEnabled=true;
+    soundBtn.classList.add("on");
+    soundBtn.innerText="音效已啟用";
+  }
+
+  await loadSettings();
   listenOrders();
   await loadMenu();
   await loadSeatsForCounter();
-  await loadSettings();
 });
 
 window.showTab=(tab,btn)=>{
@@ -469,7 +539,7 @@ function listenOrders(){
             <div class="order-id">${o.order_id||d.id}</div>
             <div class="meta">住戶：${o.uid||""}</div>
             <div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
-            <div class="meta">金額：NT$ ${o.total||0}</div>
+            <div class="meta">金額：${o.total||0} 點</div>
             <div class="meta">下單時間：${formatOrderTime(o.created_at)}</div>
             ${o.created_by?`<div class="meta">建立來源：${o.created_by}</div>`:""}
           </div>
@@ -612,6 +682,7 @@ window.addMenu=async()=>{
   const category=(mCategory.value||mCategorySelect.value).trim();
   const image=mImage.value.trim();
   const note=mNote.value.trim();
+  const sort_order=Number(mSortOrder.value||999);
 
   if(!name||!price||!category){
     alert("請填名稱、價格、分類");
@@ -619,7 +690,13 @@ window.addMenu=async()=>{
   }
 
   await addDoc(collection(db,"menu"),{
-    name,price,category,image,note,
+    name,
+    price,
+    category,
+    image,
+    note,
+    sort_order,
+    after_meal_enabled:mAfterMeal.value==="true",
     enabled:true,
     custom_options:getCleanOptions(newOptionGroups),
     note_enabled:true,
@@ -631,6 +708,8 @@ window.addMenu=async()=>{
   mCategory.value="";
   mCategorySelect.value="";
   mImage.value="";
+  mSortOrder.value="";
+  mAfterMeal.value="false";
   mNote.value="";
   newOptionGroups=[];
   renderNewOptionGroups();
@@ -659,7 +738,11 @@ async function loadMenu(){
     if(m.category&&!categoryCache.includes(m.category)){
       categoryCache.push(m.category);
     }
+  });
 
+  sortMenuAndCategories();
+
+  menuCache.forEach(m=>{
     const optionsText=(m.custom_options||[])
       .map(o=>`${o.title}：${(o.choices||[]).join("、")}`)
       .join("<br>");
@@ -671,7 +754,8 @@ async function loadMenu(){
       <div>
         <div class="menu-name">${m.name||""}</div>
         <div class="menu-meta">
-          ${m.category||""}｜NT$ ${m.price||0}｜${m.enabled===false?"暫停供應":"供應中"}<br>
+          ${m.category||""}｜${m.price||0} 點｜排序：${m.sort_order||999}｜${m.enabled===false?"暫停供應":"供應中"}<br>
+          ${m.after_meal_enabled===true?"可選餐後上<br>":""}
           ${optionsText || "未設定自訂選項"}
         </div>
       </div>
@@ -696,6 +780,8 @@ window.openEditMenu=(id)=>{
   editPrice.value=m.price||0;
   editCategory.value=m.category||"";
   editImage.value=m.image||"";
+  editSortOrder.value=m.sort_order||"";
+  editAfterMeal.value=m.after_meal_enabled===true?"true":"false";
   editNote.value=m.note||"";
   editOptionGroups=JSON.parse(JSON.stringify(m.custom_options||[]));
   renderEditOptionGroups();
@@ -759,6 +845,8 @@ window.saveEditMenu=async()=>{
     category:editCategory.value.trim(),
     image:editImage.value.trim(),
     note:editNote.value.trim(),
+    sort_order:Number(editSortOrder.value||999),
+    after_meal_enabled:editAfterMeal.value==="true",
     custom_options:getCleanOptions(editOptionGroups),
     note_enabled:true,
     updated_at:new Date().toISOString()
@@ -792,27 +880,36 @@ async function loadSettings(){
       open:true,
       open_time:"08:30",
       close_time:"19:00",
-      closed_days:[]
+      closed_days:[],
+      category_order:["咖啡","茶類","氣泡飲","甜點","輕食","其他"]
     },{merge:true});
 
+    categoryOrder=["咖啡","茶類","氣泡飲","甜點","輕食","其他"];
     systemStatus.innerText="目前狀態：開放點餐｜自動營業 08:30–19:00";
     openTime.value="08:30";
     closeTime.value="19:00";
     closedDays.value="";
+    categoryOrderInput.value=categoryOrder.join(",");
     return;
   }
 
   const data=s.data();
   const effectiveOpen=isCafeOpenBySetting(data);
 
+  categoryOrder=Array.isArray(data.category_order)&&data.category_order.length
+    ? data.category_order
+    : ["咖啡","茶類","氣泡飲","甜點","輕食","其他"];
+
   systemStatus.innerText=
     "目前狀態："+(effectiveOpen?"開放點餐":"關閉點餐")+
     "｜自動營業 "+(data.open_time||"08:30")+"–"+(data.close_time||"19:00")+
-    "｜公休日："+((data.closed_days||[]).join(",")||"無");
+    "｜公休日："+((data.closed_days||[]).join(",")||"無")+
+    "｜分類順序："+categoryOrder.join("、");
 
   openTime.value=data.open_time||"08:30";
   closeTime.value=data.close_time||"19:00";
   closedDays.value=Array.isArray(data.closed_days)?data.closed_days.join(","):"";
+  categoryOrderInput.value=categoryOrder.join(",");
 }
 
 window.setCafeOpen=async(open)=>{
@@ -832,14 +929,22 @@ window.saveCafeSchedule=async()=>{
     ? raw.split(",").map(x=>Number(x.trim())).filter(x=>x>=1&&x<=31)
     : [];
 
+  const rawCategory=categoryOrderInput.value.trim();
+  const categories=rawCategory
+    ? rawCategory.split(",").map(x=>x.trim()).filter(x=>x)
+    : ["咖啡","茶類","氣泡飲","甜點","輕食","其他"];
+
   await setDoc(doc(db,"settings","cafe"),{
     open_time:openTime.value||"08:30",
     close_time:closeTime.value||"19:00",
-    closed_days:days
+    closed_days:days,
+    category_order:categories
   },{merge:true});
 
   await loadSettings();
-  alert("營業設定已儲存");
+  await loadMenu();
+  renderCounterMenu();
+  alert("營業與分類設定已儲存");
 };
 
 window.clearWaitingOrders=async()=>{
@@ -938,7 +1043,7 @@ window.loadCounterResident=async()=>{
     counterStored=0;
     counterResidentInfo.innerHTML=`
       帳號：${username}<br>
-      找不到點數資料，請洽物業。
+      找不到點資料，請洽物業。
     `;
     return;
   }
@@ -952,9 +1057,9 @@ window.loadCounterResident=async()=>{
 
   counterResidentInfo.innerHTML=`
     帳號：${username}<br>
-    配發點數：${counterGranted}<br>
-    儲值點數：${counterStored}<br>
-    總點數：${counterGranted+counterStored}
+    配發點：${counterGranted}<br>
+    儲值點：${counterStored}<br>
+    總點：${counterGranted+counterStored}
   `;
 
   renderCounterCart();
@@ -984,7 +1089,7 @@ function renderCounterMenu(){
       <img class="counter-mini-img" src="${m.image||""}">
       <div>
         <div class="menu-name">${m.name||""}</div>
-        <div class="menu-meta">${m.category||""}｜NT$ ${m.price||0}</div>
+        <div class="menu-meta">${m.category||""}｜${m.price||0} 點</div>
       </div>
       <button class="btn primary" onclick="openCounterItemModal('${m.id}')">加入</button>
     `;
@@ -1011,7 +1116,7 @@ function renderCounterOptions(){
   counterOptionArea.innerHTML="";
   const opts=Array.isArray(counterCurrentItem.custom_options)?counterCurrentItem.custom_options:[];
 
-  if(!opts.length){
+  if(!opts.length&&!counterCurrentItem.after_meal_enabled){
     counterOptionArea.innerHTML=`<div class="setting-status">此品項沒有自訂選項</div>`;
     return;
   }
@@ -1031,6 +1136,19 @@ function renderCounterOptions(){
     `;
     counterOptionArea.appendChild(div);
   });
+
+  if(counterCurrentItem.after_meal_enabled===true){
+    const div=document.createElement("div");
+    div.style.marginBottom="12px";
+    div.innerHTML=`
+      <label style="display:block;font-weight:900;margin-bottom:8px;">是否餐後上</label>
+      <select id="counterAfterMeal">
+        <option value="否">否</option>
+        <option value="是">是</option>
+      </select>
+    `;
+    counterOptionArea.appendChild(div);
+  }
 }
 
 window.counterChangeQty=(n)=>{
@@ -1052,6 +1170,11 @@ window.addCounterItemToCart=()=>{
     }
   });
 
+  const afterMeal=document.getElementById("counterAfterMeal");
+  if(afterMeal){
+    options["是否餐後上"]=afterMeal.value;
+  }
+
   counterCart.push({
     id:counterCurrentItem.id,
     name:counterCurrentItem.name,
@@ -1071,7 +1194,7 @@ function renderCounterCart(){
 
   if(!counterCart.length){
     box.innerHTML=`<div class="empty">購物車目前是空的</div>`;
-    counterTotal.innerText="NT$ 0";
+    counterTotal.innerText="0 點";
     return;
   }
 
@@ -1089,15 +1212,15 @@ function renderCounterCart(){
       <div class="item-detail">
         ${optionsText||"無自訂選項"}<br>
         備註：${item.note||"無"}<br>
-        小計：NT$ ${item.price*item.qty}
+        小計：${item.price*item.qty} 點
       </div>
       <button class="small-btn danger" onclick="removeCounterCartItem(${index})">刪除</button>
     `;
     box.appendChild(div);
   });
 
-  counterTotal.innerText=`NT$ ${total}`;
-};
+  counterTotal.innerText=`${total} 點`;
+}
 
 window.removeCounterCartItem=(index)=>{
   counterCart.splice(index,1);
@@ -1117,7 +1240,7 @@ window.submitCounterOrder=async()=>{
   }
 
   if(!counterBalanceDocId){
-    alert("找不到住戶點數資料");
+    alert("找不到住戶點資料");
     return;
   }
 
@@ -1137,7 +1260,7 @@ window.submitCounterOrder=async()=>{
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0);
 
   if(counterGranted+counterStored<total){
-    alert("住戶點數不足");
+    alert("住戶點不足");
     return;
   }
 
@@ -1177,9 +1300,9 @@ window.submitCounterOrder=async()=>{
 
   counterResidentInfo.innerHTML=`
     帳號：${counterResident.username}<br>
-    配發點數：${counterGranted}<br>
-    儲值點數：${counterStored}<br>
-    總點數：${counterGranted+counterStored}
+    配發點：${counterGranted}<br>
+    儲值點：${counterStored}<br>
+    總點：${counterGranted+counterStored}
   `;
 
   renderCounterCart();
