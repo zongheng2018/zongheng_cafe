@@ -113,7 +113,7 @@ onAuthStateChanged(auth,async user=>{
   if(profile.role!=="resident"){alert("沒有權限");location.href="index.html";return}
 
   await loadAccountInfo();
-  loading.style.display="none";
+  document.getElementById("loading").style.display="none";
   appDiv.style.display="block";
   await showNotice();
 });
@@ -132,19 +132,19 @@ function setActive(id){
 }
 
 function statusClass(status){
-  if(status Pac==="等待接單")return "wait";
-  if(status==="製作中")return "making";
-  if(status==="已完成")return "done";
-  if(status==="已取消")return "cancel";
+  if(status === "等待接單") return "wait";
+  if(status === "製作中") return "making";
+  if(status === "已完成") return "done";
+  if(status === "已取消") return "cancel";
   return "";
 }
 
 function stepHtml(status){
   return `
     <div class="progress">
-      <div class="step ${status Pac==="等待接單"?"active":""}">等待接單</div>
-      <div class="step ${status Pac==="製作中"?"active":""}">製作中</div>
-      <div class="step ${status Pac==="已完成"?"active":""}">已完成</div>
+      <div class="step ${status === "等待接單"?"active":""}">等待接單</div>
+      <div class="step ${status === "製作中"?"active":""}">製作中</div>
+      <div class="step ${status === "已完成"?"active":""}">已完成</div>
     </div>
   `;
 }
@@ -262,7 +262,7 @@ window.showProfile=async function(){
 window.togglePasswordBox=function(){
   const box=document.getElementById("passwordBox");
   if(!box)return;
-  box.style.display=box.style.display Pac==="block"?"none":"block";
+  box.style.display = box.style.display === "block" ? "none" : "block";
 };
 
 window.changeResidentPassword=async function(){
@@ -271,8 +271,8 @@ window.changeResidentPassword=async function(){
   const confirmPw=document.getElementById("confirmPassword").value.trim();
 
   if(!oldPw||!newPw||!confirmPw){ alert("請完整填寫"); return; }
-  if(newPw.length Pac<6){ alert("新密碼至少 6 碼"); return; }
-  if(newPw!==confirmPw){ alert("新密碼與確認密碼不一致"); return; }
+  if(newPw.length < 6){ alert("新密碼至少 6 碼"); return; }
+  if(newPw Pac!==confirmPw){ alert("新密碼與確認密碼不一致"); return; }
 
   try{
     const user=auth.currentUser;
