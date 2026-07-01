@@ -61,15 +61,12 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .sig-canvas{border:2px dashed #c9c0b7;background:#fdfcfb;border-radius:14px;cursor:crosshair;display:block;margin:14px 0}
 .time-lock-box{background:#f5f1eb;border:1px solid #eee5dd;border-radius:14px;padding:14px;margin:4px 0;grid-column:1/-1}
 
-/* 🚀 完美對接：接單畫面的莫蘭迪彩色狀態外框大標籤 */
+/* 🚀 訂單卡片右上角狀態圓角彩色外框標籤樣式 */
 .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap;min-width:82px;height:34px;flex-shrink:0}
 .badge.wait{background:#fff1d9;color:#9b681f;border:1px solid #ffe3be}
 .badge.making{background:#e6f0ff;color:#426f9c;border:1px solid #bcd8ff}
 .badge.done{background:#e8f5e9;color:#3f7f47;border:1px solid #c8e6c9}
 .badge.cancel{background:#fde8e6;color:#b3514a;border:1px solid #f9cbd7}
-
-@media(max-width:900px){.counter-grid{grid-template-columns:1fr}}
-@media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.menu-row{grid-template-columns:1fr}.counter-menu-row{grid-template-columns:64px 1fr}.counter-menu-row .btn{grid-column:1/-1}.brand img{width:60px}.title{font-size:18px}.header{padding:0 12px}.sound-btn{font-size:13px;padding:8px}}
 </style>
 </head>
 
@@ -158,7 +155,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
             <option value="內用">內用</option>
             <option value="外帶">外帶</option>
           </select>
-          <!-- 🚀 修正：內用座位選擇下拉選單 -->
           <div id="counterSeatArea">
             <select id="counterSeat"><option value="">請選擇座位</option></select>
           </div>
@@ -195,7 +191,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </section>
 </div>
 
-<!-- 編輯品項燈箱 -->
 <div class="modal-bg" id="editModalBg">
   <div class="modal">
     <div class="section-title">編輯品項</div>
@@ -216,10 +211,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
       <textarea id="editNote" placeholder="品項備註"></textarea>
     </div>
-    <div class="option-editor">
-      <div class="option-title">自訂選項</div><div id="editOptionList"></div>
-      <button class="btn light" type="button" onclick="addEditOptionGroup()">＋新增選項群組</button>
-    </div>
     <div class="btn-row">
       <button class="btn primary" onclick="saveEditMenu()">儲存修改</button>
       <button class="btn light" onclick="closeEditModal()">取消</button>
@@ -227,7 +218,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </div>
 </div>
 
-<!-- 代客點餐選擇視窗 -->
 <div class="modal-bg" id="counterItemModalBg">
   <div class="modal">
     <div class="section-title" id="counterItemTitle">選擇品項</div>
@@ -282,6 +272,15 @@ function playPremiumCrystalSound() {
   } catch (e) { console.error(e); }
 }
 
+// 🚀 格式化為台灣在地好讀時間
+function formatLocalTime(isoString) {
+  if(!isoString) return "未知時間";
+  try {
+    const d = new Date(isoString);
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+  } catch(e) { return "時間格式錯誤"; }
+}
+
 function getBadgeStatusClass(status) {
   if (status === "等待接單") return "wait";
   if (status === "製作中") return "making";
@@ -331,7 +330,8 @@ function listenOrders(){
       }
       
       const div=document.createElement("div"); div.className="order-card";
-      div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div><div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div>${sigHtml}</div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
+      // 🚀 修正：新增「送出時間：」欄位，顯示在地排單時間
+      div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div><div class="meta" style="font-weight:bold; color:#7a594c;">送出時間：${formatLocalTime(o.created_at)}</div><div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div>${sigHtml}</div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       if(status === "等待接單") waitingOrders.appendChild(div); else if(status === "製作中") makingOrders.appendChild(div); else doneOrders.appendChild(div);
     });
     if(hasNewIncomingOrder){ playPremiumCrystalSound(); } isInitialLoad = false;
@@ -368,7 +368,7 @@ function getCleanOptions(groups) {
 window.addMenu=async()=>{
   const name=mName.value.trim(); const price=Number(mPrice.value); const category=(mCategory.value||mCategorySelect.value).trim(); const isTimeRestricted = document.getElementById("mTimeRestricted").checked;
   await addDoc(collection(db,"menu"),{ name, price, category, enabled:true, custom_options:getCleanOptions(newOptionGroups), is_time_restricted: isTimeRestricted, start_time: isTimeRestricted ? mStartTime.value : "09:00", end_time: isTimeRestricted ? mEndTime.value : "17:00", created_at:new Date().toISOString() });
-  mName.value=""; mPrice.value=""; mCategory.value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
+  mName.value=""; mPrice.value=""; mCategory.value=""; mCategorySelect.value=""; alert("新增成功"); await loadMenu();
 };
 
 async function loadMenu(){
@@ -439,27 +439,20 @@ function renderCounterMenu(){
   });
 }
 
-// 🚀 修正：櫃台開啟規格視窗時，必須正確渲染出自訂選項（如微糖去冰），不能是空白！
 window.openCounterItemModal=(id)=>{
   counterCurrentItem=menuCache.find(x=>x.id===id); counterItemTitle.innerText=counterCurrentItem.name; counterItemQty.value=1; counterItemNote.value="";
   const area = document.getElementById("counterOptionArea"); area.innerHTML="";
   (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{
-    area.innerHTML += `<div class="option-title" style="font-weight:800; margin:6px 0;">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>環境`;
+    area.innerHTML += `<div class="option-title" style="font-weight:800; margin:6px 0;">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
   });
   counterItemModalBg.style.display="flex";
 };
 window.closeCounterItemModal=()=>counterItemModalBg.style.display="none";
 
-// 🚀 修正：點擊確認加入時，必須撈到對應的自訂規格選擇
 window.addCounterItemToCart=()=>{
   const options = {};
-  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{
-    options[g.title] = document.getElementById(`counter_opt_${idx}`).value;
-  });
-  counterCart.push({
-    id:counterCurrentItem.id, name:counterCurrentItem.name, price:Number(counterCurrentItem.price||0),
-    qty:Number(counterItemQty.value||1), options, note:counterItemNote.value.trim()
-  });
+  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
+  counterCart.push({ id:counterCurrentItem.id, name:counterCurrentItem.name, price:Number(counterCurrentItem.price||0), qty:Number(counterItemQty.value||1), options, note:counterItemNote.value.trim() });
   closeCounterItemModal(); renderCounterCart();
 };
 
@@ -473,27 +466,19 @@ function renderCounterCart(){
   counterTotal.innerText=`${total} 點`;
 }
 
-// 🚀 修正：內用座位載入邏輯——必須完全動態讀取資料庫 seats 集合中的可用號碼！
 async function loadSeatsForCounter(){ 
   const snap = await getDocs(collection(db, "seats"));
-  const select = document.getElementById("counterSeat"); 
-  if(!select) return;
+  const select = document.getElementById("counterSeat"); if(!select) return;
   select.innerHTML = `<option value="">請選擇座位</option>`;
-  snap.forEach(d => { 
-    const data = d.data();
-    if(data.available !== false) {
-      select.innerHTML += `<option value="${data.seatId}">${data.seatId}</option>`;
-    }
-  });
+  snap.forEach(d => { const data = d.data(); if(data.available !== false) { select.innerHTML += `<option value="${data.seatId}">${data.seatId}</option>`; } });
 }
 
 window.toggleCounterSeat=()=>{
   const selectArea = document.getElementById("counterSeatArea");
-  if(selectArea) {
-    selectArea.style.display = counterDining.value === "內用" ? "block" : "none";
-  }
+  if(selectArea) { selectArea.style.display = counterDining.value === "內用" ? "block" : "none"; }
 };
 
+initCafeSignatureCanvas();
 function initCafeSignatureCanvas(){
   cafeCanvas=document.getElementById("cafeSigCanvas"); if(!cafeCanvas)return; cafeCtx=cafeCanvas.getContext("2d"); cafeCtx.strokeStyle="#5f574f"; cafeCtx.lineWidth=3; cafeCtx.lineCap="round";
   cafeCanvas.addEventListener("mousedown",(e)=>{ cafeIsDrawing=true; cafeCtx.beginPath(); const rect=cafeCanvas.getBoundingClientRect(); cafeCtx.moveTo(e.clientX-rect.left,e.clientY-rect.top); });
@@ -511,23 +496,10 @@ window.prepareCounterSign=()=>{
   clearCafeSignature(); cafeSignModalBg.style.display="flex"; 
 };
 
-// 🚀 修正：確認訂單並完全成功寫入資料庫
 window.confirmCounterOrderWithSignature=async()=>{
-  const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); 
-  if(counterGranted + counterStored < total) { alert("該住戶點數不足以支付此筆訂單！"); return; }
-  
-  await addDoc(collection(db,"orders"),{ 
-    order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, 
-    dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", 
-    status:"等待接單", counter_signature:cafeCanvas.toDataURL("image/png"), created_at:new Date().toISOString() 
-  });
-  
-  await updateDoc(doc(db,"balances",counterBalanceDocId),{
-    granted_amount: counterGranted >= total ? counterGranted - total : 0,
-    stored_amount: counterGranted >= total ? counterStored : counterStored - (total - counterGranted),
-    updated_by:"cafe_counter"
-  }); 
-  
+  const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); if(counterGranted + counterStored < total) { alert("該住戶點數不足！"); return; }
+  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", status:"等待接單", counter_signature:cafeCanvas.toDataURL("image/png"), created_at:new Date().toISOString() });
+  await updateDoc(doc(db,"balances",counterBalanceDocId),{ granted_amount: counterGranted >= total ? counterGranted - total : 0, stored_amount: counterGranted >= total ? counterStored : counterStored - (total - currentGranted), updated_by:"cafe_counter" }); 
   alert("代客點餐訂單已完全成功送出！"); counterCart=[]; renderCounterCart(); closeCafeSignModal();
 };
 
