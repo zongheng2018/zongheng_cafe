@@ -24,7 +24,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 input,textarea,select{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
 textarea{height:86px;resize:none;grid-column:1/-1}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81}
+.btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81;cursor:pointer}
 .btn.primary{background:#6d6258}
 .btn.done{background:#6b8b61}
 .btn.danger{background:#c86b62}
@@ -36,7 +36,12 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .row-meta{font-size:14px;color:#777;line-height:1.7;margin-top:4px}
 .status-box{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
 .point-box{background:white;border:1px solid #eee5dd;border-radius:18px;padding:16px;margin-bottom:14px}
-@media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.list-row{grid-template-columns:1fr}.brand img{width:60px}.title{font-size:18px}.header{padding:0 12px}}
+
+/* 電子簽名燈箱樣式設定 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99;padding:18px}
+.modal{background:white;width:100%;max-width:500px;border-radius:24px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+.sig-canvas{border:2px dashed #c9c0b7;background:#fdfcfb;border-radius:14px;cursor:crosshair;display:block;margin:14px 0}
+@media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.list-row{grid-template-columns:1fr}.brand img{width:60px}.title{font-size:18px}.header padding:0 12px}
 </style>
 </head>
 
@@ -117,7 +122,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
 
       <div class="btn-row">
-        <button class="btn done" onclick="saveResidentPoints()">直接儲存目前數值</button>
+        <button class="btn done" onclick="prepareSign('save')">直接儲存目前數值</button>
       </div>
 
       <div class="status-box" style="margin-top:18px;">
@@ -131,8 +136,8 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         </div>
 
         <div class="btn-row">
-          <button class="btn done" onclick="addResidentPoints()">新增點數</button>
-          <button class="btn danger" onclick="minusResidentPoints()">扣除點數</button>
+          <button class="btn done" onclick="prepareSign('add')">新增點數</button>
+          <button class="btn danger" onclick="prepareSign('minus')">扣除點數</button>
         </div>
       </div>
     </div>
@@ -150,6 +155,22 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     </div>
   </section>
 
+</div>
+
+<div class="modal-bg" id="signModalBg">
+  <div class="modal">
+    <div class="section-title">請住戶確認並簽名</div>
+    <div id="signSummary" class="status-box" style="margin-bottom: 12px; font-weight: 800;"></div>
+    
+    <label style="font-weight:900;color:#6d6258;">請在下方框格內簽名：</label>
+    <canvas id="sigCanvas" class="sig-canvas" width="450" height="200"></canvas>
+    
+    <div class="btn-row">
+      <button class="btn primary done" onclick="confirmAndSubmitWithSignature()">確認送出</button>
+      <button class="btn light" onclick="clearSignature()">清除重簽</button>
+      <button class="btn danger" onclick="closeSignModal()">取消</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -199,6 +220,10 @@ let currentPointUser = null;
 let currentGranted = 0;
 let currentStored = 0;
 
+// 簽名暫存狀態控制變數
+let pendingActionType = ""; 
+let canvas, ctx, isDrawing = false;
+
 onAuthStateChanged(auth, async user => {
   if (!user) {
     location.href = "index.html";
@@ -221,6 +246,7 @@ onAuthStateChanged(auth, async user => {
   }
 
   await reloadAll();
+  initSignatureCanvas(); // 初始化畫布事件
 });
 
 window.showTab = (tab, btn) => {
@@ -446,7 +472,8 @@ window.loadResidentPoints = async () => {
   clearPointDeltaInputs();
 };
 
-async function savePointValues(granted, stored) {
+// 核心微調：寫入點數資料時，一併附帶住戶簽名的 base64 字串作為存證
+async function savePointValues(granted, stored, signatureDataUrl = "") {
   const username = point_username.value.trim();
 
   if (!username) {
@@ -464,6 +491,7 @@ async function savePointValues(granted, stored) {
       uid: username,
       granted_amount: granted,
       stored_amount: stored,
+      last_signature: signatureDataUrl, // 保存電子簽名圖檔
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       updated_by: propertyProfile?.username || "property"
@@ -474,6 +502,7 @@ async function savePointValues(granted, stored) {
     await updateDoc(doc(db, "balances", currentBalanceDocId), {
       granted_amount: granted,
       stored_amount: stored,
+      last_signature: signatureDataUrl, // 更新電子簽名圖檔
       updated_at: new Date().toISOString(),
       updated_by: propertyProfile?.username || "property"
     });
@@ -489,82 +518,147 @@ async function savePointValues(granted, stored) {
   renderPointInfo(username, granted, stored);
 }
 
-window.saveResidentPoints = async () => {
-  const granted = Number(edit_granted.value || 0);
-  const stored = Number(edit_stored.value || 0);
+// ==========================================
+//           電子簽名畫布核心邏輯
+// ==========================================
 
-  await savePointValues(granted, stored);
+function initSignatureCanvas() {
+  canvas = document.getElementById("sigCanvas");
+  if (!canvas) return;
+  ctx = canvas.getContext("2d");
+  
+  ctx.strokeStyle = "#5f574f"; // 線條顏色對齊原本系統字體顏色
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
 
-  alert("點數已更新");
+  // 滑鼠事件模擬軌跡（完全相容隨插即用繪圖板）
+  canvas.addEventListener("mousedown", startDrawing);
+  canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mouseup", stopDrawing);
+  canvas.addEventListener("mouseout", stopDrawing);
+
+  // 觸控事件模擬軌跡（相容平板或輕觸控設備）
+  canvas.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousedown", {
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+  }, { passive: true });
+
+  canvas.addEventListener("touchmove", (e) => {
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousemove", {
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+  }, { passive: true });
+}
+
+function startDrawing(e) {
+  isDrawing = true;
+  ctx.beginPath();
+  const rect = canvas.getBoundingClientRect();
+  ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  const rect = canvas.getBoundingClientRect();
+  ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+  ctx.stroke();
+}
+
+function stopDrawing() {
+  isDrawing = false;
+}
+
+window.clearSignature = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 };
 
-window.addResidentPoints = async () => {
-  const username = point_username.value.trim();
+window.closeSignModal = () => {
+  document.getElementById("signModalBg").style.display = "none";
+};
 
+// 按下動作時不直接寫入，先跳出彈出視窗並摘要變動資訊請住戶核對
+window.prepareSign = (actionType) => {
+  const username = point_username.value.trim();
   if (!username) {
     alert("請先載入住戶點數");
     return;
   }
-
-  if (!currentPointUser || currentPointUser !== username) {
-    await loadResidentPoints();
+  
+  pendingActionType = actionType;
+  const summaryBox = document.getElementById("signSummary");
+  
+  if (actionType === 'save') {
+    summaryBox.innerHTML = `住戶帳號：${username}<br>變更動作：直接調整總額<br>目標配發點：${edit_granted.value || 0} 點｜目標儲值點：${edit_stored.value || 0} 點`;
+  } else if (actionType === 'add') {
+    summaryBox.innerHTML = `住戶帳號：${username}<br>變更動作：【儲值/新增】點數<br>新增配發：+${add_granted.value || 0} 點｜新增儲值：+${add_stored.value || 0} 點`;
+  } else if (actionType === 'minus') {
+    summaryBox.innerHTML = `住戶帳號：${username}<br>變更動作：【扣除】點數<br>扣除配發：-${minus_granted.value || 0} 點｜扣除儲值：-${minus_stored.value || 0} 點`;
   }
 
-  const addGranted = Number(add_granted.value || 0);
-  const addStored = Number(add_stored.value || 0);
-
-  if (addGranted <= 0 && addStored <= 0) {
-    alert("請輸入要新增的點數");
-    return;
-  }
-
-  const newGranted = currentGranted + addGranted;
-  const newStored = currentStored + addStored;
-
-  await savePointValues(newGranted, newStored);
-
-  clearPointDeltaInputs();
-
-  alert("點數已新增");
+  clearSignature(); // 清空畫布
+  document.getElementById("signModalBg").style.display = "flex";
 };
 
-window.minusResidentPoints = async () => {
-  const username = point_username.value.trim();
-
-  if (!username) {
-    alert("請先載入住戶點數");
+// 住戶完成簽名，按下確認送出後，才正式封裝 Base64 資料送進資料庫
+window.confirmAndSubmitWithSignature = async () => {
+  // 將 Canvas 轉換成極小的 Base64 輕量圖片字串
+  const sigImgData = canvas.toDataURL("image/png");
+  
+  // 檢查是否有畫任何一筆軌跡，防範空白送出
+  const blankCanvas = document.createElement('canvas');
+  blankCanvas.width = canvas.width;
+  blankCanvas.height = canvas.height;
+  if (sigImgData === blankCanvas.toDataURL("image/png")) {
+    alert("請住戶完成手寫簽名後再確認送出。");
     return;
   }
 
-  if (!currentPointUser || currentPointUser !== username) {
-    await loadResidentPoints();
+  closeSignModal();
+
+  if (pendingActionType === 'save') {
+    const granted = Number(edit_granted.value || 0);
+    const stored = Number(edit_stored.value || 0);
+    await savePointValues(granted, stored, sigImgData);
+    alert("點數變動已確認，簽名檔已安全存證！");
+    
+  } else if (pendingActionType === 'add') {
+    const addGranted = Number(add_granted.value || 0);
+    const addStored = Number(add_stored.value || 0);
+    if (addGranted <= 0 && addStored <= 0) {
+      alert("請輸入要新增的點數");
+      return;
+    }
+    const newGranted = currentGranted + addGranted;
+    const newStored = currentStored + addStored;
+    await savePointValues(newGranted, newStored, sigImgData);
+    clearPointDeltaInputs();
+    alert("儲值點數已成功，簽名檔已安全存證！");
+
+  } else if (pendingActionType === 'minus') {
+    const minusGranted = Number(minus_granted.value || 0);
+    const minusStored = Number(minus_stored.value || 0);
+    if (minusGranted <= 0 && minusStored <= 0) {
+      alert("請輸入要扣除的點數");
+      return;
+    }
+    const newGranted = currentGranted - minusGranted;
+    const newStored = currentStored - minusStored;
+    if (newGranted < 0 || newStored < 0) {
+      alert("扣除後點數不能小於 0");
+      return;
+    }
+    if (!confirm("確定要扣除點數？")) return;
+    await savePointValues(newGranted, newStored, sigImgData);
+    clearPointDeltaInputs();
+    alert("扣除點數已成功，簽名檔已安全存證！");
   }
-
-  const minusGranted = Number(minus_granted.value || 0);
-  const minusStored = Number(minus_stored.value || 0);
-
-  if (minusGranted <= 0 && minusStored <= 0) {
-    alert("請輸入要扣除的點數");
-    return;
-  }
-
-  const newGranted = currentGranted - minusGranted;
-  const newStored = currentStored - minusStored;
-
-  if (newGranted < 0 || newStored < 0) {
-    alert("扣除後點數不能小於 0");
-    return;
-  }
-
-  if (!confirm("確定要扣除點數？")) {
-    return;
-  }
-
-  await savePointValues(newGranted, newStored);
-
-  clearPointDeltaInputs();
-
-  alert("點數已扣除");
 };
 
 async function loadSystemStatus() {
