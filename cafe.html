@@ -162,17 +162,22 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="counter-grid">
       <div class="card">
         <div class="section-title">菜單</div>
+        <select id="counterCategoryFilter" onchange="changeCounterCategory(this.value)" style="margin-bottom:14px;">
+          <option value="全部">全部分類</option>
+        </select>
         <div id="counterMenuList" class="counter-menu-list"></div>
       </div>
       <div class="card">
         <div class="section-title">櫃台購物車</div>
         <div id="counterCartList"></div>
         <div class="form-grid" style="margin-top:14px;">
-          <select id="counterDining">
+          <select id="counterDining" onchange="toggleCounterSeat()">
             <option value="內用">內用</option>
             <option value="外帶">外帶</option>
           </select>
-          <select id="counterSeat"></select>
+          <select id="counterSeat">
+            <option value="">請選擇座位</option>
+          </select>
         </div>
         <div class="counter-total" id="counterTotal">0 點</div>
         <div class="btn-row">
@@ -230,10 +235,12 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </div>
 </div>
 
+<!-- 代客點餐規格燈箱 -->
 <div class="modal-bg" id="counterItemModalBg">
   <div class="modal">
     <div class="section-title" id="counterItemTitle">選擇品項</div>
     <div id="counterOptionArea"></div>
+    <div style="margin-top:12px;"><textarea id="counterItemNote" placeholder="備註，可空白"></textarea></div>
     <div class="form-grid" style="margin-top:12px;">
       <button class="btn light" onclick="counterChangeQty(-1)">−</button>
       <input id="counterItemQty" type="number" value="1" min="1">
@@ -247,7 +254,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <div class="modal-bg" id="cafeSignModalBg">
   <div class="modal" style="max-width: 500px;">
     <div class="section-title">住戶點餐明細確認</div>
-    <div id="cafeSignSummary" class="setting-status" style="margin-bottom: 12px;"></div>
+    <div id="cafeSignSummary" class="setting-status" style="margin-bottom: 12px; line-height:1.6;"></div>
     <canvas id="cafeSigCanvas" class="sig-canvas" width="450" height="180"></canvas>
     <div class="btn-row">
       <button class="btn primary done" onclick="confirmCounterOrderWithSignature()">確認送出訂單</button>
@@ -281,6 +288,7 @@ let counterBalanceDocId=null;
 let counterGranted=0, counterStored=0;
 let counterCart=[];
 let counterCurrentItem=null;
+let currentCounterCategory="全部";
 let ordersUnsubscribe=null;
 let cafeCanvas, cafeCtx, cafeIsDrawing = false;
 let soundEnabled = true;
@@ -312,7 +320,10 @@ window.showTab=(tab,btn)=>{
 };
 
 function formatItems(items){
-  return items.map(x=>`<div class="order-item"><div class="item-name">${x.name} × ${x.qty}</div></div>`).join("");
+  return items.map(x=>{
+    const optHtml = x.options ? Object.entries(x.options).map(([k,v])=>`<div class="item-detail">${k}：${v}</div>`).join("") : "";
+    return `<div class="order-item"><div class="item-name">${x.name} × ${x.qty}</div>${optHtml}<div class="item-detail">備註：${x.note||"無"}</div></div>`;
+  }).join("");
 }
 
 function listenOrders(){
@@ -322,8 +333,19 @@ function listenOrders(){
     if(snap.empty) return;
     snap.forEach(d=>{
       const o=d.data(); const status=o.status||"等待接單";
+      const sigHtml = o.counter_signature ? `<div class="meta" style="margin-top:6px;">住戶簽名：<br><img src="${o.counter_signature}" style="width:120px; background:white; border:1px solid #eee; border-radius:6px; margin-top:2px;"></div>` : "";
+      
+      // 完美還原：按鈕顯示防線（已完成、已取消的卡片完全不渲染任何操控按鈕！）
+      let btnHtml = "";
+      if (status === "等待接單") {
+        btnHtml = `<div class="btn-row"><button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
+      } else if (status === "製作中") {
+        btnHtml = `<div class="btn-row"><button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
+      }
+
       const div=document.createElement("div"); div.className="order-card";
-      div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div><div class="meta">住戶：${o.uid||""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge">${status}</div></div>${formatItems(o.items||[])}<div class="btn-row"><button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button><button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button></div>`;
+      div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div><div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div>${sigHtml}</div><div class="badge">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
+      
       if(status === "等待接單") waitingOrders.appendChild(div);
       else if(status === "製作中") makingOrders.appendChild(div);
       else doneOrders.appendChild(div);
@@ -334,18 +356,22 @@ function listenOrders(){
 window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
 
 window.addMenu=async()=>{
-  const name=mName.value.trim(); const price=Number(mPrice.value); const category=mCategory.value.trim();
+  const name=mName.value.trim(); const price=Number(mPrice.value); const category=(mCategory.value||mCategorySelect.value).trim();
   const isTimeRestricted = document.getElementById("mTimeRestricted").checked;
   await addDoc(collection(db,"menu"),{
     name, price, category, enabled:true, custom_options:getCleanOptions(newOptionGroups),
     is_time_restricted: isTimeRestricted, start_time: isTimeRestricted ? mStartTime.value : "", end_time: isTimeRestricted ? mEndTime.value : "", created_at:new Date().toISOString()
   });
+  mName.value=""; mPrice.value=""; mCategory.value=""; mCategorySelect.value=""; mImage.value="";
   alert("品項已新增"); await loadMenu();
 };
 
 async function loadMenu(){
-  const snap=await getDocs(collection(db,"menu")); menuCache=[]; menuList.innerHTML="";
-  snap.forEach(d=>{ menuCache.push({id:d.id,...d.data()}); });
+  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; menuList.innerHTML="";
+  snap.forEach(d=>{ 
+    const m = {id:d.id,...d.data()}; menuCache.push(m); 
+    if(m.category && !categoryCache.includes(m.category)) categoryCache.push(m.category);
+  });
   
   window.openEditMenu=(id)=>{
     const m=menuCache.find(x=>x.id===id); if(!m)return;
@@ -365,6 +391,7 @@ async function loadMenu(){
     row.innerHTML=`<div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}${timeText}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
     menuList.appendChild(row);
   });
+  renderCategorySelects();
 }
 
 window.closeEditModal=()=>{ editModalBg.style.display="none"; };
@@ -383,24 +410,59 @@ async function loadSettings(){ systemStatus.innerText="系統連線正常"; }
 window.loadCounterResident=async()=>{
   const username=counterResidentInput.value.trim();
   const snap=await getDocs(query(collection(db,"balances"),where("uid","==",username)));
-  if(snap.empty) return;
+  if(snap.empty) { alert("找不到該住戶"); return; }
   const bdoc=snap.docs[0]; const b=bdoc.data();
   counterResident={username}; counterBalanceDocId=bdoc.id; counterGranted=Number(b.granted_amount||0); counterStored=Number(b.stored_amount||0);
-  counterResidentInfo.innerHTML=`帳號：${username}｜總點數：${counterGranted+counterStored}`;
+  counterResidentInfo.innerHTML=`帳號：${username} ｜ 配發：${counterGranted} ｜ 儲值：${counterStored} ｜ 總點數：${counterGranted+counterStored}`;
 };
 
+function renderCategorySelects(){
+  const f = document.getElementById("counterCategoryFilter");
+  if(f) {
+    f.innerHTML = `<option value="全部">全部分類</option>`;
+    categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; });
+    f.value = currentCounterCategory;
+  }
+}
+window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
+
+// 完美還原：代客點餐網格與精緻圖片還原（加入按鈕完美縮回右側）
 function renderCounterMenu(){
   const box=document.getElementById("counterMenuList"); box.innerHTML="";
-  menuCache.filter(x=>x.enabled!==false).forEach(m=>{
-    box.innerHTML+=`<div class="counter-menu-row"><div>${m.name} (${m.price}點)</div><button class="btn primary" onclick="openCounterItemModal('${m.id}')">加入</button></div>`;
+  let list = menuCache.filter(x=>x.enabled!==false);
+  if(currentCounterCategory !== "全部") list = list.filter(x=>x.category === currentCounterCategory);
+  
+  list.forEach(m=>{
+    const row=document.createElement("div"); row.className="counter-menu-row";
+    row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.category} ｜ ${m.price}點</div></div><button class="btn primary" onclick="openCounterItemModal('${m.id}')" style="padding: 8px 14px; min-width:60px;">加入</button>`;
+    box.appendChild(row);
   });
 }
-window.openCounterItemModal=(id)=>{ counterCurrentItem=menuCache.find(x=>x.id===id); counterItemTitle.innerText=counterCurrentItem.name; counterItemQty.value=1; counterItemModalBg.style.display="flex"; };
+
+window.openCounterItemModal=(id)=>{
+  counterCurrentItem=menuCache.find(x=>x.id===id); counterItemTitle.innerText=counterCurrentItem.name; counterItemQty.value=1;
+  const area = document.getElementById("counterOptionArea"); area.innerHTML="";
+  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{
+    area.innerHTML += `<div class="option-title" style="font-weight:800; margin:6px 0;">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
+  });
+  counterItemModalBg.style.display="flex";
+};
 window.closeCounterItemModal=()=>{ counterItemModalBg.style.display="none"; };
-window.addCounterItemToCart=()=>{ counterCart.push({id:counterCurrentItem.id,name:counterCurrentItem.name,price:Number(counterCurrentItem.price||0),qty:Number(counterItemQty.value||1),options:{}}); closeCounterItemModal(); renderCounterCart(); };
+
+window.addCounterItemToCart=()=>{
+  const options = {};
+  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
+  counterCart.push({id:counterCurrentItem.id,name:counterCurrentItem.name,price:Number(counterCurrentItem.price||0),qty:Number(counterItemQty.value||1),options,note:counterItemNote.value.trim()});
+  closeCounterItemModal(); renderCounterCart();
+};
+
 function renderCounterCart(){
   const box=document.getElementById("counterCartList"); box.innerHTML=""; let total=0;
-  counterCart.forEach((item,idx)=>{ total+=item.price*item.qty; box.innerHTML+=`<div>${item.name} × ${item.qty} <button onclick="counterCart.splice(${idx},1);renderCounterCart();">刪除</button></div>`; });
+  counterCart.forEach((item,idx)=>{ 
+    total+=item.price*item.qty;
+    const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
+    box.innerHTML+=`<div class="counter-cart-item"><div class="item-name">${item.name} × ${item.qty}</div><div style="font-size:13px; color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="small-btn danger" onclick="counterCart.splice(${idx},1);renderCounterCart();" style="margin-top:4px;">刪除</button></div>`;
+  });
   counterTotal.innerText=`${total} 點`;
 }
 
@@ -413,17 +475,21 @@ function initCafeSignatureCanvas(){
 }
 window.clearCafeSignature=()=>cafeCtx.clearRect(0,0,cafeCanvas.width,cafeCanvas.height);
 window.closeCafeSignModal=()=>document.getElementById("cafeSignModalBg").style.display="none";
+
 window.prepareCounterSign=()=>{
+  if(!counterResident) { alert("請先載入住戶"); return; }
+  if(!counterCart.length) { alert("購物車目前是空的"); return; }
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0);
-  document.getElementById("cafeSignSummary").innerHTML=`住戶：${counterResident.username}｜總計：${total}點`;
+  document.getElementById("cafeSignSummary").innerHTML=`住戶帳號：${counterResident.username}<br>取餐方式：${counterDining.value}<br>總計應扣點數：<b>${total} 點</b>`;
   clearCafeSignature(); document.getElementById("cafeSignModalBg").style.display="flex";
 };
+
 window.confirmCounterOrderWithSignature=async()=>{
   const sigImgData=cafeCanvas.toDataURL("image/png"); closeCafeSignModal();
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0);
-  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, status:"等待接單", counter_signature:sigImgData, created_at:new Date().toISOString() });
+  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", status:"等待接單", counter_signature:sigImgData, created_at:new Date().toISOString() });
   await updateDoc(doc(db,"balances",counterBalanceDocId),{granted_amount:counterGranted-total, updated_by:"cafe"});
-  alert("訂單已送出"); counterCart=[]; renderCounterCart();
+  alert("代客訂單與簽名已成功送出！"); counterCart=[]; renderCounterCart();
 };
 
 window.addNewOptionGroup=function(){ newOptionGroups.push({title:"",choices:[""]}); renderNewOptionGroups(); };
@@ -448,7 +514,13 @@ function renderEditOptionGroups(){
 window.enableSound=()=>{ soundEnabled=!soundEnabled; soundBtn.innerText = soundEnabled ? "音效已啟用" : "音效已停用"; };
 window.syncCategoryInput=()=>{ mCategory.value = mCategorySelect.value; };
 function getCleanOptions(g){ return g||[]; }
-async function loadSeatsForCounter(){ const select = document.getElementById("counterSeat"); if(select) select.innerHTML=`<option value="A1">A1</option>`; }
+async function loadSeatsForCounter(){ 
+  const select = document.getElementById("counterSeat"); 
+  if(select) {
+    select.innerHTML=`<option value="">請選擇座位</option><option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option>`; 
+  }
+}
+window.toggleCounterSeat=()=>{ seatArea.style.display = counterDining.value === "內用" ? "block" : "none"; };
 window.counterChangeQty=(n)=>{ let q=Number(counterItemQty.value||1); q=Math.max(1,q+n); counterItemQty.value=q; };
 window.clearCounterCart=()=>{ counterCart=[]; renderCounterCart(); };
 
