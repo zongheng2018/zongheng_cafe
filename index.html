@@ -288,7 +288,7 @@ function redirectByRole(role){
       window.location.href = "resident.html";
       break;
     default:
-      alert("未知角色");
+      alert("未知角色，請聯絡系統管理員。");
   }
 }
 
@@ -346,6 +346,7 @@ if(rememberLogin === "yes"){
 
 let checkingAutoLogin = true;
 
+// 核心安全修正：自動登入時，一律重新向資料庫比對真正的角色，防止竄改 LocalStorage 繞過驗證
 onAuthStateChanged(auth, async user => {
   if(!checkingAutoLogin){
     return;
@@ -363,20 +364,8 @@ onAuthStateChanged(auth, async user => {
     return;
   }
 
-  let savedProfile = null;
-
-  try{
-    savedProfile = JSON.parse(localStorage.getItem("zh_user") || "null");
-  }catch(e){
-    savedProfile = null;
-  }
-
-  if(savedProfile && savedProfile.username && savedProfile.role){
-    redirectByRole(savedProfile.role);
-    return;
-  }
-
   const email = user.email || "";
+  // 直接向資料庫撈取安全的角色資料
   const userData = await getUserDataByEmail(email);
 
   if(userData && userData.username && userData.role){
@@ -390,6 +379,9 @@ onAuthStateChanged(auth, async user => {
 
     localStorage.setItem("rememberUser", userData.username);
     redirectByRole(userData.role);
+  } else {
+    // 找不到該帳號的角色或資料異常，清除快取
+    localStorage.removeItem("zh_user");
   }
 });
 
@@ -405,7 +397,7 @@ loginBtn.addEventListener("click", async ()=>{
   }
 
   loginBtn.disabled = true;
-  loginBtn.innerText = "登入中";
+  loginBtn.innerText = "登入中...";
 
   try{
     await setPersistence(
@@ -415,19 +407,22 @@ loginBtn.addEventListener("click", async ()=>{
 
     const email = makeEmail(username);
 
+    // 1. 先通過 Firebase 身分驗證
     await signInWithEmailAndPassword(
       auth,
       email,
       password
     );
 
+    // 2. 登入成功後，「親自」去資料庫抓取該帳號被設定的角色
     const userData = await getUserDataByUsername(username);
 
     if(!userData){
-      alert("找不到帳號資料");
+      alert("找不到帳號資料，請洽管理員。");
       return;
     }
 
+    // 3. 確認有這個人，才寫入快取並導向對應的頁面
     localStorage.setItem(
       "zh_user",
       JSON.stringify({
@@ -448,7 +443,11 @@ loginBtn.addEventListener("click", async ()=>{
 
   }catch(error){
     console.error(error);
-    alert("登入失敗：" + error.message);
+    let errorMsg = "登入失敗，請檢查帳號密碼。";
+    if (error.code === "auth/invalid-credential") {
+      errorMsg = "帳號或密碼輸入錯誤！";
+    }
+    alert(errorMsg);
   }finally{
     loginBtn.disabled = false;
     loginBtn.innerText = "登入";
