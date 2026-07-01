@@ -60,7 +60,7 @@ textarea{height:72px;resize:none}
   <a href="resident.html" class="back-btn">返回首頁</a>
 </div>
 
-<div class="container" id="menuContainer">正在加載美味菜單...</div>
+<div class="container" id="menuContainer">正在加載菜單...</div>
 
 <div class="cart-bar" id="cartBar" style="display:none;" onclick="openCart()">
   <div class="cart-title">🛒 購物車已放入 <span id="cartCount">0</span> 項</div>
@@ -193,7 +193,7 @@ function renderMenu() {
         if (nowMinutes < start || nowMinutes > end) {
           isAvailable = false;
           buttonText = "非供應時段";
-          timeTip = `<span style="color:#c86b62; font-size:12px; font-weight:bold;">（限時：${m.start_time}-${m.end_time}）</span>`;
+          timeTip = `<span>（限時：${m.start_time}-${m.end_time}）</span>`;
         }
       }
 
