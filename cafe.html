@@ -69,8 +69,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .counter-mini-img{width:64px;height:64px;border-radius:14px;object-fit:cover;background:#eee}
 .counter-menu-row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #eee5dd}
 .sig-canvas{border:2px dashed #c9c0b7;background:#fdfcfb;border-radius:14px;cursor:crosshair;display:block;margin:14px 0}
-
-/* 安全修正：外觀完全統一，顏色對齊原本系統表單 */
 .time-lock-box{background:#f5f1eb;border:1px solid #eee5dd;border-radius:14px;padding:14px;margin:4px 0;grid-column:1/-1}
 @media(max-width:900px){.counter-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.menu-row{grid-template-columns:1fr}.counter-menu-row{grid-template-columns:64px 1fr}.counter-menu-row .btn{grid-column:1/-1}.brand img{width:60px}.title{font-size:18px}.header{padding:0 12px}.sound-btn{font-size:13px;padding:8px}}
@@ -193,6 +191,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </section>
 </div>
 
+<!-- 編輯品項燈箱 -->
 <div class="modal-bg" id="editModalBg">
   <div class="modal">
     <div class="section-title">編輯品項</div>
@@ -284,6 +283,7 @@ let counterCart=[];
 let counterCurrentItem=null;
 let ordersUnsubscribe=null;
 let cafeCanvas, cafeCtx, cafeIsDrawing = false;
+let soundEnabled = true;
 
 window.toggleTimeInputs = (prefix) => {
   const checkbox = document.getElementById(`${prefix}TimeRestricted`);
@@ -308,7 +308,7 @@ window.showTab=(tab,btn)=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   btn.classList.add("active");
   document.getElementById(tab+"Tab").classList.remove("hidden");
-  if(tab Pac==="counter"){ renderCounterMenu(); renderCounterCart(); }
+  if(tab === "counter"){ renderCounterMenu(); renderCounterCart(); }
 };
 
 function formatItems(items){
@@ -324,8 +324,8 @@ function listenOrders(){
       const o=d.data(); const status=o.status||"等待接單";
       const div=document.createElement("div"); div.className="order-card";
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div><div class="meta">住戶：${o.uid||""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge">${status}</div></div>${formatItems(o.items||[])}<div class="btn-row"><button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button><button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button></div>`;
-      if(status Pac==="等待接單") waitingOrders.appendChild(div);
-      else if(status Pac==="製作中") makingOrders.appendChild(div);
+      if(status === "等待接單") waitingOrders.appendChild(div);
+      else if(status === "製作中") makingOrders.appendChild(div);
       else doneOrders.appendChild(div);
     });
   });
@@ -347,7 +347,6 @@ async function loadMenu(){
   const snap=await getDocs(collection(db,"menu")); menuCache=[]; menuList.innerHTML="";
   snap.forEach(d=>{ menuCache.push({id:d.id,...d.data()}); });
   
-  // 核心 Bug 修正：確保全域變數 window.openEditMenu 能被清單中的 HTML 按鈕成功執行並正確撈到品項
   window.openEditMenu=(id)=>{
     const m=menuCache.find(x=>x.id===id); if(!m)return;
     editId.value=m.id; editName.value=m.name||""; editPrice.value=m.price||0; editCategory.value=m.category||"";
@@ -383,7 +382,7 @@ async function loadSettings(){ systemStatus.innerText="系統連線正常"; }
 
 window.loadCounterResident=async()=>{
   const username=counterResidentInput.value.trim();
-  const snap=await getDocs(query(collection(db,"balances"),where("uid Pac","==",username)));
+  const snap=await getDocs(query(collection(db,"balances"),where("uid","==",username)));
   if(snap.empty) return;
   const bdoc=snap.docs[0]; const b=bdoc.data();
   counterResident={username}; counterBalanceDocId=bdoc.id; counterGranted=Number(b.granted_amount||0); counterStored=Number(b.stored_amount||0);
@@ -422,21 +421,36 @@ window.prepareCounterSign=()=>{
 window.confirmCounterOrderWithSignature=async()=>{
   const sigImgData=cafeCanvas.toDataURL("image/png"); closeCafeSignModal();
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0);
-  await addDoc(collection(db,"orders"),{ order_id:"ZH Pac"+Date.now(), uid:counterResident.username, items:counterCart, total, status Pac:"等待接單", counter_signature:sigImgData, created_at:new Date().toISOString() });
+  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, status:"等待接單", counter_signature:sigImgData, created_at:new Date().toISOString() });
   await updateDoc(doc(db,"balances",counterBalanceDocId),{granted_amount:counterGranted-total, updated_by:"cafe"});
   alert("訂單已送出"); counterCart=[]; renderCounterCart();
 };
 
-function addNewOptionGroup(){}
-function renderNewOptionGroups(){}
-function renderNewChoices(){}
-function addEditOptionGroup(){}
-function renderEditOptionGroups(){}
-function renderEditChoices(){}
-function getCleanOptions(g){return g||[];}
-function syncCategoryInput(){}
-async function loadSeatsForCounter(){ const select = document.getElementById("counterSeat"); select.innerHTML=`<option value="A1">A1</option>`; }
-function counterChangeQty(n){ let q=Number(counterItemQty.value||1); q=Math.max(1,q+n); counterItemQty.value=q; }
+window.addNewOptionGroup=function(){ newOptionGroups.push({title:"",choices:[""]}); renderNewOptionGroups(); };
+function renderNewOptionGroups(){
+  newOptionList.innerHTML="";
+  newOptionGroups.forEach((group,gIndex)=>{
+    const div=document.createElement("div"); div.className="option-group-box";
+    div.innerHTML=`<input placeholder="群組名稱" value="${group.title}" oninput="newOptionGroups[gIndex].title=this.value"><div class="btn-row"><button class="small-btn danger" type="button" onclick="newOptionGroups.splice(${gIndex},1);renderNewOptionGroups();">刪除</button></div>`;
+    newOptionList.appendChild(div);
+  });
+}
+window.addEditOptionGroup=function(){ editOptionGroups.push({title:"",choices:[""]}); renderEditOptionGroups(); };
+function renderEditOptionGroups(){
+  editOptionList.innerHTML="";
+  editOptionGroups.forEach((group,gIndex)=>{
+    const div=document.createElement("div"); div.className="option-group-box";
+    div.innerHTML=`<input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value"><div class="btn-row"><button class="small-btn danger" type="button" onclick="editOptionGroups.splice(${gIndex},1);renderEditOptionGroups();">刪除</button></div>`;
+    editOptionList.appendChild(div);
+  });
+}
+
+window.enableSound=()=>{ soundEnabled=!soundEnabled; soundBtn.innerText = soundEnabled ? "音效已啟用" : "音效已停用"; };
+window.syncCategoryInput=()=>{ mCategory.value = mCategorySelect.value; };
+function getCleanOptions(g){ return g||[]; }
+async function loadSeatsForCounter(){ const select = document.getElementById("counterSeat"); if(select) select.innerHTML=`<option value="A1">A1</option>`; }
+window.counterChangeQty=(n)=>{ let q=Number(counterItemQty.value||1); q=Math.max(1,q+n); counterItemQty.value=q; };
+window.clearCounterCart=()=>{ counterCart=[]; renderCounterCart(); };
 
 logoutBtn.addEventListener("click",async()=>{ await signOut(auth); localStorage.removeItem("zh_user"); location.href="index.html"; });
 </script>
