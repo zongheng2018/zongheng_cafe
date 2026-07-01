@@ -36,7 +36,8 @@ textarea{height:100px;resize:none}
 .item-title{font-size:20px;font-weight:900;color:#5f574f;margin-bottom:8px}
 .meta{font-size:14px;color:#777;line-height:1.7}
 .badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#eee3d8;color:#6d6258;font-weight:800;font-size:13px}
-.small-form{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}
+.small-form{display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-top:12px}
+.eye-btn{border:none;background:#f5f1eb;border-radius:14px;padding:0 10px;cursor:pointer;color:#8b8178;font-weight:bold;display:flex;align-items:center;justify-content:center}
 .hidden{display:none}
 .empty{text-align:center;color:#999;padding:40px}
 .seat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px}
@@ -80,7 +81,7 @@ textarea{height:100px;resize:none}
       <div class="section-title">新增帳號</div>
       <div class="form-grid">
         <input id="newUsername" placeholder="帳號">
-        <input id="newPassword" placeholder="密碼，至少 6 碼">
+        <input id="newPassword" type="password" placeholder="密碼，至少 6 碼">
         <select id="newRole">
           <option value="resident">住戶 resident</option>
           <option value="cafe">咖啡廳 cafe</option>
@@ -214,19 +215,34 @@ async function loadAccounts(){
 
     const div=document.createElement("div");
     div.className="list-card";
+    
+    // 安全微調：密碼欄位預設改為 password 隱碼類型，並增加眼睛按鈕切換顯示狀態，避免直接在大螢幕曝光
     div.innerHTML=`
       <div class="item-title">${x.username||""}</div>
       <div class="meta">角色：<span class="badge">${x.role||""}</span></div>
       <div class="meta">Auth Email：${x.auth_email||x.email||"未設定"}</div>
       <div class="meta">戶號：${x.unit_number||x.room||""}</div>
       <div class="small-form">
-        <input id="pw-${x.docId}" value="${x.password||""}" placeholder="新密碼，至少 6 碼">
+        <input id="pw-${x.docId}" type="password" value="${x.password||""}" placeholder="新密碼，至少 6 碼">
+        <button class="eye-btn" onclick="togglePasswordVisibility('${x.docId}')">👁️</button>
         <button class="btn primary" onclick="savePassword('${x.docId}')">儲存</button>
       </div>
     `;
     accountList.appendChild(div);
   });
 }
+
+// 密碼眼睛圖示切換函數
+window.togglePasswordVisibility=(id)=>{
+  const input = document.getElementById(`pw-${id}`);
+  if(input) {
+    if(input.type === "password") {
+      input.type = "text";
+    } else {
+      input.type = "password";
+    }
+  }
+};
 
 window.addAccount=async()=>{
   const username=newUsername.value.trim();
@@ -244,7 +260,7 @@ window.addAccount=async()=>{
     return;
   }
 
-  try{
+  try {
     await createAccountFn({
       username,
       password,
