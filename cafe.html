@@ -31,6 +31,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .item-detail{font-size:14px;color:#777;line-height:1.6}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
 .btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81;cursor:pointer}
+.order-card .btn{min-width:64px}
 .btn.primary{background:#6d6258}
 .btn.done{background:#6b8b61}
 .btn.danger{background:#c86b62}
@@ -58,7 +59,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .counter-mini-img{width:64px;height:64px;border-radius:14px;object-fit:cover;background:#eee}
 .counter-menu-row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #eee5dd}
 .sig-canvas{border:2px dashed #c9c0b7;background:#fdfcfb;border-radius:14px;cursor:crosshair;display:block;margin:14px 0}
+.time-lock-box{background:#f5f1eb;border:1px solid #eee5dd;border-radius:14px;padding:14px;margin:4px 0;grid-column:1/-1}
 
+/* 🚀 精確修復：卡片右上角狀態小圓角標籤（外框顏色對齊 resident 版型） */
 .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap;min-width:82px;height:34px}
 .badge.wait{background:#fff1d9;color:#9b681f;border:1px solid #ffe3be}
 .badge.making{background:#e6f0ff;color:#426f9c;border:1px solid #bcd8ff}
@@ -96,8 +99,21 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="section-title">新增菜單</div>
       <div class="form-grid">
         <input id="mName" placeholder="品項名稱"><input id="mPrice" type="number" placeholder="價格（點）">
-        <select id="mCategorySelect" onchange="mCategory.value=this.value"><option value="">選擇既有分類</option></select>
+        <select id="mCategorySelect" onchange="document.getElementById('mCategory').value=this.value"><option value="">選擇既有分類</option></select>
         <input id="mCategory" placeholder="分類，例如 咖啡">
+        <input id="mImage" placeholder="圖片網址">
+        <input id="mSortOrder" type="number" placeholder="品項排序">
+        <select id="mAfterMeal"><option value="false">不顯示餐後上</option><option value="true">顯示餐後上</option></select>
+        <div class="time-lock-box">
+          <label style="font-weight:800; display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="mTimeRestricted" onchange="toggleTimeInputs('m')"> 啟用特定時間限制供應
+          </label>
+          <div id="mTimeInputs" style="display:none; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+            <div>開始供應：<input id="mStartTime" type="time" value="09:00"></div>
+            <div>結束供應：<input id="mEndTime" type="time" value="17:00"></div>
+          </div>
+        </div>
+        <textarea id="mNote" placeholder="品項備註，可空白"></textarea>
       </div>
       <div class="btn-row"><button class="btn primary" onclick="addMenu()">新增品項</button></div>
     </div>
@@ -139,9 +155,19 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="card">
       <div class="section-title">點餐系統控制面板</div>
       <div class="setting-status" id="systemStatus">讀取系統設定中...</div>
-      <div class="btn-row" style="margin-top: 14px;">
-        <button class="btn done" onclick="setSystemManualMode('force_open')">手動強制開放點餐</button>
-        <button class="btn danger" onclick="setSystemManualMode('force_closed')">手動強制關閉點餐</button>
+      <div class="setting-status" style="margin-top: 16px;">
+        <div style="font-weight:900; margin-bottom:8px;">每日自動營業時間</div>
+        <div class="form-grid">
+          <div>開始點餐時間：<input id="openTime" type="time"></div>
+          <div>截止點餐時間：<input id="closeTime" type="time"></div>
+        </div>
+        <div style="font-weight:900; margin-top:16px; margin-bottom:8px;">特定國定假日 / 系統公休日設定</div>
+        <input id="closedDays" placeholder="例如：2026-07-05,2026-07-06">
+        <div class="btn-row" style="margin-top: 14px;"><button class="btn done" onclick="saveSystemSchedule()">儲存時間與公休設定</button></div>
+      </div>
+      <div class="btn-row" style="margin-top: 18px;">
+        <button class="btn done" style="background:#43a047;" onclick="setSystemManualMode('force_open')">手動強制開放點餐</button>
+        <button class="btn danger" style="background:#e53935;" onclick="setSystemManualMode('force_closed')">手動強制關閉點餐（可填原因）</button>
         <button class="btn light" onclick="setSystemManualMode('auto')">恢復自動模式</button>
       </div>
     </div>
@@ -166,24 +192,51 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   <div class="modal">
     <div class="section-title" id="counterItemTitle">選擇品項</div>
     <div id="counterOptionArea"></div>
-    <div style="margin-top:10px;"><textarea id="counterItemNote" placeholder="規格備註說明"></textarea></div>
+    <div style="margin-top:10px;"><textarea id="counterItemNote" placeholder="規格備註說明，可空白"></textarea></div>
     <div class="form-grid" style="margin-top:12px;">
+      <button class="btn light" onclick="counterChangeQty(-1)">−</button>
       <input id="counterItemQty" type="number" value="1" min="1">
+      <button class="btn light" onclick="counterChangeQty(1)">＋</button>
       <button class="btn primary" onclick="addCounterItemToCart()">加入購物車</button>
     </div>
     <div class="btn-row"><button class="btn light" onclick="document.getElementById('counterItemModalBg').style.display='none'">取消</button></div>
   </div>
 </div>
 
+<div class="modal-bg" id="editModalBg">
+  <div class="modal">
+    <div class="section-title">編輯品項</div>
+    <input type="hidden" id="editId">
+    <div class="form-grid">
+      <input id="editName" placeholder="品項名稱"><input id="editPrice" type="number" placeholder="價格">
+      <input id="editCategory" placeholder="分類"><input id="editImage" placeholder="圖片">
+      <input id="editSortOrder" type="number" placeholder="排序">
+      <select id="editAfterMeal"><option value="false">不顯示餐後上</option><option value="true">顯示餐後上</option></select>
+      <div class="time-lock-box">
+        <label style="font-weight:800; display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="editTimeRestricted" onchange="toggleTimeInputs('edit')"> 啟用特定時間限制供應
+        </label>
+        <div id="editTimeInputs" style="display:none; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+          <div>開始供應：<input id="editStartTime" type="time"></div>
+          <div>結束供應：<input id="editEndTime" type="time"></div>
+        </div>
+      </div>
+      <textarea id="editNote" placeholder="品項備註"></textarea>
+    </div>
+    <div class="option-editor"><div class="option-title">自訂選項</div><div id="editOptionList"></div><button class="btn light" type="button" onclick="addEditOptionGroup()">＋新增選項群組</button></div>
+    <div class="btn-row"><button class="btn primary" onclick="saveEditMenu()">儲存修改</button><button class="btn light" onclick="closeEditModal()">取消</button></div>
+  </div>
+</div>
+
 <div class="modal-bg" id="cafeSignModalBg">
   <div class="modal" style="max-width: 500px;">
     <div class="section-title">住戶點餐明細確認</div>
-    <div id="cafeSignSummary" class="setting-status" style="margin-bottom: 12px;"></div>
+    <div id="cafeSignSummary" class="setting-status" style="margin-bottom: 12px; line-height:1.6;"></div>
     <canvas id="cafeSigCanvas" class="sig-canvas" width="450" height="180"></canvas>
     <div class="btn-row">
-      <button class="btn done" onclick="confirmCounterOrderWithSignature()">確認送出訂單</button>
-      <button class="btn light" onclick="cafeCtx.clearRect(0,0,450,180)">重簽</button>
-      <button class="btn danger" onclick="document.getElementById('cafeSignModalBg').style.display='none'">修改</button>
+      <button class="btn primary done" onclick="confirmCounterOrderWithSignature()">確認送出訂單</button>
+      <button class="btn light" onclick="cafeCtx.clearRect(0,0,450,180)">清除重簽</button>
+      <button class="btn danger" onclick="document.getElementById('cafeSignModalBg').style.display='none'">返回修改</button>
     </div>
   </div>
 </div>
@@ -196,103 +249,252 @@ import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
-let menuCache=[]; let categoryCache=[]; let counterResident=null; let counterBalanceDocId=null;
-let counterGranted=0, counterStored=0; let counterCart=[]; let counterCurrentItem=null;
-let cafeCanvas, cafeCtx, cafeIsDrawing=false;
+let menuCache=[]; let categoryCache=[]; let newOptionGroups=[]; let editOptionGroups=[]; let knownOrderIds=new Set();
+let cafeProfile=null; let counterResident=null; let counterBalanceDocId=null; let counterGranted=0, counterStored=0;
+let counterCart=[]; let counterCurrentItem=null; let currentCounterCategory="全部"; let ordersUnsubscribe=null;
+let cafeCanvas, cafeCtx, cafeIsDrawing = false; let soundEnabled = true; let isInitialLoad = true;
 
-onAuthStateChanged(auth, async user => {
-  if(!user){ location.href="index.html"; return; }
-  listenSettings(); listenOrders(); await loadMenu(); await loadSeatsForCounter(); initCanvas();
+function playPremiumCrystalSound() {
+  if (!soundEnabled) return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return; const ctx = new AudioContext();
+    const frequencies = [523.25, 659.25]; const now = ctx.currentTime;
+    frequencies.forEach(freq => {
+      const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + 1.2);
+    });
+  } catch (e) { console.error(e); }
+}
+
+function getBadgeStatusClass(status) {
+  if (status === "等待接單") return "wait";
+  if (status === "製作中") return "making";
+  if (status === "已完成") return "done";
+  if (status === "已取消") return "cancel";
+  return "";
+}
+
+window.toggleTimeInputs = (prefix) => {
+  const checkbox = document.getElementById(`${prefix}TimeRestricted`); const div = document.getElementById(`${prefix}TimeInputs`);
+  if (checkbox && div) { div.style.display = checkbox.checked ? "grid" : "none"; }
+};
+
+onAuthStateChanged(auth,async user=>{
+  if(!user){location.href="index.html";return}
+  const raw=localStorage.getItem("zh_user"); if(!raw){location.href="index.html";return}
+  cafeProfile=JSON.parse(raw); listenSettings(); listenOrders(); await loadMenu(); await loadSeatsForCounter(); initCafeSignatureCanvas();
 });
 
 window.showTab=(tab,btn)=>{
   ordersTab.classList.add("hidden"); menuTab.classList.add("hidden"); counterTab.classList.add("hidden"); settingsTab.classList.add("hidden");
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); btn.classList.add("active");
-  document.getElementById(tab+"Tab").classList.remove("hidden"); if(tab==="counter") renderCounterMenu();
+  document.getElementById(tab+"Tab").classList.remove("hidden"); if(tab === "counter"){ renderCounterMenu(); renderCounterCart(); }
 };
+
+function formatItems(items){
+  return items.map(x=>{
+    const optHtml = x.options ? Object.entries(x.options).map(([k,v])=>`<div class="item-detail">${k}：${v}</div>`).join("") : "";
+    return `<div class="order-item"><div class="item-name">${x.name} × ${x.qty}</div>${optHtml}<div class="item-detail">備註：${x.note||"無"}</div></div>`;
+  }).join("");
+}
 
 function listenOrders(){
-  onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
-    waitingOrders.innerHTML=""; makingOrders.innerHTML=""; doneOrders.innerHTML="";
+  if(ordersUnsubscribe) ordersUnsubscribe();
+  ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
+    waitingOrders.innerHTML=""; makingOrders.innerHTML=""; doneOrders.innerHTML=""; if(snap.empty) { isInitialLoad = false; return; }
+    let hasNewIncomingOrder = false;
     snap.forEach(d=>{
       const o=d.data(); const status=o.status||"等待接單";
+      if(status === "等待接單" && !knownOrderIds.has(d.id)){ if(!isInitialLoad){ hasNewIncomingOrder = true; } knownOrderIds.add(d.id); } else { knownOrderIds.add(d.id); }
+      const sigHtml = o.counter_signature ? `<div class="meta" style="margin-top:6px;">住戶簽名：<br><img src="${o.counter_signature}" style="width:120px; background:white; border:1px solid #eee; border-radius:6px; margin-top:2px;"></div>` : "";
+      
+      let btnHtml = "";
+      if (status === "等待接單") {
+        btnHtml = `<div class="btn-row"><button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
+      } else if (status === "製作中") {
+        btnHtml = `<div class="btn-row"><button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
+      }
+      
       const div=document.createElement("div"); div.className="order-card";
-      let btnHtml = status==="等待接單"?`<button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button>`:status==="製作中"?`<button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button>`:"";
-      div.innerHTML=`<div class="order-head"><div><b>單號：${o.order_id||d.id}</b><br>住戶：${o.uid}｜金額：${o.total}點</div><span class="badge ${status==='等待接單'?'wait':status==='製作中'?'making':'done'}">${status}</span></div><div class="btn-row">${btnHtml}</div>`;
-      if(status==="等待接單") waitingOrders.appendChild(div); else if(status==="製作中") makingOrders.appendChild(div); else doneOrders.appendChild(div);
+      div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div><div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div>${sigHtml}</div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
+      if(status === "等待接單") waitingOrders.appendChild(div); else if(status === "製作中") makingOrders.appendChild(div); else doneOrders.appendChild(div);
     });
+    if(hasNewIncomingOrder){ playPremiumCrystalSound(); } isInitialLoad = false;
   });
 }
+
 window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
 
-async function loadMenu(){
-  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[];
-  snap.forEach(d=>{ const m={id:d.id,...d.data()}; menuCache.push(m); if(m.category&&!categoryCache.includes(m.category)) categoryCache.push(m.category); });
+function listenSettings() {
+  onSnapshot(doc(db, "settings", "cafe"), s => {
+    if (!s.exists()) return; const data = s.data(); let modeText = "智慧自動控管中";
+    if (data.manual_mode === "force_open") modeText = "強制手動開放中";
+    if (data.manual_mode === "force_closed") modeText = `強制關閉中（原因：${data.closed_reason || '未說明'}）`;
+    if (data.manual_mode === "auto") modeText = "智慧自動控管中";
+    systemStatus.innerHTML = `<b>目前系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
+    document.getElementById("openTime").value = data.open_time || "08:30"; document.getElementById("closeTime").value = data.close_time || "19:00"; document.getElementById("closedDays").value = data.closed_days || "";
+  });
 }
 
-async function loadSeatsForCounter(){
-  const snap=await getDocs(collection(db,"seats")); const s=document.getElementById("counterSeat"); s.innerHTML='<option value="">選擇座位</option>';
-  snap.forEach(d=>{ if(d.data().available!==false) s.innerHTML+=`<option value="${d.data().seatId}">${d.data().seatId}</option>`; });
-}
-
-// 🚀 核心功能：計算指定月份（例如 2026-06）的所有已完成訂單與總金額
-window.calculateMonthlyRevenue = async () => {
-  const targetMonth = document.getElementById("statMonthInput").value; // 格式為 "YYYY-MM"
-  if(!targetMonth) { alert("請先選擇要統計的月份！"); return; }
-  
-  document.getElementById("monthlyStatReport").innerHTML = "🔍 正在從資料庫撈取數據，請稍後...";
-  
-  try {
-    const snap = await getDocs(collection(db, "orders"));
-    let totalOrders = 0;
-    let totalRevenue = 0;
-    let itemSummary = {};
-
-    snap.forEach(d => {
-      const o = d.data();
-      // 確保訂單已完成，且它的建立時間開頭符合選定的年月份（例如 "2026-06"）
-      if(o.status === "已完成" && o.created_at && o.created_at.startsWith(targetMonth)) {
-        totalOrders++;
-        totalRevenue += Number(o.total || 0);
-
-        // 順便統計各品項銷售數量
-        (o.items || []).forEach(item => {
-          itemSummary[item.name] = (itemSummary[item.name] || 0) + Number(item.qty || 1);
-        });
-      }
-    });
-
-    // 渲染精美的數據報告
-    let itemsHtml = Object.entries(itemSummary).map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join("");
-    if(!itemsHtml) itemsHtml = "<li>該月份無任何餐點銷售紀錄</li>";
-
-    document.getElementById("monthlyStatReport").innerHTML = `
-      <div style="font-size: 18px; font-weight: 900; color: #7a594c; margin-bottom: 10px;">📊 ${targetMonth} 月度營收結算報告</div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
-        <div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總成交訂單數：<br><span style="font-size: 22px; font-weight: 900; color: #6d6258;">${totalOrders} 筆</span></div>
-        <div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總營業額點數：<br><span style="font-size: 22px; font-weight: 900; color: #6b8b61;">${totalRevenue} 點</span></div>
-      </div>
-      <div style="font-weight: 800; margin-bottom: 6px;">📋 熱銷品項數量排行榜：</div>
-      <ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: #6d6258;">${itemsHtml}</ul>
-    `;
-  } catch (error) {
-    console.error(error);
-    document.getElementById("monthlyStatReport").innerHTML = "❌ 讀取資料庫失敗，請確認 Firebase 權限。";
-  }
+window.saveSystemSchedule = async () => {
+  const openTime = document.getElementById("openTime").value; const closeTime = document.getElementById("closeTime").value; const closedDays = document.getElementById("closedDays").value.trim();
+  await setDoc(doc(db, "settings", "cafe"), { open_time: openTime, close_time: closeTime, closed_days: closedDays }, { merge: true }); alert("設定成功！");
 };
 
-function initCanvas(){
-  cafeCanvas=document.getElementById("cafeSigCanvas"); cafeCtx=cafeCanvas.getContext("2d"); cafeCtx.lineWidth=3;
-  cafeCanvas.addEventListener("mousedown",()=>{cafeIsDrawing=true; cafeCtx.beginPath();});
-  cafeCanvas.addEventListener("mousemove",(e)=>{ if(!cafeIsDrawing)return; const r=cafeCanvas.getBoundingClientRect(); cafeCtx.lineTo(e.clientX-r.left,e.clientY-r.top); cafeCtx.stroke(); });
-  cafeCanvas.addEventListener("mouseup",()=>cafeIsDrawing=false);
+window.setSystemManualMode = async (mode) => {
+  let reason = ""; if (mode === "force_closed") { reason = prompt("請輸入暫停原因：", "設備維修維護中"); if (reason === null) return; }
+  await setDoc(doc(db, "settings", "cafe"), { manual_mode: mode, closed_reason: reason || "" }, { merge: true }); alert("切換成功！");
+};
+
+function getCleanOptions(groups) {
+  return groups.map(g => ({ title: g.title.trim(), choices: g.choices.map(c => c.trim()).filter(c => c !== "") })).filter(g => g.title !== "");
 }
-function listenSettings(){}
-window.setSystemManualMode=async(m)=>{ await setDoc(doc(db,"settings","cafe"),{manual_mode:m},{merge:true}); };
+
+window.addMenu=async()=>{
+  const name=mName.value.trim(); const price=Number(mPrice.value); const category=(mCategory.value||mCategorySelect.value).trim(); const isTimeRestricted = document.getElementById("mTimeRestricted").checked;
+  await addDoc(collection(db,"menu"),{ name, price, category, enabled:true, custom_options:getCleanOptions(newOptionGroups), is_time_restricted: isTimeRestricted, start_time: isTimeRestricted ? mStartTime.value : "09:00", end_time: isTimeRestricted ? mEndTime.value : "17:00", created_at:new Date().toISOString() });
+  mName.value=""; mPrice.value=""; mCategory.value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
+};
+
+async function loadMenu(){
+  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; menuList.innerHTML="";
+  snap.forEach(d=>{ const m = {id:d.id,...d.data()}; menuCache.push(m); if(m.category && !categoryCache.includes(m.category)) categoryCache.push(m.category); });
+  menuCache.forEach(m=>{
+    const row=document.createElement("div"); row.className="menu-row";
+    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
+    menuList.appendChild(row);
+  });
+  renderCategorySelects();
+}
+
+window.openEditMenu = (id) => {
+  const m = menuCache.find(x => x.id === id); if (!m) return;
+  editId.value = m.id; editName.value = m.name || ""; editPrice.value = m.price || 0; editCategory.value = m.category || ""; editImage.value = m.image || ""; editSortOrder.value = m.sort_order || 999; editAfterMeal.value = String(m.is_after_meal || false);
+  const isRestricted = m.is_time_restricted || false;
+  document.getElementById("editTimeRestricted").checked = isRestricted;
+  document.getElementById("editStartTime").value = m.start_time || "09:00";
+  document.getElementById("editEndTime").value = m.end_time || "17:00";
+  toggleTimeInputs('edit');
+  editOptionGroups = JSON.parse(JSON.stringify(m.custom_options || []));
+  renderEditOptionGroups(); editModalBg.style.display = "flex";
+};
+
+window.closeEditModal=()=>editModalBg.style.display="none";
+
+window.saveEditMenu=async()=>{
+  const isTimeRestricted = document.getElementById("editTimeRestricted").checked;
+  await updateDoc(doc(db,"menu",editId.value),{ 
+    name:editName.value.trim(), price:Number(editPrice.value), category:editCategory.value.trim(), image:editImage.value.trim(), sort_order:Number(editSortOrder.value||999), is_after_meal:(editAfterMeal.value==="true"), is_time_restricted:isTimeRestricted, start_time:isTimeRestricted?editStartTime.value:"", end_time:isTimeRestricted?editEndTime.value:"", custom_options:getCleanOptions(editOptionGroups)
+  });
+  editModalBg.style.display="none"; alert("更新成功"); await loadMenu();
+};
+
+window.toggleMenu=async(id,enabled)=>{ await updateDoc(doc(db,"menu",id),{enabled:!enabled}); await loadMenu(); };
+
+window.addNewOptionGroup=function(){ newOptionGroups.push({title:"",choices:[""]}); renderNewOptionGroups(); };
+function renderNewOptionGroups(){
+  newOptionList.innerHTML="";
+  newOptionGroups.forEach((group,gIndex)=>{
+    const div=document.createElement("div"); div.className="option-group-box";
+    div.innerHTML=`<input placeholder="群組名稱" value="${group.title}" oninput="newOptionGroups[gIndex].title=this.value"><div class="btn-row"><button class="small-btn danger" type="button" onclick="newOptionGroups.splice(${gIndex},1);renderNewOptionGroups();">刪除群組</button></div>`;
+    newOptionList.appendChild(div);
+  });
+}
+window.addEditOptionGroup=function(){ editOptionGroups.push({title:"",choices:[""]}); renderEditOptionGroups(); };
+function renderEditOptionGroups(){
+  editOptionList.innerHTML="";
+  editOptionGroups.forEach((group,gIndex)=>{
+    const div=document.createElement("div"); div.className="option-group-box";
+    div.innerHTML=`<input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value"><div class="btn-row"><button class="small-btn danger" type="button" onclick="editOptionGroups.splice(${gIndex},1);renderEditOptionGroups();">刪除群組</button></div>`;
+    editOptionList.appendChild(div);
+  });
+}
+
 window.loadCounterResident=async()=>{
   const snap=await getDocs(query(collection(db,"balances"),where("uid","==",counterResidentInput.value.trim())));
-  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:counterResidentInput.value.trim()}; counterResidentInfo.innerText=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
+  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:counterResidentInput.value.trim()}; counterResidentInfo.innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
 };
+function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = `<option value="全部">全部分類</option>`; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
+window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
+
+function renderCounterMenu(){
+  const box=document.getElementById("counterMenuList"); box.innerHTML=""; let list = menuCache.filter(x=>x.enabled!==false); if(currentCounterCategory !== "全部") { list = list.filter(x=>x.category === currentCounterCategory); }
+  list.forEach(m=>{
+    const row=document.createElement("div"); row.className="counter-menu-row"; row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.price}點</div></div><button class="btn primary" onclick="openCounterItemModal('${m.id}')" style="padding:8px 14px;min-width:60px;">加入</button></div>`; box.appendChild(row);
+  });
+}
+
+window.openCounterItemModal=(id)=>{
+  counterCurrentItem=menuCache.find(x=>x.id===id); counterItemTitle.innerText=counterCurrentItem.name; counterItemQty.value=1; counterItemNote.value="";
+  const area = document.getElementById("counterOptionArea"); area.innerHTML="";
+  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{
+    area.innerHTML += `<div class="option-title" style="font-weight:800; margin:6px 0;">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
+  });
+  counterItemModalBg.style.display="flex";
+};
+window.closeCounterItemModal=()=>document.getElementById("counterItemModalBg").style.display="none";
+
+window.addCounterItemToCart=()=>{
+  const options = {}; (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
+  counterCart.push({ id:counterCurrentItem.id, name:counterCurrentItem.name, price:Number(counterCurrentItem.price||0), qty:Number(counterItemQty.value||1), options, note:counterItemNote.value.trim() });
+  closeCounterItemModal(); renderCounterCart();
+};
+
+function renderCounterCart(){
+  const box=document.getElementById("counterCartList"); box.innerHTML=""; let total=0;
+  counterCart.forEach((item,idx)=>{ 
+    total+=item.price*item.qty; const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
+    box.innerHTML+=`<div class="counter-cart-item"><div><b>${item.name} × ${item.qty}</b></div><div style="font-size:13px;color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="btn danger" style="padding:4px 8px; font-size:12px; min-width:auto; margin-top:4px;" onclick="counterCart.splice(${idx},1);renderCounterCart();">刪除</button></div>`; 
+  });
+  counterTotal.innerText=`${total} 點`;
+}
+
+async function loadSeatsForCounter(){ 
+  const snap = await getDocs(collection(db, "seats")); const select = document.getElementById("counterSeat"); if(!select) return;
+  select.innerHTML = `<option value="">請選擇座位</option>`; snap.forEach(d => { const data = d.data(); if(data.available !== false) { select.innerHTML += `<option value="${data.seatId}">${data.seatId}</option>`; } });
+}
+
+window.toggleCounterSeat=()=>{ const selectArea = document.getElementById("counterSeatArea"); if(selectArea) { selectArea.style.display = counterDining.value === "內用" ? "block" : "none"; } };
+
+window.calculateMonthlyRevenue = async () => {
+  const targetMonth = document.getElementById("statMonthInput").value; if(!targetMonth) { alert("請先選擇要統計的月份！"); return; }
+  document.getElementById("monthlyStatReport").innerHTML = "正在從資料庫撈取數據，請稍後...";
+  try {
+    const snap = await getDocs(collection(db, "orders")); let totalOrders = 0; let totalRevenue = 0; let itemSummary = {};
+    snap.forEach(d => {
+      const o = d.data(); if(o.status === "已完成" && o.created_at && o.created_at.startsWith(targetMonth)) {
+        totalOrders++; totalRevenue += Number(o.total || 0); (o.items || []).forEach(item => { itemSummary[item.name] = (itemSummary[item.name] || 0) + Number(item.qty || 1); });
+      }
+    });
+    let itemsHtml = Object.entries(itemSummary).map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); if(!itemsHtml) itemsHtml = "<li>該月份無任何餐點銷售紀錄</li>";
+    document.getElementById("monthlyStatReport").innerHTML = `<div style="font-size: 18px; font-weight: 900; color: #7a594c; margin-bottom: 10px;">月度營收結算報告</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總成交訂單數：<br><span style="font-size: 22px; font-weight: 900; color: #6d6258;">${totalOrders} 筆</span></div><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總營業額點數：<br><span style="font-size: 22px; font-weight: 900; color: #6b8b61;">${totalRevenue} 點</span></div></div><div style="font-weight: 800; margin-bottom: 6px;">品項數量排行榜：</div><ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: #6d6258;">${itemsHtml}</ul>`;
+  } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
+};
+
+initCafeSignatureCanvas();
+function initCafeSignatureCanvas(){
+  cafeCanvas=document.getElementById("cafeSigCanvas"); if(!cafeCanvas)return; cafeCtx=cafeCanvas.getContext("2d"); cafeCtx.strokeStyle="#5f574f"; cafeCtx.lineWidth=3; cafeCtx.lineCap="round";
+  cafeCanvas.addEventListener("mousedown",(e)=>{ cafeIsDrawing=true; cafeCtx.beginPath(); const rect=cafeCanvas.getBoundingClientRect(); cafeCtx.moveTo(e.clientX-rect.left,e.clientY-rect.top); });
+  cafeCanvas.addEventListener("mousemove",(e)=>{ if(!cafeIsDrawing)return; const rect=cafeCanvas.getBoundingClientRect(); cafeCtx.lineTo(e.clientX-rect.left,e.clientY-rect.top); cafeCtx.stroke(); });
+  cafeCanvas.addEventListener("mouseup",()=>cafeIsDrawing=false);
+}
+
+window.prepareCounterSign=()=>{ 
+  if(!counterResident) { alert("請先輸入住戶帳號並點擊載入住戶"); return; } if(!counterCart.length) { alert("購物車內尚未加入任何餐點"); return; }
+  const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); cafeSignSummary.innerHTML = `住戶帳號：${counterResident.username}<br>取餐方式：${counterDining.value} ${counterDining.value==="內用"?`（座位：${counterSeat.value}）`:""}<br>總計扣除點數：<b>${total} 點</b>`; cafeCtx.clearRect(0,0,450,180); document.getElementById("cafeSignModalBg").style.display="flex"; 
+};
+
+window.confirmCounterOrderWithSignature=async()=>{
+  const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); if(counterGranted + counterStored < total) { alert("該住戶點數不足以支付此筆訂單！"); return; }
+  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", status:"等待接單", counter_signature:cafeCanvas.toDataURL("image/png"), created_at:new Date().toISOString() });
+  await updateDoc(doc(db,"balances",counterBalanceDocId),{ granted_amount: counterGranted>=total?counterGranted-total:0, stored_amount: counterGranted>=total?currentStored:currentStored-(total-currentGranted), updated_by:"cafe_counter" }); 
+  alert("代客點餐訂單已完全成功送出！"); counterCart=[]; renderCounterCart(); document.getElementById("cafeSignModalBg").style.display="none";
+};
+
+window.toggleSound=()=>{ soundEnabled=!soundEnabled; const btn = document.getElementById("soundBtn"); if(soundEnabled){ btn.innerText = "音效已啟用"; btn.classList.add("on"); } else { btn.innerText = "音效已停用"; btn.classList.remove("on"); } };
+window.counterChangeQty=(n)=>{ let q=Number(counterItemQty.value||1); q=Math.max(1,q+n); counterItemQty.value=q; }; window.clearCounterCart=()=>{ counterCart=[]; renderCounterCart(); };
+logoutBtn.addEventListener("click",async()=>{ await signOut(auth); localStorage.removeItem("zh_user"); location.href="index.html"; });
 </script>
 </body>
 </html>
