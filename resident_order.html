@@ -14,50 +14,58 @@
 
 <style>
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
-body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:120px}
+/* 增加底部的安全間距，防止餐點被底部常駐展開的規格面板擋住 */
+body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:340px}
 body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);backdrop-filter:blur(5px);z-index:-1}
 
-.header{height:72px;background:rgba(255,255,255,.9);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+/* 🚀 修正：頁首與橫向分類選單群組永久鎖定最頂端，往下滑絕對不消失 */
+.sticky-top-group{position:sticky;top:0;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+.header{height:72px;background:rgba(255,255,255,.95);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
 .brand img{width:72px;opacity:.85}
 .back-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:8px 14px;font-weight:800;text-decoration:none;font-size:15px}
 
-/* 原本上面那一排分類選單導覽列 */
-.category-nav{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.85);border-bottom:1px solid #eee5dd;position:sticky;top:0;z-index:80;scrollbar-width:none}
+.category-nav{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.95);border-bottom:1px solid #eee5dd;scrollbar-width:none}
 .category-nav::-webkit-scrollbar{display:none}
-.nav-item{flex:shrink-0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 16px;border-radius:20px;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap}
+.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 16px;border-radius:20px;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap}
 .nav-item.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 
-.container{max-width:760px;margin:10px auto;padding:0 14px}
-.category-section{scroll-margin-top:70px}
+.container{max-width:760px;margin:16px auto;padding:0 14px}
+.category-section{scroll-margin-top:140px}
 .category-title{font-size:20px;color:#6d6258;font-weight:900;margin:24px 0 12px 4px;letter-spacing:1px}
 
 .menu-grid{display:grid;grid-template-columns:1fr;gap:14px}
-/* 還原原本直接點選整張卡片進行點餐的設計，移除多餘的按鈕 */
 .menu-card{background:rgba(255,255,255,.93);border-radius:18px;padding:14px;display:grid;grid-template-columns:90px 1fr;gap:14px;box-shadow:0 6px 20px rgba(0,0,0,.05);border:1px solid rgba(230,224,218,.6);cursor:pointer}
-.menu-card.disabled{cursor:not-allowed;opacity:0.6}
+.menu-card.disabled{cursor:not-allowed;opacity:0.65}
 .menu-img{width:90px;height:90px;object-fit:cover;border-radius:14px;background:#eee}
 .menu-info{display:flex;flex-direction:column;justify-content:space-between}
-.menu-name{font-size:18px;font-weight:900;color:#4a433d;display:flex;align-items:center;justify-content:space-between}
+.menu-name{font-size:18px;font-weight:900;color:#4a433d;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .menu-note{font-size:13px;color:#8c837a;line-height:1.4;margin:4px 0}
 .menu-price{font-size:19px;font-weight:900;color:#7a594c;margin-top:6px}
-.status-badge{font-size:12px;background:#eaddd3;color:#7a6b60;padding:3px 8px;border-radius:8px;font-weight:bold}
 
-/* 完美還原最底層直接顯示、常駐的購物車區塊 */
-.bottom-cart-panel{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,0.96);border-top:1px solid #ddd5cc;box-shadow:0 -4px 20px rgba(0,0,0,0.08);padding:12px 16px;z-index:90;display:flex;flex-direction:column;gap:8px}
-.cart-summary-row{display:flex;justify-content:space-between;align-items:center}
+.status-badge{font-size:13px;padding:4px 10px;border-radius:999px;font-weight:700;white-space:nowrap}
+.status-badge.soldout{background:#fde8e6;color:#b3514a;border:1px solid #f9cbd7}
+.status-badge.notime{background:#fff1d9;color:#9b681f;border:1px solid #ffe3be}
+
+/* 🚀 完美還原：底部常駐、非懸浮的點餐購物車面板 */
+.bottom-cart-panel{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,0.98);border-top:1px solid #ddd5cc;box-shadow:0 -6px 25px rgba(0,0,0,0.1);z-index:90;display:flex;flex-direction:column}
+.cart-summary-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:white;border-top:1px solid #eee}
 .cart-info-text{font-size:16px;font-weight:800;color:#5f574f}
 .cart-info-text span{color:#7a594c;font-size:20px}
 .open-cart-btn{border:none;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;border-radius:12px;padding:10px 20px;font-weight:800;font-size:15px;cursor:pointer}
 
+/* 🚀 修正：規格選項直接在最底部展開，不彈出在畫面中間 */
+.bottom-option-slide{background:#fdfbf9;border-bottom:1px solid #eee5dd;max-height:260px;overflow-y:auto;padding:16px;display:none;flex-direction:column;gap:10px}
+.option-title{font-size:15px;font-weight:800;color:#6d6258;margin:6px 0 2px}
+select,textarea{width:100%;border:none;background:#f5f1eb;border-radius:12px;padding:10px;font-size:14px;outline:none;color:#5f574f}
+textarea{height:54px;resize:none}
+.qty-row{display:grid;grid-template-columns:50px 1fr 50px;gap:10px;align-items:center;margin-top:8px;text-align:center}
+.qty-btn{border:none;background:#eaddd3;color:#5f574f;font-size:20px;font-weight:900;height:40px;border-radius:12px;cursor:pointer}
+.qty-val{font-size:18px;font-weight:900}
+
+/* 查看購物車結帳清單燈箱 */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:99;padding:16px}
-.modal{background:white;width:100%;max-width:480px;border-radius:24px;padding:20px;max-height:85vh;overflow:auto}
+.modal{background:white;width:100%;max-width:480px;border-radius:24px;padding:20px;max-height:80vh;overflow:auto}
 .modal-title{font-size:22px;font-weight:900;color:#554d46;margin-bottom:14px}
-.option-title{font-size:15px;font-weight:800;color:#6d6258;margin:12px 0 6px}
-select,textarea{width:100%;border:none;background:#f5f1eb;border-radius:12px;padding:12px;font-size:15px;outline:none;color:#5f574f}
-textarea{height:72px;resize:none}
-.qty-row{display:grid;grid-template-columns:50px 1fr 50px;gap:10px;align-items:center;margin-top:16px;text-align:center}
-.qty-btn{border:none;background:#eaddd3;color:#5f574f;font-size:20px;font-weight:900;height:44px;border-radius:12px;cursor:pointer}
-.qty-val{font-size:20px;font-weight:900}
 .btn-row{display:grid;grid-template-columns:1fr;gap:10px;margin-top:20px}
 .btn{border:none;border-radius:12px;padding:13px;font-size:16px;font-weight:800;color:white;background:#9c8e81;cursor:pointer}
 .btn.primary{background:#6d6258}
@@ -67,47 +75,46 @@ textarea{height:72px;resize:none}
 .cart-item-meta{font-size:13px;color:#888;margin-top:2px}
 .cart-item-price{font-weight:700;color:#7a594c;margin-top:4px}
 .cart-del{position:absolute;right:12px;top:12px;border:none;background:none;color:#c86b62;font-weight:bold;font-size:14px;cursor:pointer}
-
-.status-banner{background:rgba(109,98,88,.95);color:white;border-radius:14px;padding:14px;margin-bottom:16px;text-align:center;font-size:15px;font-weight:bold;line-height:1.5;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.status-banner{background:rgba(109,98,88,.95);color:white;border-radius:14px;padding:14px;margin-bottom:16px;text-align:center;font-size:15px;font-weight:bold;line-height:1.5}
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <div class="brand"><img src="logo.png"></div>
-  <a href="resident.html" class="back-btn">返回首頁</a>
+<div class="sticky-top-group">
+  <div class="header">
+    <div class="brand"><img src="logo.png"></div>
+    <a href="resident.html" class="back-btn">返回首頁</a>
+  </div>
+  <div class="category-nav" id="categoryNav">正在加載分類...</div>
 </div>
-
-<div class="category-nav" id="categoryNav"></div>
 
 <div class="container">
   <div id="systemBannerArea"></div>
   <div id="menuContainer">正在加載菜單...</div>
 </div>
 
-<div class="bottom-cart-panel" id="bottomCartPanel" style="display:none;">
-  <div class="cart-summary-row">
-    <div class="cart-info-text">🛒 已選擇 <span id="cartCount" style="color:#7a594c;font-size:18px;">0</span> 項商品，共 <span id="cartTotalText">0</span> 點</div>
-    <button class="open-cart-btn" onclick="openCart()">查看購物車 ></button>
-  </div>
-</div>
-
-<div class="modal-bg" id="itemModalBg">
-  <div class="modal">
-    <div class="modal-title" id="modalItemName">餐點名稱</div>
+<div class="bottom-cart-panel" id="bottomCartPanel">
+  <!-- 點擊餐點後，規格選項直接在這裡（底部）展開，絕不懸浮 -->
+  <div class="bottom-option-slide" id="bottomOptionSlide">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="category-title" id="modalItemName" style="margin:0; font-size:18px;">餐點名稱</div>
+      <button style="border:none; background:none; color:#c86b62; font-weight:bold; cursor:pointer;" onclick="closeItemModal()">關閉 ✕</button>
+    </div>
     <div id="optionArea"></div>
     <div class="option-title">備註說明</div>
-    <textarea id="itemNote" placeholder="去冰 / 半糖 / 微溫，可空白"></textarea>
+    <textarea id="itemNote" placeholder="去冰 / 半糖，可空白"></textarea>
     <div class="qty-row">
       <button class="qty-btn" onclick="changeQty(-1)">−</button>
       <div class="qty-val" id="qtyVal">1</div>
       <button class="qty-btn" onclick="changeQty(1)">＋</button>
     </div>
-    <div class="btn-row">
-      <button class="btn primary" onclick="addItemToCart()">加入購物車</button>
-      <button class="btn" style="background:#ddd; color:#555;" onclick="closeItemModal()">取消</button>
-    </div>
+    <button class="btn primary" onclick="addItemToCart()" style="padding:10px; margin-top:8px; font-size:14px;">確認加入購物車</button>
+  </div>
+
+  <div class="cart-summary-row">
+    <div class="cart-info-text">已選擇 <span id="cartCount">0</span> 項商品，共 <span id="cartTotalText">0</span> 點</div>
+    <button class="open-cart-btn" onclick="openCart()">查看購物車 ></button>
   </div>
 </div>
 
@@ -148,21 +155,19 @@ let cart=[];
 let currentSelectItem=null;
 let balanceDocId=null;
 let currentGranted=0, currentStored=0;
-let globalSystemConfig=null;
+let sysConfig={manual_mode:"auto",open_time:"08:30",close_time:"19:00",closed_days:"",closed_reason:""};
 
 function getTaipeiTimeInMinutes() {
   const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
   return now.getHours() * 60 + now.getMinutes();
 }
-
 function getTaipeiDateString() {
   const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
   const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
   return `${y}-${m}-${d}`;
 }
-
 function timeStringToMinutes(timeStr) {
   if (!timeStr) return 0;
   const parts = timeStr.split(":");
@@ -176,8 +181,15 @@ onAuthStateChanged(auth, async user => {
   profile = JSON.parse(raw);
   await loadBalance();
   await loadSeats();
-  listenSystemSettingsAndMenu();
+  listenSystemConfig();
 });
+
+function listenSystemConfig() {
+  onSnapshot(doc(db, "settings", "cafe"), async snapshot => {
+    if(snapshot.exists()) { sysConfig = snapshot.data(); }
+    await loadMenuData();
+  });
+}
 
 async function loadBalance() {
   const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", profile.username)));
@@ -186,13 +198,6 @@ async function loadBalance() {
     currentGranted = Number(snap.docs[0].data().granted_amount || 0);
     currentStored = Number(snap.docs[0].data().stored_amount || 0);
   }
-}
-
-function listenSystemSettingsAndMenu() {
-  onSnapshot(doc(db, "settings", "cafe"), s => {
-    if (s.exists()) { globalSystemConfig = s.data(); }
-    loadMenuData();
-  });
 }
 
 async function loadMenuData() {
@@ -204,20 +209,18 @@ async function loadMenuData() {
   renderMenu();
 }
 
-// 建立頂部選單切換與錨點跳轉
 function renderCategoryNav() {
   const nav = document.getElementById("categoryNav");
   nav.innerHTML = "";
   const categories = [...new Set(menuList.map(x => x.category || "其他"))];
-  
-  categories.forEach((cat, idx) => {
+  categories.forEach((cat, index) => {
     const btn = document.createElement("button");
-    btn.className = `nav-item ${idx === 0 ? 'active' : ''}`;
+    btn.className = `nav-item ${index === 0 ? 'active' : ''}`;
     btn.innerText = cat;
     btn.onclick = () => {
-      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
       btn.classList.add("active");
-      const target = document.getElementById(`cat_sec_${cat}`);
+      const target = document.getElementById(`cat_sec_${index}`);
       if(target) target.scrollIntoView({ behavior: 'smooth' });
     };
     nav.appendChild(btn);
@@ -231,39 +234,38 @@ function renderMenu() {
   bannerArea.innerHTML = "";
 
   const nowMinutes = getTaipeiTimeInMinutes();
-  const nowDateStr = getTaipeiDateString();
+  const todayStr = getTaipeiDateString();
 
-  let systemForceBlock = false;
-  let systemBlockReason = "非供應時段";
+  let systemOpen = true;
+  let systemCloseReason = "";
+  const offDays = (sysConfig.closed_days || "").split(",").map(x=>x.trim());
 
-  if (globalSystemConfig) {
-    const startOpen = timeStringToMinutes(globalSystemConfig.open_time || "08:30");
-    const endOpen = timeStringToMinutes(globalSystemConfig.close_time || "19:00");
-    const closedDaysArray = (globalSystemConfig.closed_days || "").split(",").map(x => x.trim());
+  if (sysConfig.manual_mode === "force_closed") {
+    systemOpen = false;
+    systemCloseReason = sysConfig.closed_reason || "後台手動暫停服務中";
+  } else if (offDays.includes(todayStr)) {
+    systemOpen = false;
+    systemCloseReason = "今日為社區公休日，不開放點餐";
+  } else if (sysConfig.manual_mode !== "force_open") {
+    const startMin = timeStringToMinutes(sysConfig.open_time || "08:30");
+    const endMin = timeStringToMinutes(sysConfig.close_time || "19:00");
+    if (nowMinutes < startMin || nowMinutes > endMin) {
+      systemOpen = false;
+      systemCloseReason = `不在營業時間內（營業時段：${sysConfig.open_time}-${sysConfig.close_time}）`;
+    }
+  }
 
-    if (closedDaysArray.includes(nowDateStr)) {
-      systemForceBlock = true;
-      systemBlockReason = "系統公休";
-      bannerArea.innerHTML = `<div class="status-banner">公告：今日為社區大樓公休日，全天暫停咖啡廳線上點餐服務。</div>`;
-    }
-    else if (globalSystemConfig.manual_mode === "force_closed") {
-      systemForceBlock = true;
-      const customReason = globalSystemConfig.closed_reason || "櫃檯暫停開放點餐";
-      systemBlockReason = "暫停點餐";
-      bannerArea.innerHTML = `<div class="status-banner">公告：咖啡廳點餐系統臨時關閉。<br>【原因：${customReason}】</div>`;
-    }
-    else if (globalSystemConfig.manual_mode !== "force_open" && (nowMinutes < startOpen || nowMinutes > endOpen)) {
-      systemForceBlock = true;
-      systemBlockReason = "非供應時段";
-    }
+  if (!systemOpen) {
+    container.innerHTML = `<div class="status-banner">咖啡廳系統關閉中<br>【原因：${systemCloseReason}】</div>`;
+    return;
   }
 
   const categories = [...new Set(menuList.map(x => x.category || "其他"))];
 
-  categories.forEach(cat => {
+  categories.forEach((cat, index) => {
     const section = document.createElement("div");
     section.className = "category-section";
-    section.id = `cat_sec_${cat}`;
+    section.id = `cat_sec_${index}`;
 
     const catDiv = document.createElement("div");
     catDiv.className = "category-title";
@@ -276,31 +278,23 @@ function renderMenu() {
     const items = menuList.filter(x => (x.category || "其他") === cat);
     items.forEach(m => {
       let isAvailable = true;
-      let badgeText = "";
-      let timeTip = "";
+      let badgeHtml = "";
 
-      if (systemForceBlock) {
+      if (m.enabled === false) {
         isAvailable = false;
-        badgeText = systemBlockReason;
-      }
-      else if (m.enabled === false) {
-        isAvailable = false;
-        badgeText = "今日售完";
-      }
+        badgeHtml = `<span class="status-badge soldout">今日售完</span>`;
+      } 
       else if (m.is_time_restricted) {
-        const startItem = timeStringToMinutes(m.start_time);
-        const endItem = timeStringToMinutes(m.end_time);
-        if (nowMinutes < startItem || nowMinutes > endItem) {
+        const start = timeStringToMinutes(m.start_time);
+        const end = timeStringToMinutes(m.end_time);
+        if (nowMinutes < start || nowMinutes > end) {
           isAvailable = false;
-          badgeText = "限時供應";
-          timeTip = `<span style="font-size:12px; color:#8c837a; font-weight:normal;">（限 ${m.start_time}-${m.end_time}）</span>`;
+          badgeHtml = `<span class="status-badge notime">限時：${m.start_time}-${m.end_time}</span>`;
         }
       }
 
       const card = document.createElement("div");
       card.className = `menu-card ${!isAvailable ? 'disabled' : ''}`;
-      
-      // 如果可以供應，點擊卡片直接開啟規格彈窗；不供應則鎖定
       if (isAvailable) {
         card.onclick = () => window.openItemModal(m.id);
       }
@@ -309,10 +303,7 @@ function renderMenu() {
         <img class="menu-img" src="${m.image || 'logo.png'}">
         <div class="menu-info">
           <div>
-            <div class="menu-name">
-              <span>${m.name} ${timeTip}</span>
-              ${badgeText ? `<span class="status-badge">${badgeText}</span>` : ''}
-            </div>
+            <div class="menu-name"><span>${m.name}</span> ${badgeHtml}</div>
             <div class="menu-note">${m.note || ""}</div>
           </div>
           <div class="menu-price">${m.price} 點</div>
@@ -333,18 +324,18 @@ window.openItemModal = (id) => {
   const area = document.getElementById("optionArea");
   area.innerHTML = "";
   (currentSelectItem.custom_options || []).forEach((g, idx) => {
-    area.innerHTML += `<div class="option-title">${g.title}</div><select id="opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
+    area.innerHTML += `<div class="option-title">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
   });
-  itemModalBg.style.display = "flex";
+  document.getElementById("bottomOptionSlide").style.display = "flex";
 };
 
-window.closeItemModal = () => { itemModalBg.style.display = "none"; };
+window.closeItemModal = () => { document.getElementById("bottomOptionSlide").style.display = "none"; };
 window.changeQty = (n) => { let q = Number(qtyVal.innerText); q = Math.max(1, q + n); qtyVal.innerText = q; };
 
 window.addItemToCart = () => {
   const options = {};
   (currentSelectItem.custom_options || []).forEach((g, idx) => {
-    options[g.title] = document.getElementById(`opt_${idx}`).value;
+    options[g.title] = document.getElementById(`counter_opt_${idx}`).value;
   });
   cart.push({
     id: currentSelectItem.id, name: currentSelectItem.name, price: currentSelectItem.price,
@@ -354,9 +345,6 @@ window.addItemToCart = () => {
 };
 
 function updateCartSummary() {
-  const panel = document.getElementById("bottomCartPanel");
-  if(!cart.length) { panel.style.display = "none"; return; }
-  panel.style.display = "flex";
   document.getElementById("cartCount").innerText = cart.reduce((s,x)=>s+x.qty, 0);
   document.getElementById("cartTotalText").innerText = cart.reduce((s,x)=>s+x.price*x.qty, 0);
 }
@@ -384,7 +372,6 @@ async function loadSeats() {
 async function submitOrder() {
   const total = cart.reduce((s,x)=>s+x.price*x.qty, 0);
   if(currentGranted + currentStored < total) { alert("您的點數不足！"); return; }
-  
   submitOrderBtn.disabled = true;
   submitOrderBtn.innerText = "送出中...";
 
@@ -403,7 +390,6 @@ async function submitOrder() {
   alert("訂單已成功送出！"); cart = []; location.href = "resident.html";
 }
 document.getElementById("submitOrderBtn").addEventListener("click", submitOrder);
-itemModalBg.addEventListener("click", e => { if(e.target===itemModalBg) closeItemModal(); });
 cartModalBg.addEventListener("click", e => { if(e.target===cartModalBg) closeCart(); });
 </script>
 </body>
