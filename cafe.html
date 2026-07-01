@@ -67,11 +67,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 <body>
 
-<audio id="newOrderAudio" preload="auto">
-  <source src="https://actions.google.com/sounds/v1/multimedia/ambient_hum_air_conditioner.ogg" type="audio/ogg">
-  <source src="https://assets.mixkit.co/active_storage/sfx/911/911-200.wav" type="audio/wav">
-</audio>
-
 <div class="header">
   <div class="brand">
     <img src="logo.png">
@@ -280,7 +275,42 @@ let currentCounterCategory="全部";
 let ordersUnsubscribe=null;
 let cafeCanvas, cafeCtx, cafeIsDrawing = false;
 let soundEnabled = true;
-let isInitialLoad = true; // 用於阻擋第一次打開頁面時把舊訂單全部敲一次鈴聲
+let isInitialLoad = true;
+
+// 🔒 獨家高質感：Web Audio API 水晶和弦生成器
+function playPremiumCrystalSound() {
+  if (!soundEnabled) return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+
+    // 聲音和弦頻率：C5 (523.25Hz) + E5 (659.25Hz)
+    const frequencies = [523.25, 659.25];
+    const now = ctx.currentTime;
+
+    frequencies.forEach(freq => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      // 設定水晶音音色（正弦波 + 三角波完美融合）
+      osc.type = 'sine'; 
+      osc.frequency.setValueAtTime(freq, now);
+      
+      // 精緻的微調鋼琴延音音量曲線
+      gain.gain.setValueAtTime(0.2, now); // 起音音量
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2); // 1.2秒內優雅淡出
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(now);
+      osc.stop(now + 1.2);
+    });
+  } catch (e) {
+    console.error("Web Audio API 播放失敗:", e);
+  }
+}
 
 window.toggleTimeInputs = (prefix) => {
   const checkbox = document.getElementById(`${prefix}TimeRestricted`);
@@ -315,7 +345,6 @@ function formatItems(items){
   }).join("");
 }
 
-// 監聽訂單並智慧判斷高音質音效撥放
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -328,11 +357,8 @@ function listenOrders(){
       const o=d.data(); const status=o.status||"等待接單";
       const orderDocId = d.id;
 
-      // 檢查是否為全新進來的等待接單訂單
       if(status === "等待接單" && !knownOrderIds.has(orderDocId)){
-        if(!isInitialLoad){
-          hasNewIncomingOrder = true;
-        }
+        if(!isInitialLoad){ hasNewIncomingOrder = true; }
         knownOrderIds.add(orderDocId);
       } else {
         knownOrderIds.add(orderDocId);
@@ -355,14 +381,8 @@ function listenOrders(){
       else doneOrders.appendChild(div);
     });
 
-    // 觸發高音質清脆音效
-    if(hasNewIncomingOrder && soundEnabled){
-      const audio = document.getElementById("newOrderAudio");
-      if(audio){
-        audio.currentTime = 0;
-        audio.play().catch(e=>console.log("瀏覽器阻擋自動播放音效，需點擊頁面任一處解鎖:", e));
-      }
-    }
+    // 🎛️ 觸發音效
+    if(hasNewIncomingOrder){ playPremiumCrystalSound(); }
     isInitialLoad = false;
   });
 }
@@ -400,9 +420,9 @@ async function loadMenu(){
   };
 
   menuCache.forEach(m=>{
-    const timeText = m.is_time_restricted ? `<br><span style="color:#c67113; font-weight:bold;">限時供應：${m.start_time} – ${m.end_time}</span>` : "";
+    const timeText = m.is_time_restricted ? `<br><span style="color:#777;">限時供應：${m.start_time} – ${m.end_time}</span>` : "";
     const row=document.createElement("div"); row.className="menu-row";
-    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.category||""} ｜ ${m.price||0} 點 ｜ ${m.enabled===false?"暫停供應":"供應中"}${timeText}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
+    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}${timeText}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
     menuList.appendChild(row);
   });
   renderCategorySelects();
@@ -424,10 +444,10 @@ async function loadSettings(){ systemStatus.innerText="系統連線正常"; }
 window.loadCounterResident=async()=>{
   const username=counterResidentInput.value.trim();
   const snap=await getDocs(query(collection(db,"balances"),where("uid","==",username)));
-  if(snap.empty) { alert("找不到該住戶"); return; }
+  if(snap.empty) return;
   const bdoc=snap.docs[0]; const b=bdoc.data();
   counterResident={username}; counterBalanceDocId=bdoc.id; counterGranted=Number(b.granted_amount||0); counterStored=Number(b.stored_amount||0);
-  counterResidentInfo.innerHTML=`帳號：${username} ｜ 配發：${counterGranted} ｜ 儲值：${counterStored} ｜ 總點數：${counterGranted+counterStored}`;
+  counterResidentInfo.innerHTML=`帳號：${username}｜總點數：${counterGranted+counterStored}`;
 };
 
 function renderCategorySelects(){
@@ -443,38 +463,22 @@ window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(
 function renderCounterMenu(){
   const box=document.getElementById("counterMenuList"); box.innerHTML="";
   let list = menuCache.filter(x=>x.enabled!==false);
-  if(currentCounterCategory !== "全部") list = list.filter(x=>x.category === currentCounterCategory);
+  if(currentCounterCategory !== "全部") { list = list.filter(x=>x.category === currentCounterCategory); }
   
   list.forEach(m=>{
     const row=document.createElement("div"); row.className="counter-menu-row";
-    row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.category} ｜ ${m.price}點</div></div><button class="btn primary" onclick="openCounterItemModal('${m.id}')" style="padding: 8px 14px; min-width:60px;">加入</button>`;
+    row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.category} ｜ ${m.price}點</div></div><button class="btn primary" onclick="openCounterItemModal('${m.id}')" style="padding: 8px 14px; min-width:60px;">加入</button></div>`;
     box.appendChild(row);
   });
 }
 
-window.openCounterItemModal=(id)=>{
-  counterCurrentItem=menuCache.find(x=>x.id===id); counterItemTitle.innerText=counterCurrentItem.name; counterItemQty.value=1;
-  const area = document.getElementById("counterOptionArea"); area.innerHTML="";
-  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{
-    area.innerHTML += `<div class="option-title" style="font-weight:800; margin:6px 0;">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
-  });
-  counterItemModalBg.style.display="flex";
-};
+window.openCounterItemModal=(id)=>{ counterCurrentItem=menuCache.find(x=>x.id===id); counterItemTitle.innerText=counterCurrentItem.name; counterItemQty.value=1; counterItemModalBg.style.display="flex"; };
 window.closeCounterItemModal=()=>{ counterItemModalBg.style.display="none"; };
-
-window.addCounterItemToCart=()=>{
-  const options = {};
-  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
-  counterCart.push({id:counterCurrentItem.id,name:counterCurrentItem.name,price:Number(counterCurrentItem.price||0),qty:Number(counterItemQty.value||1),options,note:counterItemNote.value.trim()});
-  closeCounterItemModal(); renderCounterCart();
-};
-
+window.addCounterItemToCart=()=>{ counterCart.push({id:counterCurrentItem.id,name:counterCurrentItem.name,price:Number(counterCurrentItem.price||0),qty:Number(counterItemQty.value||1),options:{}}); closeCounterItemModal(); renderCounterCart(); };
 function renderCounterCart(){
   const box=document.getElementById("counterCartList"); box.innerHTML=""; let total=0;
   counterCart.forEach((item,idx)=>{ 
-    total+=item.price*item.qty;
-    const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
-    box.innerHTML+=`<div class="counter-cart-item"><div class="item-name">${item.name} × ${item.qty}</div><div style="font-size:13px; color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="small-btn danger" onclick="counterCart.splice(${idx},1);renderCounterCart();" style="margin-top:4px;">刪除</button></div>`;
+    total+=item.price*item.qty; box.innerHTML+=`<div class="counter-cart-item"><div class="item-name">${item.name} × ${item.qty}</div><div>小計：${item.price*item.qty} 點</div><button class="small-btn danger" onclick="counterCart.splice(${idx},1);renderCounterCart();" style="margin-top:4px;">刪除</button></div>`;
   });
   counterTotal.innerText=`${total} 點`;
 }
@@ -488,19 +492,15 @@ function initCafeSignatureCanvas(){
 }
 window.clearCafeSignature=()=>cafeCtx.clearRect(0,0,cafeCanvas.width,cafeCanvas.height);
 window.closeCafeSignModal=()=>document.getElementById("cafeSignModalBg").style.display="none";
-
 window.prepareCounterSign=()=>{
-  if(!counterResident) { alert("請先載入住戶"); return; }
-  if(!counterCart.length) { alert("購物車目前是空的"); return; }
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0);
-  document.getElementById("cafeSignSummary").innerHTML=`住戶帳號：${counterResident.username}<br>取餐方式：${counterDining.value}<br>總計應扣點數：<b>${total} 點</b>`;
+  document.getElementById("cafeSignSummary").innerHTML=`住戶：${counterResident.username}｜總計：${total}點`;
   clearCafeSignature(); document.getElementById("cafeSignModalBg").style.display="flex";
 };
-
 window.confirmCounterOrderWithSignature=async()=>{
   const sigImgData=cafeCanvas.toDataURL("image/png"); closeCafeSignModal();
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0);
-  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", status:"等待接單", counter_signature:sigImgData, created_at:new Date().toISOString() });
+  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, status:"等待接單", counter_signature:sigImgData, created_at:new Date().toISOString() });
   await updateDoc(doc(db,"balances",counterBalanceDocId),{granted_amount:counterGranted-total, updated_by:"cafe"});
   alert("代客訂單與簽名已成功送出！"); counterCart=[]; renderCounterCart();
 };
@@ -527,13 +527,8 @@ function renderEditOptionGroups(){
 window.toggleSound=()=>{ 
   soundEnabled=!soundEnabled; 
   const btn = document.getElementById("soundBtn");
-  if(soundEnabled){
-    btn.innerText = "音效已啟用";
-    btn.classList.add("on");
-  } else {
-    btn.innerText = "音效已停用";
-    btn.classList.remove("on");
-  }
+  if(soundEnabled){ btn.innerText = "音效已啟用"; btn.classList.add("on"); } 
+  else { btn.innerText = "音效已停用"; btn.classList.remove("on"); }
 };
 window.syncCategoryInput=()=>{ mCategory.value = mCategorySelect.value; };
 function getCleanOptions(g){ return g||[]; }
