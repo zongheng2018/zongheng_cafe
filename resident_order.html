@@ -2,78 +2,66 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>住戶點餐｜昭揚縱橫 咖啡廳點餐系統</title>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#9c8e81">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="縱橫點餐">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="logo.png">
 
 <style>
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
-body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:340px}
+body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:120px}
 body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);backdrop-filter:blur(5px);z-index:-1}
 
-/* 🚀 頁首與橫向分類導覽列：精準永久鎖定最頂端 */
 .sticky-top-group{position:sticky;top:0;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
-.header{height:72px;background:rgba(255,255,255,.95);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
-.brand img{width:72px;opacity:.85}
-.back-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:8px 14px;font-weight:800;text-decoration:none;font-size:15px}
+.header{height:64px;background:rgba(255,255,255,.95);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 14px}
+.brand img{width:64px;opacity:.85}
+.back-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:8px;padding:6px 12px;font-weight:800;text-decoration:none;font-size:14px}
 
-.category-nav{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.95);border-bottom:1px solid #eee5dd;scrollbar-width:none}
+.category-nav{display:flex;gap:8px;overflow-x:auto;padding:10px 14px;background:rgba(255,255,255,.95);border-bottom:1px solid #eee5dd;scrollbar-width:none}
 .category-nav::-webkit-scrollbar{display:none}
-.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 16px;border-radius:20px;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap}
+.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:6px 14px;border-radius:16px;font-weight:800;font-size:13px;white-space:nowrap}
 .nav-item.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 
-.container{max-width:760px;margin:16px auto;padding:0 14px}
-.category-section{scroll-margin-top:140px}
-.category-title{font-size:20px;color:#6d6258;font-weight:900;margin:24px 0 12px 4px;letter-spacing:1px}
+.container{max-width:760px;margin:12px auto;padding:0 12px}
+.category-title{font-size:18px;color:#6d6258;font-weight:900;margin:16px 0 8px 4px}
 
-.menu-grid{display:grid;grid-template-columns:1fr;gap:14px}
-.menu-card{background:rgba(255,255,255,.93);border-radius:18px;padding:14px;display:grid;grid-template-columns:90px 1fr;gap:14px;box-shadow:0 6px 20px rgba(0,0,0,.05);border:1px solid rgba(230,224,218,.6);cursor:pointer}
-.menu-card.disabled{cursor:not-allowed;opacity:0.65}
-.menu-img{width:90px;height:90px;object-fit:cover;border-radius:14px;background:#eee}
+.menu-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.menu-card{background:rgba(255,255,255,.93);border-radius:14px;padding:12px;display:grid;grid-template-columns:76px 1fr;gap:12px;box-shadow:0 4px 14px rgba(0,0,0,.04);border:1px solid rgba(230,224,218,.6);cursor:pointer}
+.menu-img{width:76px;height:76px;object-fit:cover;border-radius:10px;background:#eee}
 .menu-info{display:flex;flex-direction:column;justify-content:space-between}
-.menu-name{font-size:18px;font-weight:900;color:#4a433d;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.menu-note{font-size:13px;color:#8c837a;line-height:1.4;margin:4px 0}
-.menu-price{font-size:19px;font-weight:900;color:#7a594c;margin-top:6px}
+.menu-name{font-size:16px;font-weight:900;color:#4a433d;display:flex;align-items:center;justify-content:space-between}
+.menu-note{font-size:12px;color:#8c837a;margin:2px 0;line-height:1.3}
+.menu-price{font-size:16px;font-weight:900;color:#7a594c}
 
-.status-badge{font-size:13px;padding:4px 10px;border-radius:999px;font-weight:700;white-space:nowrap}
-.status-badge.soldout{background:#fde8e6;color:#b3514a;border:1px solid #f9cbd7}
-.status-badge.notime{background:#fff1d9;color:#9b681f;border:1px solid #ffe3be}
+/* 🚀 核心修正：底層常駐條，只保留結帳跟摘要，絕不塞規格選項 */
+.bottom-cart-panel{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,0.98);border-top:1px solid #ddd5cc;box-shadow:0 -4px 20px rgba(0,0,0,0.08);z-index:90}
+.cart-summary-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px}
+.cart-info-text{font-size:14px;font-weight:800;color:#5f574f}
+.cart-info-text span{color:#7a594c;font-size:18px}
+.open-cart-btn{border:none;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;border-radius:10px;padding:8px 16px;font-weight:800;font-size:14px}
 
-/* 🚀 修正：底層一體化抽屜控制台，解決推擠與按鈕下沉問題 */
-.bottom-cart-panel{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,0.98);border-top:1px solid #ddd5cc;box-shadow:0 -6px 25px rgba(0,0,0,0.1);z-index:90;display:flex;flex-direction:column}
-.cart-summary-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:white;border-top:1px solid #eee}
-.cart-info-text{font-size:16px;font-weight:800;color:#5f574f}
-.cart-info-text span{color:#7a594c;font-size:20px}
-.open-cart-btn{border:none;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;border-radius:12px;padding:10px 20px;font-weight:800;font-size:15px;cursor:pointer}
+/* 🚀 核心修正：規格面板獨立升級為覆蓋式燈箱抽屜（Modal Overlay），徹底阻斷擠壓 */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:150;display:none;align-items:flex-end}
+.bottom-option-slide{background:white;width:100%;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px 16px 24px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 -8px 24px rgba(0,0,0,0.15)}
 
-/* 🚀 完美還原手機截圖比例：品項規格在底部展開的抽屜，優化縮排防止擠壓按鈕 */
-.bottom-option-slide{background:#fdfbf9;border-bottom:1px solid #eee5dd;max-height:300px;overflow-y:auto;padding:14px 16px 20px;display:none;flex-direction:column;gap:8px}
-.option-title{font-size:15px;font-weight:800;color:#6d6258;margin:4px 0 2px}
-select,textarea{width:100%;border:none;background:#f5f1eb;border-radius:12px;padding:10px;font-size:14px;outline:none;color:#5f574f}
-textarea{height:50px;resize:none}
-.qty-row{display:grid;grid-template-columns:50px 1fr 50px;gap:10px;align-items:center;margin-top:8px;text-align:center}
-.qty-btn{border:none;background:#eaddd3;color:#5f574f;font-size:20px;font-weight:900;height:40px;border-radius:12px;cursor:pointer}
-.qty-val{font-size:18px;font-weight:900}
-.btn-primary-action{border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:800;color:white;background:#6d6258;cursor:pointer;width:100%;margin-top:4px}
+.checkout-title-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:8px}
+.checkout-main-title{font-size:17px;font-weight:900;color:#554d46}
+.beautiful-close-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:8px;padding:4px 12px;font-weight:800;font-size:13px}
 
-/* 常駐底部的購物車推起面板 */
-.bottom-checkout-slide{background:white;border-bottom:1px solid #ddd5cc;max-height:420px;overflow-y:auto;padding:20px;display:none;flex-direction:column;gap:12px}
-.checkout-title-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:10px}
-.checkout-main-title{font-size:20px;font-weight:900;color:#554d46}
-.beautiful-close-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:6px 14px;font-weight:800;font-size:14px;cursor:pointer}
+.option-title{font-size:14px;font-weight:800;color:#6d6258;margin-top:4px}
+select,textarea{width:100%;border:none;background:#f5f1eb;border-radius:10px;padding:10px;font-size:14px;outline:none;color:#5f574f}
+textarea{height:54px;resize:none}
+.qty-row{display:grid;grid-template-columns:46px 1fr 46px;gap:12px;align-items:center;margin:8px 0;text-align:center}
+.qty-btn{border:none;background:#eaddd3;color:#5f574f;font-size:18px;font-weight:900;height:36px;border-radius:10px}
+.qty-val{font-size:16px;font-weight:900}
+.btn-primary-action{border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:800;color:white;background:#6d6258;width:100%}
 
-.cart-item{background:#f8f5f1;border-radius:14px;padding:12px;position:relative;margin-bottom:8px}
-.cart-item-name{font-weight:800;font-size:16px}
-.cart-item-meta{font-size:13px;color:#888;margin-top:2px}
-.cart-item-price{font-weight:700;color:#7a594c;margin-top:4px}
-.cart-del{position:absolute;right:12px;top:12px;border:none;background:none;color:#c86b62;font-weight:bold;font-size:14px;cursor:pointer}
-.status-banner{background:rgba(109,98,88,.95);color:white;border-radius:14px;padding:14px;margin-bottom:16px;text-align:center;font-size:15px;font-weight:bold;line-height:1.5}
+/* 購物車列表抽屜 */
+.bottom-checkout-slide{background:white;border-top:1px solid #ddd5cc;position:fixed;left:0;right:0;bottom:0;z-index:95;max-height:65vh;overflow-y:auto;padding:16px;display:none;flex-direction:column;gap:10px;box-shadow:0 -6px 20px rgba(0,0,0,0.1)}
+.cart-item{background:#f8f5f1;border-radius:12px;padding:10px;position:relative;margin-bottom:6px}
+.cart-item-name{font-weight:800;font-size:15px}
+.cart-item-meta{font-size:12px;color:#888}
+.cart-item-price{font-weight:700;color:#7a594c;font-size:14px}
+.cart-del{position:absolute;right:10px;top:10px;border:none;background:none;color:#c86b62;font-weight:bold;font-size:13px}
+.status-banner{background:rgba(109,98,88,.95);color:white;border-radius:12px;padding:12px;text-align:center;font-size:14px;font-weight:bold}
 </style>
 </head>
 
@@ -84,42 +72,22 @@ textarea{height:50px;resize:none}
     <div class="brand"><img src="logo.png"></div>
     <a href="resident.html" class="back-btn">返回首頁</a>
   </div>
-  <div class="category-nav" id="categoryNav">正在加載分類...</div>
+  <div class="category-nav" id="categoryNav">正在加載...</div>
 </div>
 
 <div class="container">
-  <div id="systemBannerArea"></div>
   <div id="menuContainer">正在加載菜單...</div>
 </div>
 
-<div class="bottom-cart-panel" id="bottomCartPanel">
-  
-  <div class="bottom-checkout-slide" id="bottomCheckoutSlide">
+<div class="modal-overlay" id="optionModalOverlay">
+  <div class="bottom-option-slide">
     <div class="checkout-title-row">
-      <div class="checkout-main-title">確認購物車餐點</div>
-      <button class="beautiful-close-btn" onclick="closeCart()">返回點餐</button>
-    </div>
-    <div id="cartListArea"></div>
-    <div class="option-title">取餐方式</div>
-    <select id="diningType" onchange="toggleSeatSelect()">
-      <option value="外帶">外帶</option>
-      <option value="內用">內用</option>
-    </select>
-    <div id="seatArea" style="display:none;">
-      <div class="option-title">選擇座位號碼</div>
-      <select id="seatSelect"></select>
-    </div>
-    <button class="btn-primary-action" id="submitOrderBtn" style="margin-top:10px;">送出訂單</button>
-  </div>
-
-  <div class="bottom-option-slide" id="bottomOptionSlide">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:6px;">
-      <div class="checkout-main-title" id="modalItemName" style="font-size:18px;">餐點名稱</div>
+      <div class="checkout-main-title" id="modalItemName">餐點規格</div>
       <button class="beautiful-close-btn" onclick="closeItemModal()">取消 ✕</button>
     </div>
     <div id="optionArea"></div>
     <div class="option-title">備註說明</div>
-    <textarea id="itemNote" placeholder="去冰 / 半糖，可空白"></textarea>
+    <textarea id="itemNote" placeholder="去冰/半糖，可空白"></textarea>
     <div class="qty-row">
       <button class="qty-btn" onclick="changeQty(-1)">−</button>
       <div class="qty-val" id="qtyVal">1</div>
@@ -127,9 +95,29 @@ textarea{height:50px;resize:none}
     </div>
     <button class="btn-primary-action" onclick="addItemToCart()">確認加入購物車</button>
   </div>
+</div>
 
+<div class="bottom-checkout-slide" id="bottomCheckoutSlide">
+  <div class="checkout-title-row">
+    <div class="checkout-main-title">確認購物車餐點</div>
+    <button class="beautiful-close-btn" onclick="closeCart()">返回點餐</button>
+  </div>
+  <div id="cartListArea"></div>
+  <div class="option-title">取餐方式</div>
+  <select id="diningType" onchange="toggleSeatSelect()">
+    <option value="外帶">外帶</option>
+    <option value="內用">內用</option>
+  </select>
+  <div id="seatArea" style="display:none;">
+    <div class="option-title">選擇座位號碼</div>
+    <select id="seatSelect"></select>
+  </div>
+  <button class="btn-primary-action" id="submitOrderBtn" style="margin-top:6px;">送出訂單</button>
+</div>
+
+<div class="bottom-cart-panel">
   <div class="cart-summary-row">
-    <div class="cart-info-text">已選擇 <span id="cartCount">0</span> 項商品，共 <span id="cartTotalText">0</span> 點</div>
+    <div class="cart-info-text">已選擇 <span id="cartCount">0</span> 項，共 <span id="cartTotalText">0</span> 點</div>
     <button class="open-cart-btn" onclick="openCart()">查看購物車 ></button>
   </div>
 </div>
@@ -140,204 +128,92 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 import { getFirestore, collection, getDocs, addDoc, query, where, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
+const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+let profile=null; let menuList=[]; let cart=[]; let currentSelectItem=null; let balanceDocId=null;
+let currentGranted=0, currentStored=0; let sysConfig={manual_mode:"auto"};
 
-let profile=null;
-let menuList=[];
-let cart=[];
-let currentSelectItem=null;
-let balanceDocId=null;
-let currentGranted=0, currentStored=0;
-let sysConfig={manual_mode:"auto",open_time:"08:30",close_time:"19:00",closed_days:"",closed_reason:""};
-
-function getTaipeiTimeInMinutes() {
-  const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
-  return now.getHours() * 60 + now.getMinutes();
-}
-function getTaipeiDateString() {
-  const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
-  const y = now.getFullYear();
-  const m = String(now.getMonth()+1).padStart(2,'0');
-  const d = String(now.getDate()).padStart(2,'0');
-  return `${y}-${m}-${d}`;
-}
-function timeStringToMinutes(timeStr) {
-  if (!timeStr) return 0;
-  const parts = timeStr.split(":");
-  return Number(parts[0] || 0) * 60 + Number(parts[1] || 0);
-}
+function getTaipeiTimeInMinutes() { const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"})); return now.getHours() * 60 + now.getMinutes(); }
+function getTaipeiDateString() { const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"})); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; }
+function timeStringToMinutes(t) { if(!t)return 0; const p=t.split(":"); return Number(p[0]||0)*60+Number(p[1]||0); }
 
 onAuthStateChanged(auth, async user => {
   if (!user) { location.href = "index.html"; return; }
-  const raw = localStorage.getItem("zh_user");
-  if (!raw) { location.href = "index.html"; return; }
-  profile = JSON.parse(raw);
-  await loadBalance();
-  await loadSeats();
-  listenSystemConfig();
+  profile = JSON.parse(localStorage.getItem("zh_user"));
+  await loadBalance(); await loadSeats();
+  onSnapshot(doc(db, "settings", "cafe"), s => { if(s.exists()) sysConfig=s.data(); loadMenuData(); });
 });
-
-function listenSystemConfig() {
-  onSnapshot(doc(db, "settings", "cafe"), async snapshot => {
-    if(snapshot.exists()) { sysConfig = snapshot.data(); }
-    await loadMenuData();
-  });
-}
 
 async function loadBalance() {
   const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", profile.username)));
-  if (!snap.empty) {
-    balanceDocId = snap.docs[0].id;
-    currentGranted = Number(snap.docs[0].data().granted_amount || 0);
-    currentStored = Number(snap.docs[0].data().stored_amount || 0);
-  }
+  if (!snap.empty) { balanceDocId = snap.docs[0].id; currentGranted = Number(snap.docs[0].data().granted_amount||0); currentStored = Number(snap.docs[0].data().stored_amount||0); }
 }
 
 async function loadMenuData() {
-  const snap = await getDocs(collection(db, "menu"));
-  menuList = [];
-  snap.forEach(d => { menuList.push({id:d.id,...d.data()}); });
+  const snap = await getDocs(collection(db, "menu")); menuList = []; snap.forEach(d => { menuList.push({id:d.id,...d.data()}); });
   menuList.sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));
-  renderCategoryNav();
-  renderMenu();
+  renderCategoryNav(); renderMenu();
 }
 
 function renderCategoryNav() {
-  const nav = document.getElementById("categoryNav");
-  nav.innerHTML = "";
+  const nav = document.getElementById("categoryNav"); nav.innerHTML = "";
   const categories = [...new Set(menuList.map(x => x.category || "其他"))];
-  categories.forEach((cat, index) => {
-    const btn = document.createElement("button");
-    btn.className = `nav-item ${index === 0 ? 'active' : ''}`;
-    btn.innerText = cat;
+  categories.forEach((cat, idx) => {
+    const btn = document.createElement("button"); btn.className = `nav-item ${idx === 0 ? 'active' : ''}`; btn.innerText = cat;
     btn.onclick = () => {
-      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      const target = document.getElementById(`cat_sec_${index}`);
-      if(target) target.scrollIntoView({ behavior: 'smooth' });
+      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active")); btn.classList.add("active");
+      const target = document.getElementById(`cat_sec_${idx}`); if(target) target.scrollIntoView({ behavior: 'smooth' });
     };
     nav.appendChild(btn);
   });
 }
 
 function renderMenu() {
-  const container = document.getElementById("menuContainer");
-  const bannerArea = document.getElementById("systemBannerArea");
-  container.innerHTML = "";
-  bannerArea.innerHTML = "";
+  const container = document.getElementById("menuContainer"); container.innerHTML = "";
+  const nowMin = getTaipeiTimeInMinutes(); const todayStr = getTaipeiDateString();
+  let systemOpen = true; let closeReason = ""; const offDays = (sysConfig.closed_days || "").split(",").map(x=>x.trim());
 
-  const nowMinutes = getTaipeiTimeInMinutes();
-  const todayStr = getTaipeiDateString();
-
-  let systemOpen = true;
-  let systemCloseReason = "";
-  const offDays = (sysConfig.closed_days || "").split(",").map(x=>x.trim());
-
-  if (sysConfig.manual_mode === "force_closed") {
-    systemOpen = false;
-    systemCloseReason = sysConfig.closed_reason || "後台手動暫停服務中";
-  } else if (offDays.includes(todayStr)) {
-    systemOpen = false;
-    systemCloseReason = "今日為社區公休日，不開放點餐";
-  } else if (sysConfig.manual_mode !== "force_open") {
-    const startMin = timeStringToMinutes(sysConfig.open_time || "08:30");
-    const endMin = timeStringToMinutes(sysConfig.close_time || "19:00");
-    if (nowMinutes < startMin || nowMinutes > endMin) {
-      systemOpen = false;
-      systemCloseReason = `不在營業時間內（營業時段：${sysConfig.open_time}-${sysConfig.close_time}）`;
-    }
+  if (sysConfig.manual_mode === "force_closed") { systemOpen = false; closeReason = sysConfig.closed_reason || "暫停服務"; }
+  else if (offDays.includes(todayStr)) { systemOpen = false; closeReason = "今日公休"; }
+  else if (sysConfig.manual_mode !== "force_open") {
+    const start = timeStringToMinutes(sysConfig.open_time || "08:30"); const end = timeStringToMinutes(sysConfig.close_time || "19:00");
+    if (nowMin < start || nowMin > end) { systemOpen = false; closeReason = `不在營業時間（${sysConfig.open_time}-${sysConfig.close_time}）`; }
   }
-
-  if (!systemOpen) {
-    container.innerHTML = `<div class="status-banner">咖啡廳系統關閉中<br>【原因：${systemCloseReason}】</div>`;
-    return;
-  }
+  if (!systemOpen) { container.innerHTML = `<div class="status-banner">咖啡廳系統關閉中<br>【${closeReason}】</div>`; return; }
 
   const categories = [...new Set(menuList.map(x => x.category || "其他"))];
+  categories.forEach((cat, idx) => {
+    const section = document.createElement("div"); section.className = "category-section"; section.id = `cat_sec_${idx}`;
+    section.innerHTML = `<div class="category-title">${cat}</div>`;
+    const grid = document.createElement("div"); grid.className = "menu-grid";
 
-  categories.forEach((cat, index) => {
-    const section = document.createElement("div");
-    section.className = "category-section";
-    section.id = `cat_sec_${index}`;
-
-    const catDiv = document.createElement("div");
-    catDiv.className = "category-title";
-    catDiv.innerText = cat;
-    section.appendChild(catDiv);
-
-    const grid = document.createElement("div");
-    grid.className = "menu-grid";
-
-    const items = menuList.filter(x => (x.category || "其他") === cat);
-    items.forEach(m => {
-      let isAvailable = true;
-      let badgeHtml = "";
-
-      if (m.enabled === false) {
-        isAvailable = false;
-        badgeHtml = `<span class="status-badge soldout">今日售完</span>`;
-      } 
-      else if (m.is_time_restricted) {
-        const start = timeStringToMinutes(m.start_time);
-        const end = timeStringToMinutes(m.end_time);
-        if (nowMinutes < start || nowMinutes > end) {
-          isAvailable = false;
-          badgeHtml = `<span class="status-badge notime">限時：${m.start_time}-${m.end_time}</span>`;
-        }
-      }
-
-      const card = document.createElement("div");
-      card.className = `menu-card ${!isAvailable ? 'disabled' : ''}`;
-      if (isAvailable) {
-        card.onclick = () => window.openItemModal(m.id);
-      }
-
-      card.innerHTML = `
-        <img class="menu-img" src="${m.image || 'logo.png'}">
-        <div class="menu-info">
-          <div>
-            <div class="menu-name"><span>${m.name}</span> ${badgeHtml}</div>
-            <div class="menu-note">${m.note || ""}</div>
-          </div>
-          <div class="menu-price">${m.price} 點</div>
-        </div>
-      `;
+    menuList.filter(x => (x.category || "其他") === cat).forEach(m => {
+      let avail = m.enabled !== false;
+      if (avail && m.is_time_restricted) { const s=timeStringToMinutes(m.start_time), e=timeStringToMinutes(m.end_time); if(nowMin<s||nowMin>e) avail=false; }
+      const card = document.createElement("div"); card.className = "menu-card";
+      if(avail) card.onclick = () => window.openItemModal(m.id); else card.style.opacity = "0.5";
+      card.innerHTML = `<img class="menu-img" src="${m.image || 'logo.png'}"><div class="menu-info"><div><div class="menu-name">${m.name}</div><div class="menu-note">${m.note||""}</div></div><div class="menu-price">${m.price} 點</div></div>`;
       grid.appendChild(card);
     });
-    section.appendChild(grid);
-    container.appendChild(section);
+    section.appendChild(grid); container.appendChild(section);
   });
 }
 
 window.openItemModal = (id) => {
-  document.getElementById("bottomCheckoutSlide").style.display = "none";
-  currentSelectItem = menuList.find(x => x.id === id);
-  modalItemName.innerText = currentSelectItem.name;
-  qtyVal.innerText = "1";
-  itemNote.value = "";
-  const area = document.getElementById("optionArea");
-  area.innerHTML = "";
+  closeCart(); currentSelectItem = menuList.find(x => x.id === id);
+  modalItemName.innerText = currentSelectItem.name; qtyVal.innerText = "1"; itemNote.value = "";
+  const area = document.getElementById("optionArea"); area.innerHTML = "";
   (currentSelectItem.custom_options || []).forEach((g, idx) => {
     area.innerHTML += `<div class="option-title">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
   });
-  document.getElementById("bottomOptionSlide").style.display = "flex";
+  optionModalOverlay.style.display = "flex";
 };
-
-window.closeItemModal = () => { document.getElementById("bottomOptionSlide").style.display = "none"; };
-window.changeQty = (n) => { let q = Number(qtyVal.innerText); q = Math.max(1, q + n); qtyVal.innerText = q; };
+window.closeItemModal = () => { optionModalOverlay.style.display = "none"; };
+window.changeQty = (n) => { qtyVal.innerText = Math.max(1, Number(qtyVal.innerText) + n); };
 
 window.addItemToCart = () => {
-  const options = {};
-  (currentSelectItem.custom_options || []).forEach((g, idx) => {
-    options[g.title] = document.getElementById(`counter_opt_${idx}`).value;
-  });
-  cart.push({
-    id: currentSelectItem.id, name: currentSelectItem.name, price: currentSelectItem.price,
-    qty: Number(qtyVal.innerText), options, note: itemNote.value.trim()
-  });
+  const options = {}; (currentSelectItem.custom_options || []).forEach((g, idx) => { options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
+  cart.push({ id: currentSelectItem.id, name: currentSelectItem.name, price: currentSelectItem.price, qty: Number(qtyVal.innerText), options, note: itemNote.value.trim() });
   closeItemModal(); updateCartSummary();
 };
 
@@ -347,48 +223,29 @@ function updateCartSummary() {
 }
 
 window.openCart = () => {
-  document.getElementById("bottomOptionSlide").style.display = "none";
-  const area = document.getElementById("cartListArea");
-  area.innerHTML = "";
+  closeItemModal(); const area = document.getElementById("cartListArea"); area.innerHTML = "";
   cart.forEach((x, idx) => {
-    const meta = Object.entries(x.options).map(([k,v])=>`${k}:${v}`).join(", ");
-    area.innerHTML += `<div class="cart-item"><div class="cart-item-name">${x.name} × ${x.qty}</div><div class="cart-item-meta">${meta} ${x.note?`[${x.note}]`:''}</div><div class="cart-item-price">${x.price*x.qty} 點</div><button class="cart-del" onclick="window.delCartItem(${idx})">刪除</button></div>`;
+    const opts = Object.entries(x.options).map(([k,v])=>`${k}:${v}`).join(", ");
+    area.innerHTML += `<div class="cart-item"><div class="cart-item-name">${x.name} × ${x.qty}</div><div class="cart-item-meta">${opts} ${x.note?`[${x.note}]`:''}</div><div class="cart-item-price">${x.price*x.qty} 點</div><button class="cart-del" onclick="window.delCartItem(${idx})">刪除</button></div>`;
   });
   document.getElementById("bottomCheckoutSlide").style.display = "flex";
 };
-
 window.closeCart = () => { document.getElementById("bottomCheckoutSlide").style.display = "none"; };
 window.delCartItem = (idx) => { cart.splice(idx,1); openCart(); updateCartSummary(); };
 window.toggleSeatSelect = () => { seatArea.style.display = diningType.value === "內用" ? "block" : "none"; };
 
 async function loadSeats() {
-  const snap = await getDocs(collection(db, "seats"));
-  const select = document.getElementById("seatSelect");
-  select.innerHTML = "";
+  const snap = await getDocs(collection(db, "seats")); const select = document.getElementById("seatSelect"); select.innerHTML = "";
   snap.forEach(d => { if(d.data().available !== false) select.innerHTML += `<option value="${d.data().seatId}">${d.data().seatId}</option>`; });
 }
 
-async function submitOrder() {
-  const total = cart.reduce((s,x)=>s+x.price*x.qty, 0);
-  if(currentGranted + currentStored < total) { alert("您的點數不足！"); return; }
+document.getElementById("submitOrderBtn").addEventListener("click", async () => {
+  const total = cart.reduce((s,x)=>s+x.price*x.qty, 0); if(currentGranted + currentStored < total) { alert("點數不足！"); return; }
   submitOrderBtn.disabled = true;
-  submitOrderBtn.innerText = "送出中...";
-
-  await addDoc(collection(db, "orders"), {
-    order_id: "ZH" + Date.now(), uid: profile.username, items: cart, total,
-    dining_type: diningType.value, seat: diningType.value === "內用" ? seatSelect.value : "",
-    status: "等待接單", created_at: new Date().toISOString()
-  });
-
-  await updateDoc(doc(db, "balances", balanceDocId), {
-    granted_amount: currentGranted >= total ? currentGranted - total : 0,
-    stored_amount: currentGranted >= total ? currentStored : currentStored - (total - currentGranted),
-    updated_by: "resident_auto"
-  });
-
-  alert("訂單已成功送出！"); cart = []; location.href = "resident.html";
-}
-document.getElementById("submitOrderBtn").addEventListener("click", submitOrder);
+  await addDoc(collection(db, "orders"), { order_id: "ZH"+Date.now(), uid: profile.username, items: cart, total, dining_type: diningType.value, seat: diningType.value==="內用"?seatSelect.value:"", status: "等待接單", created_at: new Date().toISOString() });
+  await updateDoc(doc(db, "balances", balanceDocId), { granted_amount: currentGranted>=total?currentGranted-total:0, stored_amount: currentGranted>=total?currentStored:currentStored-(total-currentGranted), updated_by: "resident_auto" });
+  alert("訂單送出成功！"); cart = []; location.href = "resident.html";
+});
 </script>
 </body>
 </html>
