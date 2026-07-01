@@ -174,14 +174,36 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     </div>
   </section>
 
+  <!-- 設定面板功能完整回歸 -->
   <section id="settingsTab" class="hidden">
     <div class="card">
-      <div class="section-title">點餐系統設定</div>
-      <div class="setting-status" id="systemStatus">讀取中...</div>
+      <div class="section-title">點餐系統控制面板</div>
+      <div class="setting-status" id="systemStatus">讀取系統設定中...</div>
+      
+      <div class="setting-status" style="margin-top: 16px;">
+        <div style="font-weight:900; margin-bottom:8px;">每日自動營業時間</div>
+        <div class="form-grid">
+          <div>開始點餐時間：<input id="openTime" type="time" value="08:30"></div>
+          <div>截止點餐時間：<input id="closeTime" type="time" value="19:00"></div>
+        </div>
+
+        <div style="font-weight:900; margin-top:16px; margin-bottom:8px;">特定國定假日 / 系統公休日設定</div>
+        <input id="closedDays" placeholder="請輸入公休日期，多天請用逗號隔開。例如：2026-07-05,2026-07-06">
+        
+        <div class="btn-row" style="margin-top: 14px;">
+          <button class="btn done" onclick="saveSystemSchedule()">儲存時間與公休設定</button>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top: 18px;">
+        <button class="btn done" style="background:#43a047;" onclick="setSystemManualMode('force_open')">手動強制開放點餐</button>
+        <button class="btn danger" style="background:#e53935;" onclick="setSystemManualMode('force_closed')">手動強制關閉點餐（可填原因）</button>
+      </div>
     </div>
   </section>
 </div>
 
+<!-- 編輯品項燈箱 -->
 <div class="modal-bg" id="editModalBg">
   <div class="modal">
     <div class="section-title">編輯品項</div>
@@ -277,39 +299,27 @@ let cafeCanvas, cafeCtx, cafeIsDrawing = false;
 let soundEnabled = true;
 let isInitialLoad = true;
 
-// 🔒 獨家高質感：Web Audio API 水晶和弦生成器
 function playPremiumCrystalSound() {
   if (!soundEnabled) return;
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
-
-    // 聲音和弦頻率：C5 (523.25Hz) + E5 (659.25Hz)
     const frequencies = [523.25, 659.25];
     const now = ctx.currentTime;
-
     frequencies.forEach(freq => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      
-      // 設定水晶音音色（正弦波 + 三角波完美融合）
       osc.type = 'sine'; 
       osc.frequency.setValueAtTime(freq, now);
-      
-      // 精緻的微調鋼琴延音音量曲線
-      gain.gain.setValueAtTime(0.2, now); // 起音音量
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2); // 1.2秒內優雅淡出
-      
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
       osc.connect(gain);
       gain.connect(ctx.destination);
-      
       osc.start(now);
       osc.stop(now + 1.2);
     });
-  } catch (e) {
-    console.error("Web Audio API 播放失敗:", e);
-  }
+  } catch (e) { console.error(e); }
 }
 
 window.toggleTimeInputs = (prefix) => {
@@ -323,7 +333,7 @@ onAuthStateChanged(auth,async user=>{
   const raw=localStorage.getItem("zh_user");
   if(!raw){location.href="index.html";return}
   cafeProfile=JSON.parse(raw);
-  await loadSettings();
+  listenSettings(); // 動態即時同步狀態面板
   listenOrders();
   await loadMenu();
   await loadSeatsForCounter();
@@ -350,44 +360,84 @@ function listenOrders(){
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
     waitingOrders.innerHTML=""; makingOrders.innerHTML=""; doneOrders.innerHTML="";
     if(snap.empty) { isInitialLoad = false; return; }
-    
     let hasNewIncomingOrder = false;
-
     snap.forEach(d=>{
       const o=d.data(); const status=o.status||"等待接單";
-      const orderDocId = d.id;
-
-      if(status === "等待接單" && !knownOrderIds.has(orderDocId)){
+      if(status === "等待接單" && !knownOrderIds.has(d.id)){
         if(!isInitialLoad){ hasNewIncomingOrder = true; }
-        knownOrderIds.add(orderDocId);
-      } else {
-        knownOrderIds.add(orderDocId);
-      }
+        knownOrderIds.add(d.id);
+      } else { knownOrderIds.add(d.id); }
 
       const sigHtml = o.counter_signature ? `<div class="meta" style="margin-top:6px;">住戶簽名：<br><img src="${o.counter_signature}" style="width:120px; background:white; border:1px solid #eee; border-radius:6px; margin-top:2px;"></div>` : "";
-      
       let btnHtml = "";
       if (status === "等待接單") {
         btnHtml = `<div class="btn-row"><button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
       } else if (status === "製作中") {
         btnHtml = `<div class="btn-row"><button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
       }
-
       const div=document.createElement("div"); div.className="order-card";
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div><div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div>${sigHtml}</div><div class="badge">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
-      
       if(status === "等待接單") waitingOrders.appendChild(div);
       else if(status === "製作中") makingOrders.appendChild(div);
       else doneOrders.appendChild(div);
     });
-
-    // 🎛️ 觸發音效
     if(hasNewIncomingOrder){ playPremiumCrystalSound(); }
     isInitialLoad = false;
   });
 }
 
 window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
+
+// 📡 即時監聽與更新系統控制設定
+function listenSettings() {
+  onSnapshot(doc(db, "settings", "cafe"), s => {
+    if (!s.exists()) return;
+    const data = s.data();
+    let modeText = "智慧自動控管中";
+    if (data.manual_mode === "force_open") modeText = "強制手動開放中";
+    if (data.manual_mode === "force_closed") modeText = `強制關閉中（原因：${data.closed_reason || '未說明'}）`;
+
+    systemStatus.innerHTML = `
+      <b>目前系統模式：</b>${modeText}<br>
+      <b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br>
+      <b>公休日期清單：</b>${data.closed_days || "未設定"}
+    `;
+    
+    // 回填欄位數值
+    document.getElementById("openTime").value = data.open_time || "08:30";
+    document.getElementById("closeTime").value = data.close_time || "19:00";
+    document.getElementById("closedDays").value = data.closed_days || "";
+  });
+}
+
+// 💾 儲存自動化排程與公休日
+window.saveSystemSchedule = async () => {
+  const openTime = document.getElementById("openTime").value;
+  const closeTime = document.getElementById("closeTime").value;
+  const closedDays = document.getElementById("closedDays").value.trim();
+
+  await setDoc(doc(db, "settings", "cafe"), {
+    open_time: openTime,
+    close_time: closeTime,
+    closed_days: closedDays
+  }, { merge: true });
+  alert("系統營業排程設定成功！");
+};
+
+// 🕹️ 手動變更強制開關模式（含原因填寫邏輯）
+window.setSystemManualMode = async (mode) => {
+  let reason = "";
+  if (mode === "force_closed") {
+    reason = prompt("請輸入暫停點餐的原因公告（住戶點餐端會看見此公告）：", "設備維修維護中，暫停點餐");
+    if (reason === null) return; // 取消作業
+  }
+  
+  await setDoc(doc(db, "settings", "cafe"), {
+    manual_mode: mode,
+    closed_reason: reason || ""
+  }, { merge: true });
+  alert("系統模式已成功切換！");
+};
 
 window.addMenu=async()=>{
   const name=mName.value.trim(); const price=Number(mPrice.value); const category=(mCategory.value||mCategorySelect.value).trim();
@@ -439,7 +489,6 @@ window.saveEditMenu=async()=>{
 };
 
 window.toggleMenu=async(id,enabled)=>{ await updateDoc(doc(db,"menu",id),{enabled:!enabled}); await loadMenu(); };
-async function loadSettings(){ systemStatus.innerText="系統連線正常"; }
 
 window.loadCounterResident=async()=>{
   const username=counterResidentInput.value.trim();
@@ -464,7 +513,6 @@ function renderCounterMenu(){
   const box=document.getElementById("counterMenuList"); box.innerHTML="";
   let list = menuCache.filter(x=>x.enabled!==false);
   if(currentCounterCategory !== "全部") { list = list.filter(x=>x.category === currentCounterCategory); }
-  
   list.forEach(m=>{
     const row=document.createElement("div"); row.className="counter-menu-row";
     row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.category} ｜ ${m.price}點</div></div><button class="btn primary" onclick="openCounterItemModal('${m.id}')" style="padding: 8px 14px; min-width:60px;">加入</button></div>`;
