@@ -272,7 +272,7 @@ window.changeResidentPassword=async function(){
 
   if(!oldPw||!newPw||!confirmPw){ alert("請完整填寫"); return; }
   if(newPw.length < 6){ alert("新密碼至少 6 碼"); return; }
-  if(newPw Pac!==confirmPw){ alert("新密碼與確認密碼不一致"); return; }
+  if(newPw !== confirmPw){ alert("新密碼與確認密碼不一致"); return; }
 
   try{
     const user=auth.currentUser;
