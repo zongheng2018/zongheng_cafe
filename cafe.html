@@ -24,15 +24,6 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .section-title{font-size:26px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
 .order-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .order-card{background:white;border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
-.order-card.new{animation:pulse 1.2s ease-in-out 4;border:2px solid #d8b56d}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
-.order-id{font-size:20px;font-weight:900}
-.meta{font-size:14px;color:#777;line-height:1.7}
-.badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap;min-width:82px;height:38px;flex-shrink:0}
-.wait{background:#fff1d9;color:#9b681f}
-.making{background:#e6f0ff;color:#426f9c}
-.done{background:#e8f5e9;color:#3f7f47}
-.cancel{background:#fde8e6;color:#b3514a}
 .order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
 .order-item{padding:10px 0;border-bottom:1px solid #eee}
 .item-name{font-weight:900}
@@ -47,19 +38,18 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 input,textarea,select{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
 textarea{height:86px;resize:none;grid-column:1/-1}
-.menu-row{display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #eee5dd}
+
+.menu-row{display:grid;grid-template-columns:80px 1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid #eee5dd}
 .menu-img{width:80px;height:80px;object-fit:cover;border-radius:16px;background:#eee}
 .menu-name{font-size:18px;font-weight:900}
-.menu-meta{font-size:14px;color:#777;margin-top:4px}
+.menu-meta{font-size:14px;color:#777;margin-top:4px;line-height:1.5}
+
 .hidden{display:none}
 .empty{text-align:center;color:#999;padding:40px}
 .setting-status{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
 .option-editor{margin-top:14px;background:#f8f5f1;border-radius:16px;padding:16px}
 .option-title{font-size:18px;font-weight:900;color:#6d6258;margin-bottom:12px}
 .option-group-box{background:white;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #eee5dd}
-.option-choice-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
-.small-btn{border:none;border-radius:10px;padding:8px 12px;background:#9c8e81;color:white;font-weight:800}
-.small-btn.danger{background:#c86b62}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99;padding:18px}
 .modal{background:white;width:100%;max-width:680px;border-radius:24px;padding:22px;max-height:90vh;overflow:auto}
 .counter-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
@@ -78,7 +68,8 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <body>
 
 <audio id="newOrderAudio" preload="auto">
-  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  <source src="https://actions.google.com/sounds/v1/multimedia/ambient_hum_air_conditioner.ogg" type="audio/ogg">
+  <source src="https://assets.mixkit.co/active_storage/sfx/911/911-200.wav" type="audio/wav">
 </audio>
 
 <div class="header">
@@ -87,7 +78,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="title">咖啡廳櫃台</div>
   </div>
   <div class="header-actions">
-    <button class="sound-btn on" id="soundBtn" onclick="enableSound()">音效已啟用</button>
+    <button class="sound-btn on" id="soundBtn" onclick="toggleSound()">音效已啟用</button>
     <button class="logout" id="logoutBtn">登出</button>
   </div>
 </div>
@@ -196,7 +187,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </section>
 </div>
 
-<!-- 編輯品項燈箱 -->
 <div class="modal-bg" id="editModalBg">
   <div class="modal">
     <div class="section-title">編輯品項</div>
@@ -235,12 +225,10 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </div>
 </div>
 
-<!-- 代客點餐規格燈箱 -->
 <div class="modal-bg" id="counterItemModalBg">
   <div class="modal">
     <div class="section-title" id="counterItemTitle">選擇品項</div>
     <div id="counterOptionArea"></div>
-    <div style="margin-top:12px;"><textarea id="counterItemNote" placeholder="備註，可空白"></textarea></div>
     <div class="form-grid" style="margin-top:12px;">
       <button class="btn light" onclick="counterChangeQty(-1)">−</button>
       <input id="counterItemQty" type="number" value="1" min="1">
@@ -292,6 +280,7 @@ let currentCounterCategory="全部";
 let ordersUnsubscribe=null;
 let cafeCanvas, cafeCtx, cafeIsDrawing = false;
 let soundEnabled = true;
+let isInitialLoad = true; // 用於阻擋第一次打開頁面時把舊訂單全部敲一次鈴聲
 
 window.toggleTimeInputs = (prefix) => {
   const checkbox = document.getElementById(`${prefix}TimeRestricted`);
@@ -326,16 +315,31 @@ function formatItems(items){
   }).join("");
 }
 
+// 監聽訂單並智慧判斷高音質音效撥放
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
     waitingOrders.innerHTML=""; makingOrders.innerHTML=""; doneOrders.innerHTML="";
-    if(snap.empty) return;
+    if(snap.empty) { isInitialLoad = false; return; }
+    
+    let hasNewIncomingOrder = false;
+
     snap.forEach(d=>{
       const o=d.data(); const status=o.status||"等待接單";
+      const orderDocId = d.id;
+
+      // 檢查是否為全新進來的等待接單訂單
+      if(status === "等待接單" && !knownOrderIds.has(orderDocId)){
+        if(!isInitialLoad){
+          hasNewIncomingOrder = true;
+        }
+        knownOrderIds.add(orderDocId);
+      } else {
+        knownOrderIds.add(orderDocId);
+      }
+
       const sigHtml = o.counter_signature ? `<div class="meta" style="margin-top:6px;">住戶簽名：<br><img src="${o.counter_signature}" style="width:120px; background:white; border:1px solid #eee; border-radius:6px; margin-top:2px;"></div>` : "";
       
-      // 完美還原：按鈕顯示防線（已完成、已取消的卡片完全不渲染任何操控按鈕！）
       let btnHtml = "";
       if (status === "等待接單") {
         btnHtml = `<div class="btn-row"><button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
@@ -350,6 +354,16 @@ function listenOrders(){
       else if(status === "製作中") makingOrders.appendChild(div);
       else doneOrders.appendChild(div);
     });
+
+    // 觸發高音質清脆音效
+    if(hasNewIncomingOrder && soundEnabled){
+      const audio = document.getElementById("newOrderAudio");
+      if(audio){
+        audio.currentTime = 0;
+        audio.play().catch(e=>console.log("瀏覽器阻擋自動播放音效，需點擊頁面任一處解鎖:", e));
+      }
+    }
+    isInitialLoad = false;
   });
 }
 
@@ -386,9 +400,9 @@ async function loadMenu(){
   };
 
   menuCache.forEach(m=>{
-    const timeText = m.is_time_restricted ? `<br><span style="color:#777;">限時供應：${m.start_time} – ${m.end_time}</span>` : "";
+    const timeText = m.is_time_restricted ? `<br><span style="color:#c67113; font-weight:bold;">限時供應：${m.start_time} – ${m.end_time}</span>` : "";
     const row=document.createElement("div"); row.className="menu-row";
-    row.innerHTML=`<div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}${timeText}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
+    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.category||""} ｜ ${m.price||0} 點 ｜ ${m.enabled===false?"暫停供應":"供應中"}${timeText}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
     menuList.appendChild(row);
   });
   renderCategorySelects();
@@ -426,7 +440,6 @@ function renderCategorySelects(){
 }
 window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
 
-// 完美還原：代客點餐網格與精緻圖片還原（加入按鈕完美縮回右側）
 function renderCounterMenu(){
   const box=document.getElementById("counterMenuList"); box.innerHTML="";
   let list = menuCache.filter(x=>x.enabled!==false);
@@ -511,14 +524,22 @@ function renderEditOptionGroups(){
   });
 }
 
-window.enableSound=()=>{ soundEnabled=!soundEnabled; soundBtn.innerText = soundEnabled ? "音效已啟用" : "音效已停用"; };
+window.toggleSound=()=>{ 
+  soundEnabled=!soundEnabled; 
+  const btn = document.getElementById("soundBtn");
+  if(soundEnabled){
+    btn.innerText = "音效已啟用";
+    btn.classList.add("on");
+  } else {
+    btn.innerText = "音效已停用";
+    btn.classList.remove("on");
+  }
+};
 window.syncCategoryInput=()=>{ mCategory.value = mCategorySelect.value; };
 function getCleanOptions(g){ return g||[]; }
 async function loadSeatsForCounter(){ 
   const select = document.getElementById("counterSeat"); 
-  if(select) {
-    select.innerHTML=`<option value="">請選擇座位</option><option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option>`; 
-  }
+  if(select) { select.innerHTML=`<option value="">請選擇座位</option><option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option>`; }
 }
 window.toggleCounterSeat=()=>{ seatArea.style.display = counterDining.value === "內用" ? "block" : "none"; };
 window.counterChangeQty=(n)=>{ let q=Number(counterItemQty.value||1); q=Math.max(1,q+n); counterItemQty.value=q; };
