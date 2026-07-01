@@ -38,7 +38,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .item-name{font-weight:900}
 .item-detail{font-size:14px;color:#777;line-height:1.6}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
-.btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81}
+.btn{border:none;border-radius:13px;padding:10px 14px;font-weight:800;color:white;background:#9c8e81;cursor:pointer}
 .order-card .btn{min-width:64px}
 .btn.primary{background:#6d6258}
 .btn.done{background:#6b8b61}
@@ -68,6 +68,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .counter-total{font-size:24px;font-weight:900;color:#6d6258;margin-top:14px}
 .counter-mini-img{width:64px;height:64px;border-radius:14px;object-fit:cover;background:#eee}
 .counter-menu-row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #eee5dd}
+
+/* 電子簽名畫布增設樣式 */
+.sig-canvas{border:2px dashed #c9c0b7;background:#fdfcfb;border-radius:14px;cursor:crosshair;display:block;margin:14px 0}
 @media(max-width:900px){.counter-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.menu-row{grid-template-columns:1fr}.counter-menu-row{grid-template-columns:64px 1fr}.counter-menu-row .btn{grid-column:1/-1}.brand img{width:60px}.title{font-size:18px}.header{padding:0 12px}.sound-btn{font-size:13px;padding:8px}}
 </style>
@@ -180,7 +183,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
         <div class="btn-row">
           <button class="btn danger" onclick="clearCounterCart()">清空購物車</button>
-          <button class="btn primary" onclick="submitCounterOrder()">送出訂單</button>
+          <button class="btn primary" onclick="prepareCounterSign()">送出訂單</button>
         </div>
       </div>
     </div>
@@ -271,6 +274,22 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </div>
 </div>
 
+<div class="modal-bg" id="cafeSignModalBg">
+  <div class="modal" style="max-width: 500px;">
+    <div class="section-title">住戶點餐明細確認</div>
+    <div id="cafeSignSummary" class="setting-status" style="margin-bottom: 12px; max-height: 180px; overflow: auto; line-height: 1.6;"></div>
+    
+    <label style="font-weight:900;color:#6d6258;">請住戶在下方框格內簽名確認：</label>
+    <canvas id="cafeSigCanvas" class="sig-canvas" width="450" height="180"></canvas>
+    
+    <div class="btn-row">
+      <button class="btn primary done" onclick="confirmCounterOrderWithSignature()">確認送出訂單</button>
+      <button class="btn light" onclick="clearCafeSignature()">清除重簽</button>
+      <button class="btn danger" onclick="closeCafeSignModal()">返回修改</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -323,6 +342,9 @@ let counterCart=[];
 let counterCurrentItem=null;
 let currentCounterCategory="全部";
 let ordersUnsubscribe=null;
+
+// 簽名專用畫布變數
+let cafeCanvas, cafeCtx, cafeIsDrawing = false;
 
 function getTaipeiNow(){
   return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
@@ -445,7 +467,7 @@ onAuthStateChanged(auth,async user=>{
 
   cafeProfile=JSON.parse(raw);
 
-  if(cafeProfile.role!=="cafe"){
+  if(cafeProfile.role!=="cafe" && cafeProfile.role!=="engineer"){
     alert("沒有權限");
     location.href="index.html";
     return;
@@ -467,6 +489,7 @@ onAuthStateChanged(auth,async user=>{
   listenOrders();
   await loadMenu();
   await loadSeatsForCounter();
+  initCafeSignatureCanvas(); // 初始化代客點餐畫布
 });
 
 window.showTab=(tab,btn)=>{
@@ -543,6 +566,11 @@ function listenOrders(){
         playNewOrderSound();
       }
 
+      // 優化呈現：如果是櫃檯代客點餐，管理員點開卡片能直接看到當時住戶的簽名圖檔存證
+      const sigHtml = o.counter_signature 
+        ? `<div class="meta" style="margin-top:6px;">住戶簽名：<br><img src="${o.counter_signature}" style="width:120px; background:white; border:1px solid #eee; border-radius:6px; margin-top:2px;"></div>`
+        : "";
+
       const div=document.createElement("div");
       div.className="order-card "+(!firstSnapshot && isNew ? "new" : "");
       div.innerHTML=`
@@ -554,6 +582,7 @@ function listenOrders(){
             <div class="meta">金額：${o.total||0} 點</div>
             <div class="meta">下單時間：${formatOrderTime(o.created_at)}</div>
             ${o.created_by?`<div class="meta">建立來源：${o.created_by}</div>`:""}
+            ${sigHtml}
           </div>
           <div class="badge ${statusClass(status)}">${status}</div>
         </div>
@@ -1253,30 +1282,97 @@ window.clearCounterCart=()=>{
   renderCounterCart();
 };
 
-window.submitCounterOrder=async()=>{
-  if(!counterResident){
-    alert("請先載入住戶");
+// ==========================================
+//      新增：咖啡廳代客點餐電子簽名核心邏輯
+// ==========================================
+
+function initCafeSignatureCanvas() {
+  cafeCanvas = document.getElementById("cafeSigCanvas");
+  if (!cafeCanvas) return;
+  cafeCtx = cafeCanvas.getContext("2d");
+  
+  cafeCtx.strokeStyle = "#5f574f";
+  cafeCtx.lineWidth = 3;
+  cafeCtx.lineCap = "round";
+
+  // 繪圖板與滑鼠事件
+  cafeCanvas.addEventListener("mousedown", (e) => {
+    cafeIsDrawing = true;
+    cafeCtx.beginPath();
+    const rect = cafeCanvas.getBoundingClientRect();
+    cafeCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+  });
+  
+  cafeCanvas.addEventListener("mousemove", (e) => {
+    if (!cafeIsDrawing) return;
+    const rect = cafeCanvas.getBoundingClientRect();
+    cafeCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    cafeCtx.stroke();
+  });
+  
+  cafeCanvas.addEventListener("mouseup", () => cafeIsDrawing = false);
+  cafeCanvas.addEventListener("mouseout", () => cafeIsDrawing = false);
+
+  // 觸控事件相容
+  cafeCanvas.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousedown", { clientX: touch.clientX, clientY: touch.clientY });
+    cafeCanvas.dispatchEvent(mouseEvent);
+  }, { passive: true });
+
+  cafeCanvas.addEventListener("touchmove", (e) => {
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
+    cafeCanvas.dispatchEvent(mouseEvent);
+  }, { passive: true });
+}
+
+window.clearCafeSignature = () => {
+  cafeCtx.clearRect(0, 0, cafeCanvas.width, cafeCanvas.height);
+};
+
+window.closeCafeSignModal = () => {
+  document.getElementById("cafeSignModalBg").style.display = "none";
+};
+
+// 按下送出訂單按鈕，先攔截並跳出電子簽名核對框
+window.prepareCounterSign = () => {
+  if(!counterResident){ alert("請先載入住戶"); return; }
+  if(!counterBalanceDocId){ alert("找不到住戶點資料"); return; }
+  if(!counterCart.length){ alert("購物車是空的"); return; }
+
+  const dining = counterDining.value;
+  const seat = counterSeat.value;
+  if(dining === "內用" && !seat){ alert("請選擇座位"); return; }
+
+  const summaryBox = document.getElementById("cafeSignSummary");
+  const total = counterCart.reduce((s,x)=>s+x.price*x.qty,0);
+  
+  // 組合精確的購物車餐點摘要供住戶核對
+  let itemsHtml = counterCart.map(x => `· ${x.name} × ${x.qty}`).join("<br>");
+  summaryBox.innerHTML = `住戶帳號：${counterResident.username}<br>取餐方式：${dining}${seat?` (${seat}桌)`:""}<br>餐點明細：<br>${itemsHtml}<br><b>應扣總點數：${total} 點</b>`;
+
+  clearCafeSignature();
+  document.getElementById("cafeSignModalBg").style.display = "flex";
+};
+
+// 簽名完確認送出訂單，正式上傳
+window.confirmCounterOrderWithSignature = async () => {
+  const sigImgData = cafeCanvas.toDataURL("image/png");
+  
+  // 空白簽名防呆檢查
+  const blankCanvas = document.createElement('canvas');
+  blankCanvas.width = cafeCanvas.width;
+  blankCanvas.height = cafeCanvas.height;
+  if (sigImgData === blankCanvas.toDataURL("image/png")) {
+    alert("請住戶完成簽名後再確認送出訂單。");
     return;
   }
 
-  if(!counterBalanceDocId){
-    alert("找不到住戶點資料");
-    return;
-  }
-
-  if(!counterCart.length){
-    alert("購物車是空的");
-    return;
-  }
+  closeCafeSignModal();
 
   const dining=counterDining.value;
   const seat=counterSeat.value;
-
-  if(dining==="內用"&&!seat){
-    alert("請選擇座位");
-    return;
-  }
-
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0);
 
   if(counterGranted+counterStored<total){
@@ -1295,6 +1391,7 @@ window.submitCounterOrder=async()=>{
     newStored-=rest;
   }
 
+  // 正式寫入訂單，同時附帶 counter_signature 電子簽名圖檔
   await addDoc(collection(db,"orders"),{
     order_id:"ZH"+Date.now(),
     uid:counterResident.username,
@@ -1304,6 +1401,7 @@ window.submitCounterOrder=async()=>{
     dining_type:dining,
     seat:dining==="內用"?seat:"",
     status:"等待接單",
+    counter_signature: sigImgData, // 電子簽名封裝存證
     created_at:new Date().toISOString()
   });
 
@@ -1312,7 +1410,7 @@ window.submitCounterOrder=async()=>{
     stored_amount:newStored
   });
 
-  alert("代客訂單已送出");
+  alert("代客訂單已成功送出，住戶簽名檔已留存！");
 
   counterCart=[];
   counterGranted=newGranted;
