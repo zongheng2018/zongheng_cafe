@@ -120,7 +120,6 @@ const db=getFirestore(app);
 
 let profile=null;
 let accountDocId=null;
-let currentPassword="";
 
 const appDiv=document.getElementById("app");
 const content=document.getElementById("content");
@@ -152,7 +151,7 @@ async function loadAccountInfo(){
   if(!snap.empty){
     const d=snap.docs[0];
     accountDocId=d.id;
-    currentPassword=String(d.data().password||"");
+    // 安全修正：不再將敏感的明文密碼同步下載到前端變數 currentPassword 中儲存
   }
 }
 
@@ -207,7 +206,7 @@ window.showNotice=async function(){
   const orders=await getMyOrders();
 
   if(orders.length===0){
-    latestOrderBox.innerHTML='<div class="order-item">目前尚無進行中的訂單</div>';
+    latestOrderBox.innerHTML='<div class="order-item">目尚無進行中的訂單</div>';
   }else{
     const o=orders[0];
     const items=(o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
@@ -336,6 +335,7 @@ window.changeResidentPassword=async function(){
 
     const credential=EmailAuthProvider.credential(user.email,oldPw);
 
+    // 透過 Firebase Auth 進行安全認證，不需要依賴前端暫存舊密碼
     await reauthenticateWithCredential(user,credential);
 
     await updatePassword(user,newPw);
@@ -345,12 +345,10 @@ window.changeResidentPassword=async function(){
       return;
     }
 
+    // 安全優化：修改密碼時只同步寫回更新時間，不在 Firestore 內留下明文欄位
     await updateDoc(doc(db,"accounts",accountDocId),{
-      password:newPw,
       updated_at:new Date().toISOString()
     });
-
-    currentPassword=newPw;
 
     document.getElementById("oldPassword").value="";
     document.getElementById("newPassword").value="";
