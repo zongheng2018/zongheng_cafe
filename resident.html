@@ -45,6 +45,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
 .step.active{background:#9c8e81;color:white}
 .input{width:100%;border:none;background:#f5f1eb;border-radius:12px;padding:13px;font-size:15px;margin-bottom:10px;outline:none}
 .action-btn{border:none;background:#6d6258;color:white;border-radius:12px;padding:11px 18px;font-weight:800}
+.order-time-text{font-size:13px;color:#8c837a;margin-top:2px}
 @media(max-width:560px){.point-grid{grid-template-columns:1fr}.section-title{font-size:24px}.announcement{font-size:16px}}
 </style>
 </head>
@@ -103,6 +104,17 @@ let profile=null;
 let accountDocId=null;
 const appDiv=document.getElementById("app");
 const content=document.getElementById("content");
+
+// 🚀 轉換 Firebase 存入的 ISO字串時間為在地好讀格式的優雅函數
+function formatLocalTime(isoString) {
+  if(!isoString) return "未知時間";
+  try {
+    const d = new Date(isoString);
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+  } catch(e) {
+    return "時間格式錯誤";
+  }
+}
 
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
@@ -180,11 +192,13 @@ window.showNotice=async function(){
   }else{
     const o=orders[0];
     const items=(o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
+    // 🚀 修正：金額單位改為「點」，並新增「送出時間」欄位
     latestOrderBox.innerHTML=`
       <div class="order-item">
         <div class="order-title">${o.order_id||""} <span class="status ${statusClass(o.status)}">${o.status||""}</span></div>
+        <div class="order-time-text">送出時間：${formatLocalTime(o.created_at)}</div>
         <div>${items}</div>
-        <div>金額：NT$ ${o.total||0}</div>
+        <div>金額：${o.total||0} 點</div>
         <div>${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
         ${stepHtml(o.status)}
       </div>`;
@@ -219,11 +233,13 @@ window.showOrders=async function(){
   orderList.innerHTML="";
   orders.forEach(o=>{
     const items=(o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
+    // 🚀 修正：金額單位改為「點」，並新增「送出時間」
     orderList.innerHTML+=`
       <div class="order-item">
         <div class="order-title">${o.order_id||""} <span class="status ${statusClass(o.status)}">${o.status||""}</span></div>
+        <div class="order-time-text">送出時間：${formatLocalTime(o.created_at)}</div>
         <div>${items}</div>
-        <div>金額：NT$ ${o.total||0}</div>
+        <div>金額：${o.total||0} 點</div>
         <div>${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
         ${stepHtml(o.status)}
       </div>`;
@@ -242,6 +258,7 @@ window.showProfile=async function(){
     stored=Number(snap.docs[0].data().stored_amount||0);
   }
 
+  // 🚀 修正：這裡的儲值點數標籤原本就是點，維持點的設計
   profileBox.innerHTML=`
     <div class="point-grid">
       <div class="point-box"><div class="point-label">配發點數</div><div class="point-value">${granted}</div></div>
