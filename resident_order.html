@@ -67,7 +67,6 @@ textarea{height:72px;resize:none}
   <div class="cart-title" id="cartTotalText">0 點 ></div>
 </div>
 
-<!-- 規格選擇彈出視窗 -->
 <div class="modal-bg" id="itemModalBg">
   <div class="modal">
     <div class="modal-title" id="modalItemName">餐點名稱</div>
@@ -86,7 +85,6 @@ textarea{height:72px;resize:none}
   </div>
 </div>
 
-<!-- 購物車清單彈出視窗 -->
 <div class="modal-bg" id="cartModalBg">
   <div class="modal">
     <div class="modal-title">確認購物車餐點</div>
@@ -185,12 +183,10 @@ function renderMenu() {
       let buttonText = "點餐 ＋";
       let timeTip = "";
 
-      // 1. 檢查是否被櫃檯按暫停供應（無表情符號）
       if (m.enabled === false) {
         isAvailable = false;
         buttonText = "今日售完";
       } 
-      // 2. 檢查是否在非供應時段（無表情符號）
       else if (m.is_time_restricted) {
         const start = timeStringToMinutes(m.start_time);
         const end = timeStringToMinutes(m.end_time);
