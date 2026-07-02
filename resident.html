@@ -16,7 +16,6 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.78);
 .logout{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer}
 .container{max-width:1100px;margin:20px auto;padding:0 16px 40px}
 
-/* 公告欄專屬高質感樣式 */
 .broadcast-card{background:linear-gradient(135deg, #fbf9f6 0%, #f3ede4 100%);border:1px solid #e1d7cb;border-radius:20px;padding:20px;margin-bottom:20px;box-shadow:0 6px 20px rgba(109,98,88,0.06)}
 .broadcast-title{font-size:18px;font-weight:900;color:#7a5a4c;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .broadcast-content{font-size:15px;line-height:1.6;color:#61564d;white-space:pre-wrap;background:rgba(255,255,255,0.6);padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.8)}
@@ -75,7 +74,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.78);
       <div class="balance-sub" id="balanceDetail">點數點發：0 點 ｜ 儲值點數：0 點</div>
     </div>
     <div class="card" style="display:flex;align-items:center;justify-content:center;background:none;box-shadow:none;border:none;padding:0">
-      <a href="order.html" class="btn-gate">進入線上點餐系統</a>
+      <a href="resident_order.html" class="btn-gate">進入線上點餐系統</a>
     </div>
   </div>
 
@@ -108,38 +107,26 @@ const db = getFirestore(app);
 let currentUser = null;
 
 onAuthStateChanged(auth, user => {
-  if (!user) {
-    location.href = "index.html";
-    return;
-  }
+  if (!user) { location.href = "index.html"; return; }
   const cached = localStorage.getItem("zh_user");
-  if (!cached) {
-    location.href = "index.html";
-    return;
-  }
+  if (!cached) { location.href = "index.html"; return; }
   currentUser = JSON.parse(cached);
   userDisplay.innerText = `${currentUser.uid} 戶 (${currentUser.name || '住戶'})`;
   
-  // 啟動點數、訂單與後台公告的即時監聽
   listenBalance();
   listenMyOrders();
   listenBroadcast();
 });
 
-// 監聽公告設定
 function listenBroadcast() {
   onSnapshot(doc(db, "settings", "broadcast"), s => {
     if (s.exists()) {
       const data = s.data();
-      
-      // 處理最新公告
       if (data.announcement && data.announcement.trim() !== "") {
         document.getElementById("broadcastContent").innerText = data.announcement;
       } else {
         document.getElementById("broadcastContent").innerText = "目前尚無公告訊息。";
       }
-      
-      // 處理重要緊急通知
       if (data.notice && data.notice.trim() !== "") {
         document.getElementById("noticeContent").innerText = data.notice;
         document.getElementById("noticeArea").style.display = "block";
@@ -147,12 +134,9 @@ function listenBroadcast() {
         document.getElementById("noticeArea").style.display = "none";
       }
     }
-  }, error => {
-    console.error("讀取公告失敗:", error);
   });
 }
 
-// 監聽住戶點數
 function listenBalance() {
   onSnapshot(query(collection(db, "balances"), where("uid", "==", currentUser.uid)), snap => {
     if (!snap.empty) {
@@ -165,7 +149,6 @@ function listenBalance() {
   });
 }
 
-// 監聽歷史訂單
 function listenMyOrders() {
   const q = query(
     collection(db, "orders"),
@@ -220,7 +203,7 @@ function listenMyOrders() {
     });
   }, error => {
     console.error("載入訂單失敗:", error);
-    document.getElementById("orderList").innerHTML = `<div class="empty-msg" style="color:#c86b62;">訂單讀取失敗，請聯絡櫃台檢查權限。</div>`;
+    document.getElementById("orderList").innerHTML = `<div class="empty-msg" style="color:#c86b62;">訂單讀取失敗。</div>`;
   });
 }
 
