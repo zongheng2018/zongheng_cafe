@@ -197,11 +197,11 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="form-grid">
         <div>
           <label style="font-weight:800; display:block; margin-bottom:6px;">最新公告訊息內容：</label>
-          <textarea id="announcementText" placeholder="輸入公告內容，例如：今日手沖單品豆新上架..."></textarea>
+          <textarea id="announcementText" placeholder="輸入公告內容..."></textarea>
         </div>
         <div>
           <label style="font-weight:800; display:block; margin-bottom:6px;">重要通知訊息內容：</label>
-          <textarea id="noticeText" placeholder="輸入重要通知，例如：下週二咖啡機定期保養清潔..."></textarea>
+          <textarea id="noticeText" placeholder="輸入重要通知..."></textarea>
         </div>
       </div>
       <div class="btn-row" style="margin-top:14px;">
@@ -258,7 +258,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 <div class="modal-bg" id="counterItemModalBg">
   <div class="modal">
-    <div class="section-title">選擇品項</div>
+    <div class="section-title" id="counterItemTitle">選擇品項</div>
     <div id="counterOptionArea"></div>
     <div style="margin-top:10px;"><textarea id="counterItemNote" placeholder="規格備註說明，可空白"></textarea></div>
     <div class="form-grid" style="margin-top:12px;">
@@ -287,11 +287,10 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"
-import { getFirestore as fetchDb } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88"};
-const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=fetchDb(app);
+const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
 let menuCache=[]; let categoryCache=[]; let newOptionGroups=[]; let editOptionGroups=[]; let knownOrderIds=new Set();
 let cafeProfile=null; let counterResident=null; let counterBalanceDocId=null; let counterGranted=0, counterStored=0;
@@ -602,24 +601,13 @@ window.prepareCounterSign=()=>{
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); cafeSignSummary.innerHTML = `住戶帳號：${counterResident.username}<br>取餐方式：${counterDining.value} ${counterDining.value==="內用"?`（座位：${counterSeat.value}）`:""}<br>總計扣除點數：<b>${total} 點</b>`; cafeCtx.clearRect(0,0,450,180); document.getElementById("cafeSignModalBg").style.display="flex"; 
 };
 
-// 🚀 核心修正：代客結帳送出後流暢重置關閉，絕不重複卡死
 window.confirmCounterOrderWithSignature=async()=>{
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); if(counterGranted + counterStored < total) { alert("該住戶點數不足以支付此筆訂單！"); return; }
+  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", status:"等待接單", counter_signature:cafeCanvas.toDataURL("image/png"), created_at:new Date().toISOString() });
+  await updateDoc(doc(db,"balances",counterBalanceDocId),{ granted_amount: counterGranted>=total?counterGranted-total:0, stored_amount: counterGranted>=total?currentStored:currentStored-(total-counterGranted), updated_by:"cafe_counter" }); 
   
-  await addDoc(collection(db,"orders"),{ 
-    order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, 
-    dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", 
-    status:"等待接單", counter_signature:cafeCanvas.toDataURL("image/png"), created_at:new Date().toISOString() 
-  });
-  
-  await updateDoc(doc(db,"balances",counterBalanceDocId),{ 
-    granted_amount: counterGranted>=total?counterGranted-total:0, 
-    stored_amount: counterGranted>=total?currentStored:currentStored-(total-counterGranted), 
-    updated_by:"cafe_counter" 
-  }); 
-  
-  // 🚀 執行防賴：重置並隱藏
-  alert("代客訂單與簽名已成功送出！"); 
+  // 🚀 執行防賴安全鏈：彈出提示並流暢重置隱藏
+  alert("代客點餐訂單已完全成功送出！"); 
   counterCart=[]; 
   renderCounterCart(); 
   closeCafeSignModal();
