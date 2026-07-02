@@ -18,7 +18,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .sound-btn.on{background:#6b8b61;color:white;border-color:#6b8b61}
 .container{max-width:1180px;margin:22px auto;padding:0 16px 40px}
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-.tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06);cursor:pointer}
 .tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 .card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
 
@@ -49,7 +49,18 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .setting-status{background:#f8f5f1;border-radius:16px;padding:16px;line-height:1.8}
 .option-editor{margin-top:14px;background:#f8f5f1;border-radius:16px;padding:16px}
 .option-title{font-size:18px;font-weight:900;color:#6d6258;margin-bottom:12px}
-.option-group-box{background:white;border-radius:14px;padding:16px;margin-bottom:14px;border:1px solid #eee5dd}
+
+/* 視覺風格整合：修復自訂選項的群組與細項外框襯底線條 */
+.option-group-box{background:white;border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid #ddd5cc;box-shadow:0 2px 8px rgba(0,0,0,0.02)}
+.time-lock-box{background:#f5f1eb;border:1px solid #ddd5cc;border-radius:14px;padding:16px;margin:4px 0;grid-column:1/-1;display:flex;flex-direction:column;gap:12px}
+.time-lock-trigger{display:flex;align-items:center;gap:10px;font-weight:800;color:#5f574f;cursor:pointer}
+.time-lock-trigger input[type="checkbox"]{width:18px;height:18px;margin:0}
+
+/* 統一細項與群組移除按鈕樣式，對齊縱橫整體視覺 */
+.beautiful-del-group-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:8px;padding:6px 14px;font-weight:800;font-size:13px;cursor:pointer}
+.beautiful-del-group-btn:hover{background:#f5f1eb}
+.add-choice-btn{border:1px solid #bcaea1;background:white;color:#7a6b60;border-radius:8px;padding:6px 12px;font-weight:800;font-size:13px;cursor:pointer;margin-top:8px}
+
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99;padding:18px}
 .modal{background:white;width:100%;max-width:680px;border-radius:24px;padding:22px;max-height:90vh;overflow:auto}
 .counter-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
@@ -60,14 +71,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .counter-menu-row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #eee5dd}
 .sig-canvas{border:2px dashed #c9c0b7;background:#fdfcfb;border-radius:14px;cursor:crosshair;display:block;margin:14px 0}
 
-.time-lock-box{background:#f5f1eb;border:1px solid #eee5dd;border-radius:14px;padding:16px;margin:4px 0;grid-column:1/-1;display:flex;flex-direction:column;gap:12px}
-.time-lock-trigger{display:flex;align-items:center;gap:10px;font-weight:800;color:#5f574f;cursor:pointer;user-select:none}
-.time-lock-trigger input[type="checkbox"]{width:20px;height:20px;cursor:pointer;margin:0}
-
-/* 按鈕微調優化 */
-.beautiful-del-group-btn{border:1px solid #c86b62;background:#fdf3f2;color:#c86b62;border-radius:8px;padding:6px 12px;font-weight:800;font-size:13px;cursor:pointer}
-.beautiful-del-group-btn:hover{background:#c86b62;color:white}
-.add-choice-btn{border:1px solid #9c8e81;background:white;color:#7a6b60;border-radius:8px;padding:4px 10px;font-weight:800;font-size:12px;cursor:pointer;margin-top:6px}
+/* 🚀 櫃台人員專用：超大比例寬敞送出訂單按鈕 */
+.giant-submit-btn{border:none;border-radius:14px;padding:18px 24px;font-size:18px;font-weight:900;color:white;background:#6d6258;cursor:pointer;width:100%;box-shadow:0 6px 16px rgba(109,98,88,0.3);transition:all 0.2s}
+.btn-row-giant{margin-top:20px;display:flex;flex-direction:column;gap:10px}
 
 .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap;min-width:82px;height:34px}
 .badge.wait{background:#fff1d9;color:#9b681f;border:1px solid #ffe3be}
@@ -125,7 +131,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <textarea id="mNote" placeholder="品項備註，可空白"></textarea>
       </div>
       
-      <!-- 🚀 完美補回：新增品項時的自訂細項結構 -->
       <div class="option-editor">
         <div class="option-title">自訂選項</div>
         <div id="newOptionList"></div>
@@ -156,12 +161,13 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <div id="counterCartList"></div>
         <div class="form-grid" style="margin-top:14px;">
           <select id="counterDining" onchange="toggleCounterSeat()"><option value="內用">內用</option><option value="外帶">外帶</option></select>
-          <div id="counterSeatArea"><select id="counterSeat"><option value="">請選擇座位</option></select></div>
+          <div id="counterSeatArea"><select id="counterSeat"></select></div>
         </div>
         <div class="counter-total" id="counterTotal">0 點</div>
-        <div class="btn-row">
-          <button class="btn danger" onclick="clearCounterCart()">清空購物車</button>
-          <button class="btn primary" onclick="prepareCounterSign()">送出訂單</button>
+        
+        <div class="btn-row-giant">
+          <button class="giant-submit-btn" onclick="prepareCounterSign()">確認送出訂單並簽名</button>
+          <button class="btn danger" style="padding:12px; border-radius:12px;" onclick="clearCounterCart()">清空購物車</button>
         </div>
       </div>
     </div>
@@ -181,10 +187,28 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <input id="closedDays" placeholder="例如：2026-07-05,2026-07-06">
         <div class="btn-row" style="margin-top: 14px;"><button class="btn done" onclick="saveSystemSchedule()">儲存時間與公休設定</button></div>
       </div>
+      
       <div class="btn-row" style="margin-top: 18px;">
         <button class="btn done" style="background:#43a047;" onclick="setSystemManualMode('force_open')">手動強制開放點餐</button>
-        <button class="btn danger" style="background:#e53935;" onclick="setSystemManualMode('force_closed')">手動強制關閉點餐（可填原因）</button>
+        <button class="btn danger" style="background:#e53935;" onclick="setSystemManualMode('force_closed')">手動強制關閉點餐</button>
         <button class="btn light" onclick="setSystemManualMode('auto')">恢復自動模式</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">住戶首頁大廳公告管理</div>
+      <div class="form-grid">
+        <div>
+          <label style="font-weight:800; display:block; margin-bottom:6px;">最新公告訊息內容：</label>
+          <textarea id="announcementText" placeholder="輸入公告內容，例如：今日手沖單品豆新上架..."></textarea>
+        </div>
+        <div>
+          <label style="font-weight:800; display:block; margin-bottom:6px;">重要通知訊息內容：</label>
+          <textarea id="noticeText" placeholder="輸入重要通知，例如：下週二咖啡機定期保養清潔..."></textarea>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn primary" onclick="publishBroadcastMessages()">立即發布大廳公告</button>
       </div>
     </div>
 
@@ -204,7 +228,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </section>
 </div>
 
-<!-- 編輯品項燈箱 -->
 <div class="modal-bg" id="editModalBg">
   <div class="modal">
     <div class="section-title">編輯品項</div>
@@ -227,7 +250,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
       <textarea id="editNote" placeholder="品項備註"></textarea>
     </div>
-    <!-- 🚀 完美補回：編輯品項時的細項設定 -->
     <div class="option-editor">
       <div class="option-title">自訂選項</div>
       <div id="editOptionList"></div>
@@ -258,9 +280,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div id="cafeSignSummary" class="setting-status" style="margin-bottom: 12px; line-height:1.6;"></div>
     <canvas id="cafeSigCanvas" class="sig-canvas" width="450" height="180"></canvas>
     <div class="btn-row">
-      <button class="btn primary done" onclick="confirmCounterOrderWithSignature()">確認送出訂單</button>
-      <button class="btn light" onclick="cafeCtx.clearRect(0,0,450,180)">清除重簽</button>
-      <button class="btn danger" onclick="document.getElementById('cafeSignModalBg').style.display='none'">返回修改</button>
+      <button class="giant-submit-btn" onclick="confirmCounterOrderWithSignature()">確認送出訂單</button>
+      <button class="btn light" style="margin-top:6px; padding:10px; border-radius:10px;" onclick="cafeCtx.clearRect(0,0,450,180)">清除重簽</button>
+      <button class="btn danger" style="padding:10px; border-radius:10px;" onclick="document.getElementById('cafeSignModalBg').style.display='none'">返回修改</button>
     </div>
   </div>
 </div>
@@ -309,7 +331,7 @@ window.toggleTimeInputs = (prefix) => {
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
   const raw=localStorage.getItem("zh_user"); if(!raw){location.href="index.html";return}
-  cafeProfile=JSON.parse(raw); listenSettings(); listenOrders(); await loadMenu(); loadStaticSeatsForCounter(); initCafeSignatureCanvas();
+  cafeProfile=JSON.parse(raw); listenSettings(); listenOrders(); listenBroadcastSettings(); await loadMenu(); loadStaticSeatsForCounter(); initCafeSignatureCanvas();
 });
 
 window.showTab=(tab,btn)=>{
@@ -321,7 +343,9 @@ window.showTab=(tab,btn)=>{
 function formatItems(items){
   return items.map(x=>{
     const optHtml = x.options ? Object.entries(x.options).map(([k,v])=>`<div class="item-detail">${k}：${v}</div>`).join("") : "";
-    return `<div class="order-item"><div class="item-name">${x.name} × ${x.qty}</div>${optHtml}<div class="item-detail">備註：${x.note||"無"}</div></div>`;
+    // 🚀 修正：若無編寫備註，則直接完全不渲染備註空行，大幅度精簡空間
+    const noteHtml = x.note ? `<div class="item-detail">備註：${x.note}</div>` : "";
+    return `<div class="order-item"><div class="item-name">${x.name} × ${x.qty}</div>${optHtml}${noteHtml}</div>`;
   }).join("");
 }
 
@@ -340,6 +364,7 @@ function listenOrders(){
       } else if (status === "製作中") {
         btnHtml = `<div class="btn-row"><button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
       }
+      
       const div=document.createElement("div"); div.className="order-card";
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div><div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div>${sigHtml}</div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       if(status === "等待接單") waitingOrders.appendChild(div); else if(status === "製作中") makingOrders.appendChild(div); else doneOrders.appendChild(div);
@@ -354,12 +379,32 @@ function listenSettings() {
   onSnapshot(doc(db, "settings", "cafe"), s => {
     if (!s.exists()) return; const data = s.data(); let modeText = "智慧自動控管中";
     if (data.manual_mode === "force_open") modeText = "強制手動開放中";
-    if (data.manual_mode === "force_closed") modeText = `強制關閉中（原因：${data.closed_reason || '未說明'}）`;
+    if (data.manual_mode === "force_closed") modeText = "強制手動關閉中";
     if (data.manual_mode === "auto") modeText = "智慧自動控管中";
     systemStatus.innerHTML = `<b>目前系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
     document.getElementById("openTime").value = data.open_time || "08:30"; document.getElementById("closeTime").value = data.close_time || "19:00"; document.getElementById("closedDays").value = data.closed_days || "";
   });
 }
+
+function listenBroadcastSettings() {
+  onSnapshot(doc(db, "settings", "broadcast"), s => {
+    if (!s.exists()) return;
+    const d = s.data();
+    document.getElementById("announcementText").value = d.announcement || "";
+    document.getElementById("noticeText").value = d.notice || "";
+  });
+}
+
+window.publishBroadcastMessages = async () => {
+  const aText = document.getElementById("announcementText").value.trim();
+  const nText = document.getElementById("noticeText").value.trim();
+  await setDoc(doc(db, "settings", "broadcast"), {
+    announcement: aText,
+    notice: nText,
+    updated_at: new Date().toISOString()
+  }, { merge: true });
+  alert("大廳大螢幕公告與重要通知已同步更新成功！");
+};
 
 window.saveSystemSchedule = async () => {
   const openTime = document.getElementById("openTime").value; const closeTime = document.getElementById("closeTime").value; const closedDays = document.getElementById("closedDays").value.trim();
@@ -367,21 +412,18 @@ window.saveSystemSchedule = async () => {
 };
 
 window.setSystemManualMode = async (mode) => {
-  let reason = ""; if (mode === "force_closed") { reason = prompt("請輸入暫停原因：", "設備維修維護中"); if (reason === null) return; }
-  await setDoc(doc(db, "settings", "cafe"), { manual_mode: mode, closed_reason: reason || "" }, { merge: true }); alert("切換成功！");
+  // 🚀 修正：依據要求，強制關閉功能完全移除原因填寫 prompt 彈窗
+  await setDoc(doc(db, "settings", "cafe"), { manual_mode: mode }, { merge: true }); alert("切換成功！");
 };
 
 function getCleanOptions(groups) {
-  return groups.map(g => ({
-    title: g.title.trim(),
-    choices: g.choices.map(c => c.trim()).filter(c => c !== "")
-  })).filter(g => g.title !== "");
+  return groups.map(g => ({ title: g.title.trim(), choices: g.choices.map(c => c.trim()).filter(c => c !== "") })).filter(g => g.title !== "");
 }
 
 window.addMenu=async()=>{
   const name=mName.value.trim(); const price=Number(mPrice.value); const category=(mCategory.value||mCategorySelect.value).trim(); const isTimeRestricted = document.getElementById("mTimeRestricted").checked;
   await addDoc(collection(db,"menu"),{ name, price, category, enabled:true, custom_options:getCleanOptions(newOptionGroups), is_time_restricted: isTimeRestricted, start_time: isTimeRestricted ? mStartTime.value : "09:00", end_time: isTimeRestricted ? mEndTime.value : "17:00", created_at:new Date().toISOString() });
-  mName.value=""; mPrice.value=""; mCategory.value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
+  mName.value=""; mPrice.value=""; mCategory.value=""; mImage.value=""; mSortOrder.value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
 };
 
 async function loadMenu(){
@@ -426,29 +468,31 @@ window.saveEditMenu=async()=>{
 
 window.toggleMenu=async(id,enabled)=>{ await updateDoc(doc(db,"menu",id),{enabled:!enabled}); await loadMenu(); };
 
-// 🚀 完整重構：自訂選項與內部細項（如：正常、去冰）新增刪除控制鏈
+// 🚀 核心修復：正確將點擊事件綁定至 window 物件，防止新增細項按鈕卡死
 window.addNewOptionGroup=function(){ newOptionGroups.push({title:"",choices:[""]}); renderNewOptionGroups(); };
+window.deleteNewOptionGroup=function(idx){ newOptionGroups.splice(idx,1); renderNewOptionGroups(); };
+window.addNewChoice=function(idx){ newOptionGroups[idx].choices.push(''); renderNewOptionGroups(); };
+window.deleteNewChoice=function(gIdx, cIdx){ newOptionGroups[gIdx].choices.splice(cIdx,1); renderNewOptionGroups(); };
+
 function renderNewOptionGroups(){
   newOptionList.innerHTML="";
   newOptionGroups.forEach((group,gIndex)=>{
     const div=document.createElement("div"); div.className="option-group-box";
-    
-    // 生成細項標籤
     let choicesHtml = (group.choices || []).map((c, cIndex) => `
       <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-        <input placeholder="細項值，如：去冰" value="${c}" oninput="newOptionGroups[${gIndex}].choices[${cIndex}]=this.value" style="padding:8px 12px; font-size:14px;">
-        <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; cursor:pointer;" onclick="newOptionGroups[${gIndex}].choices.splice(${cIndex},1);renderNewOptionGroups();">✕</button>
+        <input placeholder="細項，如：去冰" value="${c}" oninput="newOptionGroups[${gIndex}].choices[${cIndex}]=this.value" style="padding:8px 12px; font-size:14px;">
+        <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; font-size:16px; cursor:pointer;" onclick="window.deleteNewChoice(${gIndex},${cIndex})">✕</button>
       </div>
     `).join("");
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
         <input placeholder="群組名稱，如：冰度" value="${group.title}" oninput="newOptionGroups[gIndex].title=this.value">
-        <button class="beautiful-del-group-btn" type="button" onclick="newOptionGroups.splice(${gIndex},1);renderNewOptionGroups();">刪除群組</button>
+        <button class="beautiful-del-group-btn" type="button" onclick="window.deleteNewOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
         ${choicesHtml}
-        <button type="button" class="add-choice-btn" onclick="newOptionGroups[${gIndex}].choices.push('');renderNewOptionGroups();">＋新增細項</button>
+        <button type="button" class="add-choice-btn" onclick="window.addNewChoice(${gIndex})">＋ 新增細項</button>
       </div>
     `;
     newOptionList.appendChild(div);
@@ -456,26 +500,29 @@ function renderNewOptionGroups(){
 }
 
 window.addEditOptionGroup=function(){ editOptionGroups.push({title:"",choices:[""]}); renderEditOptionGroups(); };
+window.deleteEditOptionGroup=function(idx){ editOptionGroups.splice(idx,1); renderEditOptionGroups(); };
+window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); renderEditOptionGroups(); };
+window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); renderEditOptionGroups(); };
+
 function renderEditOptionGroups(){
   editOptionList.innerHTML="";
   editOptionGroups.forEach((group,gIndex)=>{
     const div=document.createElement("div"); div.className="option-group-box";
-    
     let choicesHtml = (group.choices || []).map((c, cIndex) => `
       <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
         <input placeholder="細項值" value="${c}" oninput="editOptionGroups[${gIndex}].choices[${cIndex}]=this.value" style="padding:8px 12px; font-size:14px;">
-        <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; cursor:pointer;" onclick="editOptionGroups[${gIndex}].choices.splice(${cIndex},1);renderEditOptionGroups();">✕</button>
+        <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; font-size:16px; cursor:pointer;" onclick="window.deleteEditChoice(${gIndex},${cIndex})">✕</button>
       </div>
     `).join("");
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
         <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
-        <button class="beautiful-del-group-btn" type="button" onclick="editOptionGroups.splice(${gIndex},1);renderEditOptionGroups();">刪除群組</button>
+        <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
         ${choicesHtml}
-        <button type="button" class="add-choice-btn" onclick="editOptionGroups[${gIndex}].choices.push('');renderEditOptionGroups();">＋新增細項</button>
+        <button type="button" class="add-choice-btn" onclick="window.addEditChoice(${gIndex})">＋ 新增細項</button>
       </div>
     `;
     editOptionList.appendChild(div);
@@ -504,7 +551,7 @@ window.openCounterItemModal=(id)=>{
   });
   counterItemModalBg.style.display="flex";
 };
-window.closeCounterItemModal=()=>counterItemModalBg.style.display="none";
+window.closeCounterItemModal=()=>document.getElementById("counterItemModalBg").style.display="none";
 
 window.addCounterItemToCart=()=>{
   const options = {}; (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
@@ -515,8 +562,7 @@ window.addCounterItemToCart=()=>{
 function renderCounterCart(){
   const box=document.getElementById("counterCartList"); box.innerHTML=""; let total=0;
   counterCart.forEach((item,idx)=>{ 
-    total+=item.price*item.qty; 
-    const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
+    total+=item.price*item.qty; const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
     box.innerHTML+=`<div class="counter-cart-item"><div><b>${item.name} × ${item.qty}</b></div><div style="font-size:13px;color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="btn danger" style="padding:4px 8px; font-size:12px; min-width:auto; margin-top:4px;" onclick="counterCart.splice(${idx},1);renderCounterCart();">刪除</button></div>`; 
   });
   counterTotal.innerText=`${total} 點`;
@@ -530,6 +576,7 @@ function loadStaticSeatsForCounter(){
 
 window.toggleCounterSeat=()=>{ const selectArea = document.getElementById("counterSeatArea"); if(selectArea) { selectArea.style.display = counterDining.value === "內用" ? "block" : "none"; } };
 
+// 🚀 修正：大數據結算報表依據銷售數量從大到小嚴格進行降序排列
 window.calculateMonthlyRevenue = async () => {
   const targetMonth = document.getElementById("statMonthInput").value; if(!targetMonth) { alert("請先選擇要統計的月份！"); return; }
   document.getElementById("monthlyStatReport").innerHTML = "正在從資料庫撈取數據，請稍後...";
@@ -540,8 +587,13 @@ window.calculateMonthlyRevenue = async () => {
         totalOrders++; totalRevenue += Number(o.total || 0); (o.items || []).forEach(item => { itemSummary[item.name] = (itemSummary[item.name] || 0) + Number(item.qty || 1); });
       }
     });
-    let itemsHtml = Object.entries(itemSummary).map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); if(!itemsHtml) itemsHtml = "<li>該月份無任何餐點銷售紀錄</li>";
-    document.getElementById("monthlyStatReport").innerHTML = `<div style="font-size: 18px; font-weight: 900; color: #7a594c; margin-bottom: 10px;">月度營收結算報告</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總成交訂單數：<br><span style="font-size: 22px; font-weight: 900; color: #6d6258;">${totalOrders} 筆</span></div><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總營業額點數：<br><span style="font-size: 22px; font-weight: 900; color: #6b8b61;">${totalRevenue} 點</span></div></div><div style="font-weight: 800; margin-bottom: 6px;">品項數量排行榜：</div><ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: #6d6258;">${itemsHtml}</ul>`;
+    
+    // 進行強制的降序 Sort 排列 (b[1] - a[1])
+    const sortedSummary = Object.entries(itemSummary).sort((a, b) => b[1] - a[1]);
+    let itemsHtml = sortedSummary.map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); 
+    if(!itemsHtml) itemsHtml = "<li>該月份無任何餐點銷售紀錄</li>";
+    
+    document.getElementById("monthlyStatReport").innerHTML = `<div style="font-size: 18px; font-weight: 900; color: #7a594c; margin-bottom: 10px;">月度營收結算報告</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總成交訂單數：<br><span style="font-size: 22px; font-weight: 900; color: #6d6258;">${totalOrders} 筆</span></div><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總營業額點數：<br><span style="font-size: 22px; font-weight: 900; color: #6b8b61;">${totalRevenue} 點</span></div></div><div style="font-weight: 800; margin-bottom: 6px;">品項數量排行榜（依販售數由高至低）：</div><ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: #6d6258;">${itemsHtml}</ul>`;
   } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
 };
 
@@ -560,15 +612,12 @@ window.prepareCounterSign=()=>{
 
 window.confirmCounterOrderWithSignature=async()=>{
   const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); if(counterGranted + counterStored < total) { alert("該住戶點數不足以支付此筆訂單！"); return; }
-  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, dining_type:counterDining.value, seat:diningType.value==="內用"?counterSeat.value:"", status:"等待接單", counter_signature:cafeCanvas.toDataURL("image/png"), created_at:new Date().toISOString() });
-  await updateDoc(doc(db,"balances",counterBalanceDocId),{ granted_amount: counterGranted>=total?counterGranted-total:0, stored_amount: counterGranted>=total?currentStored:counterStored-(total-counterGranted), updated_by:"cafe_counter" }); 
+  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", status:"等待接單", counter_signature:cafeCanvas.toDataURL("image/png"), created_at:new Date().toISOString() });
+  await updateDoc(doc(db,"balances",counterBalanceDocId),{ granted_amount: counterGranted>=total?counterGranted-total:0, stored_amount: counterGranted>=total?currentStored:currentStored-(total-counterGranted), updated_by:"cafe_counter" }); 
   alert("代客點餐訂單已完全成功送出！"); counterCart=[]; renderCounterCart(); document.getElementById("cafeSignModalBg").style.display="none";
 };
 
-window.toggleSound=()=>{ 
-  soundEnabled=!soundEnabled; const btn = document.getElementById("soundBtn");
-  if(soundEnabled){ btn.innerText = "音效已啟用"; btn.classList.add("on"); } else { btn.innerText = "音效已停用"; btn.classList.remove("on"); }
-};
+window.toggleSound=()=>{ soundEnabled=!soundEnabled; const btn = document.getElementById("soundBtn"); if(soundEnabled){ btn.innerText = "音效已啟用"; btn.classList.add("on"); } else { btn.innerText = "音效已停用"; btn.classList.remove("on"); } };
 window.counterChangeQty=(n)=>{ let q=Number(counterItemQty.value||1); q=Math.max(1,q+n); counterItemQty.value=q; }; window.clearCounterCart=()=>{ counterCart=[]; renderCounterCart(); };
 logoutBtn.addEventListener("click",async()=>{ await signOut(auth); localStorage.removeItem("zh_user"); location.href="index.html"; });
 </script>
