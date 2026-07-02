@@ -199,7 +199,6 @@ window.showNotice=async function(){
   const announcementBox = document.getElementById("announcementBox");
   const noticeList = document.getElementById("noticeList");
 
-  // 1. 即時監聽最新訂單
   const orderQuery = query(
     collection(db, "orders"),
     where("uid", "==", profile.username),
@@ -228,21 +227,19 @@ window.showNotice=async function(){
     latestOrderBox.innerHTML='<div class="order-item">讀取訂單失敗</div>';
   });
 
-  // 2. 精準對接 settings/broadcast 即時更新公告與重要通知
   unsubscribeAnnouncements = onSnapshot(doc(db, "settings", "broadcast"), s => {
     if (s.exists()) {
       const data = s.data();
       
-      // 渲染最新公告內容
       if (data.announcement && data.announcement.trim() !== "") {
         announcementBox.innerText = data.announcement;
       } else {
         announcementBox.innerText = "目前尚無公告";
       }
 
-      // 渲染重要通知清單
+      // 🚀 修正：移除「⚠️ 重要緊急通知」字樣，直接顯示 notice 內容
       if (data.notice && data.notice.trim() !== "") {
-        noticeList.innerHTML = `<div class="notice-item"><b>⚠️ 重要緊急通知</b><br>${data.notice}</div>`;
+        noticeList.innerHTML = `<div class="notice-item">${data.notice}</div>`;
       } else {
         noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
       }
