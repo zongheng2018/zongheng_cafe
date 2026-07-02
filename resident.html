@@ -91,7 +91,7 @@ import {
   getAuth,onAuthStateChanged,signOut,updatePassword,EmailAuthProvider,reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore,collection,getDocs,query,where,updateDoc,doc
+  getFirestore,collection,getDocs,query,where,updateDoc,doc,onSnapshot,orderBy,limit
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
@@ -105,7 +105,10 @@ let accountDocId=null;
 const appDiv=document.getElementById("app");
 const content=document.getElementById("content");
 
-// 🚀 轉換 Firebase 存入的 ISO字串時間為在地好讀格式的優雅函數
+// 全局監聽取消函數，切換頁籤時用來釋放監聽器，避免重複佔用資源
+let unsubscribeLatestOrder = null;
+let unsubscribeAnnouncements = null;
+
 function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
   try {
@@ -143,6 +146,11 @@ function setActive(id){
   if(id) document.getElementById(id).classList.add("active");
 }
 
+function stopAllSnapshots() {
+  if (unsubscribeLatestOrder) { unsubscribeLatestOrder(); unsubscribeLatestOrder = null; }
+  if (unsubscribeAnnouncements) { unsubscribeAnnouncements(); unsubscribeAnnouncements = null; }
+}
+
 function statusClass(status){
   if(status === "等待接單") return "wait";
   if(status === "製作中") return "making";
@@ -171,7 +179,10 @@ async function getMyOrders(){
 }
 
 window.showNotice=async function(){
+  stopAllSnapshots();
   setActive("tabNotice");
+
+  // 初始化主版面框架，文字結構保持與你提供的樣式一模一樣
   content.innerHTML=`
     <div class="card">
       <div class="section-title">最新訂單狀態</div>
@@ -186,45 +197,74 @@ window.showNotice=async function(){
       <div id="noticeList">讀取中...</div>
     </div>`;
 
-  const orders=await getMyOrders();
-  if(orders.length===0){
-    latestOrderBox.innerHTML='<div class="order-item">目前尚無進行中的訂單</div>';
-  }else{
-    const o=orders[0];
-    const items=(o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
-    // 🚀 修正：金額單位改為「點」，並新增「送出時間」欄位
-    latestOrderBox.innerHTML=`
-      <div class="order-item">
-        <div class="order-title">${o.order_id||""} <span class="status ${statusClass(o.status)}">${o.status||""}</span></div>
-        <div class="order-time-text">送出時間：${formatLocalTime(o.created_at)}</div>
-        <div>${items}</div>
-        <div>金額：${o.total||0} 點</div>
-        <div>${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
-        ${stepHtml(o.status)}
-      </div>`;
-  }
+  const latestOrderBox = document.getElementById("latestOrderBox");
+  const announcementBox = document.getElementById("announcementBox");
+  const noticeList = document.getElementById("noticeList");
 
-  const snap=await getDocs(collection(db,"announcements"));
-  if(snap.empty){
-    announcementBox.innerText="目前尚無公告";
-    noticeList.innerHTML='<div class="notice-item">目前尚無重要通知</div>';
-    return;
-  }
+  // 🚀 1. 實時即時監聽：最新一筆訂單狀態動態更新
+  const orderQuery = query(
+    collection(db, "orders"),
+    where("uid", "==", profile.username),
+    orderBy("created_at", "desc"),
+    limit(1)
+  );
 
-  let latest="";
-  let html="";
-  snap.forEach(d=>{
-    const x=d.data();
-    if(!latest && x.content) latest=x.content;
-    html+=`<div class="notice-item"><b>${x.title||"通知"}</b><br>${x.content||""}</div>`;
+  unsubscribeLatestOrder = onSnapshot(orderQuery, snap => {
+    if(snap.empty){
+      latestOrderBox.innerHTML='<div class="order-item">目前尚無進行中的訂單</div>';
+    }else{
+      const o = snap.docs[0].data();
+      const items = (o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
+      latestOrderBox.innerHTML=`
+        <div class="order-item">
+          <div class="order-title">${o.order_id||""} <span class="status ${statusClass(o.status)}">${o.status||""}</span></div>
+          <div class="order-time-text">送出時間：${formatLocalTime(o.created_at)}</div>
+          <div>${items}</div>
+          <div>金額：${o.total||0} 點</div>
+          <div>${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
+          ${stepHtml(o.status)}
+        </div>`;
+    }
+  }, error => {
+    console.error("監聽訂單失敗:", error);
+    latestOrderBox.innerHTML='<div class="order-item">讀取訂單失敗</div>';
   });
-  announcementBox.innerText=latest||"目前尚無公告";
-  noticeList.innerHTML=html;
+
+  // 🚀 2. 實時即時監聽：動態更新最新公告與重要通知清單
+  unsubscribeAnnouncements = onSnapshot(collection(db, "announcements"), snap => {
+    if(snap.empty){
+      announcementBox.innerText="目前尚無公告";
+      noticeList.innerHTML='<div class="notice-item">目前尚無重要通知</div>';
+      return;
+    }
+
+    let latest = "";
+    let html = "";
+    
+    // 將公告依時間或預設排序（若有需要可依據你的欄位加orderBy，此處保留你原汁原味的遍歷逻辑）
+    let docList = [];
+    snap.forEach(d => docList.push(d.data()));
+    
+    docList.forEach(x => {
+      if(!latest && x.content) latest = x.content;
+      html += `<div class="notice-item"><b>${x.title||"通知"}</b><br>${x.content||""}</div>`;
+    });
+
+    announcementBox.innerText = latest || "目前尚無公告";
+    noticeList.innerHTML = html;
+  }, error => {
+    console.error("監聽公告失敗:", error);
+    announcementBox.innerText = "讀取公告失敗";
+    noticeList.innerHTML = '<div class="notice-item">讀取重要通知失敗</div>';
+  });
 };
 
 window.showOrders=async function(){
+  stopAllSnapshots();
   setActive("tabOrders");
   content.innerHTML=`<div class="card"><div class="section-title">訂單紀錄</div><div id="orderList">讀取中...</div></div>`;
+  const orderList = document.getElementById("orderList");
+  
   const orders=await getMyOrders();
   if(orders.length===0){
     orderList.innerHTML='<div class="order-item">目前尚無訂單紀錄</div>';
@@ -233,7 +273,6 @@ window.showOrders=async function(){
   orderList.innerHTML="";
   orders.forEach(o=>{
     const items=(o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
-    // 🚀 修正：金額單位改為「點」，並新增「送出時間」
     orderList.innerHTML+=`
       <div class="order-item">
         <div class="order-title">${o.order_id||""} <span class="status ${statusClass(o.status)}">${o.status||""}</span></div>
@@ -247,8 +286,11 @@ window.showOrders=async function(){
 };
 
 window.showProfile=async function(){
+  stopAllSnapshots();
   setActive("tabProfile");
   content.innerHTML=`<div class="card"><div class="section-title">個人設定</div><div id="profileBox">讀取中...</div></div>`;
+  const profileBox = document.getElementById("profileBox");
+
   const q=query(collection(db,"balances"),where("uid","==",profile.username));
   const snap=await getDocs(q);
 
@@ -258,7 +300,6 @@ window.showProfile=async function(){
     stored=Number(snap.docs[0].data().stored_amount||0);
   }
 
-  // 🚀 修正：這裡的儲值點數標籤原本就是點，維持點的設計
   profileBox.innerHTML=`
     <div class="point-grid">
       <div class="point-box"><div class="point-label">配發點數</div><div class="point-value">${granted}</div></div>
@@ -312,6 +353,7 @@ window.changeResidentPassword=async function(){
 };
 
 logoutBtn.addEventListener("click",async()=>{
+  stopAllSnapshots();
   await signOut(auth);
   localStorage.removeItem("zh_user");
   location.href="index.html";
