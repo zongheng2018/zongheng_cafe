@@ -199,6 +199,7 @@ window.showNotice=async function(){
   const announcementBox = document.getElementById("announcementBox");
   const noticeList = document.getElementById("noticeList");
 
+  // 1. 即時監聽最新訂單
   const orderQuery = query(
     collection(db, "orders"),
     where("uid", "==", profile.username),
@@ -227,26 +228,28 @@ window.showNotice=async function(){
     latestOrderBox.innerHTML='<div class="order-item">讀取訂單失敗</div>';
   });
 
-  // 🚀 精準對接原本公告區：將 getDocs 改為實時監聽 onSnapshot，不破壞任何外觀結構
-  unsubscribeAnnouncements = onSnapshot(collection(db, "announcements"), snap => {
-    if(snap.empty){
-      announcementBox.innerText="目前尚無公告";
-      noticeList.innerHTML='<div class="notice-item">目前尚無重要通知</div>';
-      return;
+  // 2. 精準對接 settings/broadcast 即時更新公告與重要通知
+  unsubscribeAnnouncements = onSnapshot(doc(db, "settings", "broadcast"), s => {
+    if (s.exists()) {
+      const data = s.data();
+      
+      // 渲染最新公告內容
+      if (data.announcement && data.announcement.trim() !== "") {
+        announcementBox.innerText = data.announcement;
+      } else {
+        announcementBox.innerText = "目前尚無公告";
+      }
+
+      // 渲染重要通知清單
+      if (data.notice && data.notice.trim() !== "") {
+        noticeList.innerHTML = `<div class="notice-item"><b>⚠️ 重要緊急通知</b><br>${data.notice}</div>`;
+      } else {
+        noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
+      }
+    } else {
+      announcementBox.innerText = "目前尚無公告";
+      noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
     }
-
-    let latest = "";
-    let html = "";
-    let docList = [];
-    snap.forEach(d => docList.push(d.data()));
-    
-    docList.forEach(x => {
-      if(!latest && x.content) latest = x.content;
-      html += `<div class="notice-item"><b>${x.title||"通知"}</b><br>${x.content||""}</div>`;
-    });
-
-    announcementBox.innerText = latest || "目前尚無公告";
-    noticeList.innerHTML = html;
   }, error => {
     console.error("監聽公告失敗:", error);
     announcementBox.innerText = "讀取公告失敗";
