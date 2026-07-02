@@ -199,6 +199,7 @@ window.showNotice=async function(){
   const announcementBox = document.getElementById("announcementBox");
   const noticeList = document.getElementById("noticeList");
 
+  // 1. 即時監聽最新訂單
   const orderQuery = query(
     collection(db, "orders"),
     where("uid", "==", profile.username),
@@ -227,6 +228,7 @@ window.showNotice=async function(){
     latestOrderBox.innerHTML='<div class="order-item">讀取訂單失敗</div>';
   });
 
+  // 2. 即時監聽公告與重要通知
   unsubscribeAnnouncements = onSnapshot(doc(db, "settings", "broadcast"), s => {
     if (s.exists()) {
       const data = s.data();
@@ -237,7 +239,6 @@ window.showNotice=async function(){
         announcementBox.innerText = "目前尚無公告";
       }
 
-      // 🚀 修正：移除「⚠️ 重要緊急通知」字樣，直接顯示 notice 內容
       if (data.notice && data.notice.trim() !== "") {
         noticeList.innerHTML = `<div class="notice-item">${data.notice}</div>`;
       } else {
