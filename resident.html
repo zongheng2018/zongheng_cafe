@@ -199,19 +199,24 @@ window.showNotice=async function(){
   const announcementBox = document.getElementById("announcementBox");
   const noticeList = document.getElementById("noticeList");
 
-  // 1. 即時監聽最新訂單
+  // 🚀 核心優化：改用單一 uid 條件監聽，繞過資料庫複合索引限制，並由前端智慧排序出最新一筆
   const orderQuery = query(
     collection(db, "orders"),
-    where("uid", "==", profile.username),
-    orderBy("created_at", "desc"),
-    limit(1)
+    where("uid", "==", profile.username)
   );
 
   unsubscribeLatestOrder = onSnapshot(orderQuery, snap => {
     if(snap.empty){
       latestOrderBox.innerHTML='<div class="order-item">目前尚無進行中的訂單</div>';
     }else{
-      const o = snap.docs[0].data();
+      let orders = [];
+      snap.forEach(docSnap => {
+        orders.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      // 依據時間降序排序，確保精準抓到最新一筆
+      orders.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      
+      const o = orders[0];
       const items = (o.items||[]).map(i=>`${i.name} × ${i.qty}`).join("、");
       latestOrderBox.innerHTML=`
         <div class="order-item">
@@ -300,6 +305,7 @@ window.showProfile=async function(){
     <div class="point-grid">
       <div class="point-box"><div class="point-label">配發點數</div><div class="point-value">${granted}</div></div>
       <div class="point-box"><div class="point-label">儲值點數</div><div class="point-value">${stored}</div></div>
+      <div class="point-grid"></div>
       <div class="point-box"><div class="point-label">總點數</div><div class="point-value">${granted+stored}</div></div>
     </div>
     <div class="notice-item">帳號：${profile.username}</div>
