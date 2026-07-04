@@ -77,6 +77,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .badge.making{background:#e6f0ff;color:#426f9c;border:1px solid #bcd8ff}
 .badge.done{background:#e8f5e9;color:#3f7f47;border:1px solid #c8e6c9}
 .badge.cancel{background:#fde8e6;color:#b3514a;border:1px solid #f9cbd7}
+
+/* 新增的變更明細樣式 */
+.edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
 </style>
 </head>
 
@@ -277,9 +280,27 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div id="cafeSignSummary" class="setting-status" style="margin-bottom: 12px; line-height:1.6;"></div>
     <canvas id="cafeSigCanvas" class="sig-canvas" width="450" height="180"></canvas>
     <div class="btn-row">
-      <button class="giant-submit-btn" onclick="confirmCounterOrderWithSignature()">確認送出訂單</button>
-      <button class="btn light" style="margin-top:6px; padding:10px; border-radius:10px;" onclick="cafeCtx.clearRect(0,0,450,180)">清除重簽</button>
+      <button class="giant-submit-btn" id="sigConfirmBtn">確認送出</button>
+      <button class="btn light" style="margin-top:6px; padding:10px; border-radius:10px;" onclick="window.clearCafeSignature()">清除重簽</button>
       <button class="btn danger" style="padding:10px; border-radius:10px;" onclick="closeCafeSignModal()">返回修改</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="cafeOrderEditModalBg">
+  <div class="modal" style="max-width: 600px;">
+    <div class="section-title">變更 / 編輯住戶訂單</div>
+    <div id="editOrderDetailsSummary" class="setting-status" style="margin-bottom: 12px;"></div>
+    <div id="editOrderItemsListContainer"></div>
+    <div style="margin-top:16px; background:#f5f1eb; padding:12px; border-radius:12px;">
+      <div style="font-weight:900; margin-bottom:6px;">➕ 替換/新增品項至本單</div>
+      <select id="editOrderQuickMenuSelect" style="margin-bottom:8px;"><option value="">請選擇欲加入的品項</option></select>
+      <button class="btn primary" style="width:100%;" id="addQuickItemToEditOrderBtn">加入所選品項</button>
+    </div>
+    <div class="counter-total" id="editOrderLiveTotal" style="margin-top:16px;">總計：0 點 (差額: 0 點)</div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn done" style="padding:14px; flex:1;" id="submitEditedOrderBtn">變更完成並請住戶簽名</button>
+      <button class="btn light" style="padding:14px;" onclick="document.getElementById('cafeOrderEditModalBg').style.display='none'">關閉</button>
     </div>
   </div>
 </div>
@@ -296,6 +317,11 @@ let menuCache=[]; let categoryCache=[]; let newOptionGroups=[]; let editOptionGr
 let cafeProfile=null; let counterResident=null; let counterBalanceDocId=null; let counterGranted=0, counterStored=0;
 let counterCart=[]; let counterCurrentItem=null; let currentCounterCategory="全部"; let ordersUnsubscribe=null;
 let cafeCanvas, cafeCtx, cafeIsDrawing = false; let soundEnabled = true; let isInitialLoad = true;
+
+// 用於追蹤當前櫃台正在操作修改/取消的訂單暫存
+let activeEditingOrder = null; 
+let activeEditingItems = [];
+let pendingSignatureAction = null; // 紀錄簽名後要幹嘛 ("NEW_ORDER", "CANCEL_ORDER", "EDIT_ORDER")
 
 const staticSeats = ["A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4", "B5", "B6", "C1", "C2", "C3", "C4", "C5", "C6"];
 
@@ -351,14 +377,26 @@ function listenOrders(){
     waitingOrders.innerHTML=""; makingOrders.innerHTML=""; doneOrders.innerHTML=""; if(snap.empty) { isInitialLoad = false; return; }
     let hasNewIncomingOrder = false;
     snap.forEach(d=>{
-      const o=d.data(); const status=o.status||"等待接單";
+      const o=d.data(); o.id = d.id; // 注入文件 ID
+      const status=o.status||"等待接單";
       if(status === "等待接單" && !knownOrderIds.has(d.id)){ if(!isInitialLoad){ hasNewIncomingOrder = true; } knownOrderIds.add(d.id); } else { knownOrderIds.add(d.id); }
-      const sigHtml = o.counter_signature ? `<div class="meta" style="margin-top:6px;">住戶簽名：<br><img src="${o.counter_signature}" style="width:120px; background:white; border:1px solid #eee; border-radius:6px; margin-top:2px;"></div>` : "";
+      const sigHtml = o.counter_signature ? `<div class="meta" style="margin-top:6px;">最新確認簽名：<br><img src="${o.counter_signature}" style="width:120px; background:white; border:1px solid #eee; border-radius:6px; margin-top:2px;"></div>` : "";
+      
       let btnHtml = "";
       if (status === "等待接單") {
-        btnHtml = `<div class="btn-row"><button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
+        btnHtml = `
+          <div class="btn-row">
+            <button class="btn primary" onclick="updateOrder('${d.id}','製作中')">接單</button>
+            <button class="btn light" onclick="window.openModifyOrderModal(${JSON.stringify(o).replace(/"/g, '&quot;')})">編輯訂單</button>
+            <button class="btn danger" onclick="window.prepareCancelOrder(${JSON.stringify(o).replace(/"/g, '&quot;')})">取消退點</button>
+          </div>`;
       } else if (status === "製作中") {
-        btnHtml = `<div class="btn-row"><button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button><button class="btn danger" onclick="updateOrder('${d.id}','已取消')">取消</button></div>`;
+        btnHtml = `
+          <div class="btn-row">
+            <button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button>
+            <button class="btn light" onclick="window.openModifyOrderModal(${JSON.stringify(o).replace(/"/g, '&quot;')})">編輯訂單</button>
+            <button class="btn danger" onclick="window.prepareCancelOrder(${JSON.stringify(o).replace(/"/g, '&quot;')})">取消退點</button>
+          </div>`;
       }
       
       const div=document.createElement("div"); div.className="order-card";
@@ -370,6 +408,250 @@ function listenOrders(){
 }
 
 window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
+
+// 🚀 新增功能 A：準備取消訂單（載入簽名鏈）
+window.prepareCancelOrder = async (order) => {
+  activeEditingOrder = order;
+  pendingSignatureAction = "CANCEL_ORDER";
+  
+  cafeSignSummary.innerHTML = `
+    <span style="color:#c86b62;font-weight:900;">【取消訂單確認】</span><br>
+    訂單編號：${order.order_id}<br>
+    住戶帳號：${order.uid}<br>
+    將全額退還點數：<b>${order.total} 點</b><br>
+    <span style="font-size:13px;color:#777;">請住戶於下方簽名以確認此筆取消退點。</span>
+  `;
+  cafeCtx.clearRect(0, 0, 450, 180);
+  document.getElementById("cafeSignModalBg").style.display = "flex";
+};
+
+// 🚀 新增功能 B：開啟變更訂單視窗面版
+window.openModifyOrderModal = (order) => {
+  activeEditingOrder = order;
+  activeEditingItems = JSON.parse(JSON.stringify(order.items || []));
+  
+  document.getElementById("editOrderDetailsSummary").innerHTML = `
+    訂單編號：${order.order_id} ｜ 住戶：${order.uid}<br>
+    原本金額：<b>${order.total} 點</b>
+  `;
+  
+  // 渲染快速加入選單
+  const menuSelect = document.getElementById("editOrderQuickMenuSelect");
+  menuSelect.innerHTML = '<option value="">請選擇欲加入/替換的品項</option>';
+  menuCache.filter(x => x.enabled !== false).forEach(m => {
+    menuSelect.innerHTML += `<option value="${m.id}">${m.name} (${m.price}點)</option>`;
+  });
+  
+  renderEditOrderItemsList();
+  document.getElementById("cafeOrderEditModalBg").style.display = "flex";
+};
+
+// 渲染要編輯的訂單品項清單
+function renderEditOrderItemsList() {
+  const container = document.getElementById("editOrderItemsListContainer");
+  container.innerHTML = "";
+  
+  let currentTotal = 0;
+  activeEditingItems.forEach((item, index) => {
+    currentTotal += item.price * item.qty;
+    const optText = item.options ? Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(",") : "";
+    
+    const row = document.createElement("div");
+    row.className = "edit-order-item-row";
+    row.innerHTML = `
+      <div>
+        <div style="font-weight:bold;">${item.name} × ${item.qty} (${item.price * item.qty}點)</div>
+        <div style="font-size:12px;color:#888;">${optText} ${item.note?`[${item.note}]`:''}</div>
+      </div>
+      <div style="display:flex;gap:4px;">
+        <button class="btn light" style="padding:4px 8px;min-width:auto;" onclick="window.changeEditItemQty(${index}, -1)">-</button>
+        <button class="btn light" style="padding:4px 8px;min-width:auto;" onclick="window.changeEditItemQty(${index}, 1)">+</button>
+        <button class="btn danger" style="padding:4px 8px;min-width:auto;" onclick="window.removeEditItem(${index})">刪除</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+  
+  const diff = currentTotal - activeEditingOrder.total;
+  let diffText = "";
+  if(diff > 0) diffText = `<span style="color:#c86b62;">(需補扣 ${diff} 點)</span>`;
+  else if(diff < 0) diffText = `<span style="color:#6b8b61;">(將退回 ${Math.abs(diff)} 點)</span>`;
+  else diffText = `<span>(金額無變動)</span>`;
+  
+  document.getElementById("editOrderLiveTotal").innerHTML = `新總計：<b>${currentTotal} 點</b> ｜ ${diffText}`;
+}
+
+window.changeEditItemQty = (index, delta) => {
+  activeEditingItems[index].qty = Math.max(1, activeEditingItems[index].qty + delta);
+  renderEditOrderItemsList();
+};
+
+window.removeEditItem = (index) => {
+  activeEditingItems.splice(index, 1);
+  renderEditOrderItemsList();
+};
+
+// 快捷加入品項
+document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
+  const select = document.getElementById("editOrderQuickMenuSelect");
+  if(!select.value) return;
+  const targetMenu = menuCache.find(x => x.id === select.value);
+  if(!targetMenu) return;
+  
+  // 預設給予無客製化屬性的規格
+  activeEditingItems.push({
+    id: targetMenu.id,
+    name: targetMenu.name,
+    price: Number(targetMenu.price || 0),
+    qty: 1,
+    options: {},
+    note: "櫃台更換"
+  });
+  renderEditOrderItemsList();
+};
+
+// 按下「變更完成」觸發住戶簽名鏈
+document.getElementById("submitEditedOrderBtn").onclick = () => {
+  if(activeEditingItems.length === 0) {
+    alert("訂單內不能沒有任何品項！若要完全取消，請點外面的【取消退點】按鈕。");
+    return;
+  }
+  
+  const currentTotal = activeEditingItems.reduce((s, x) => s + x.price * x.qty, 0);
+  const diff = currentTotal - activeEditingOrder.total;
+  
+  pendingSignatureAction = "EDIT_ORDER";
+  
+  let actionText = "";
+  if(diff > 0) actionText = `變更後金額增加，需額外<b>補扣：${diff} 點</b>`;
+  else if(diff < 0) actionText = `變更後金額減少，將自動<b>退還：${Math.abs(diff)} 點</b>`;
+  else actionText = `金額無增減差額`;
+
+  cafeSignSummary.innerHTML = `
+    <span style="color:#6d6258;font-weight:900;">【修改訂單規格確認】</span><br>
+    訂單編號：${activeEditingOrder.order_id}<br>
+    住戶帳號：${activeEditingOrder.uid}<br>
+    原計：${activeEditingOrder.total} 點 ➡️ 新計：<b>${currentTotal} 點</b><br>
+    分配細項：${actionText}<br><br>
+    <span style="font-size:13px;color:#777;">請住戶於下方簽名以確認此筆內容變更。</span>
+  `;
+  
+  document.getElementById("cafeOrderEditModalBg").style.display = "none";
+  cafeCtx.clearRect(0, 0, 450, 180);
+  document.getElementById("cafeSignModalBg").style.display = "flex";
+};
+
+
+// 結合一體的簽名確認送出集體邏輯控制器
+document.getElementById("sigConfirmBtn").onclick = async () => {
+  // 檢查是否簽名 (這裡做簡易防呆，畫布全白拒絕)
+  const blank = document.createElement('canvas');
+  blank.width = cafeCanvas.width;
+  blank.height = cafeCanvas.height;
+  if(cafeCanvas.toDataURL() === blank.toDataURL()) {
+    alert("請住戶完成手寫簽名確認後再行送出！");
+    return;
+  }
+  
+  const signatureDataUrl = cafeCanvas.toDataURL("image/png");
+  
+  if (pendingSignatureAction === "NEW_ORDER") {
+    // 原始代客點餐新增邏輯
+    const total = counterCart.reduce((s, x) => s + x.price * x.qty, 0);
+    if(counterGranted + counterStored < total) { alert("該住戶點數不足！"); return; }
+    
+    await addDoc(collection(db,"orders"),{ 
+      order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, 
+      dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", 
+      status:"等待接單", counter_signature:signatureDataUrl, created_at:new Date().toISOString() 
+    });
+    
+    await updateDoc(doc(db,"balances",counterBalanceDocId),{ 
+      granted_amount: counterGranted >= total ? counterGranted - total : 0, 
+      stored_amount: counterGranted >= total ? counterStored : counterStored - (total - counterGranted), 
+      updated_by:"cafe_counter" 
+    });
+    
+    alert("代客點餐訂單已送出！");
+    counterCart=[]; renderCounterCart();
+    
+  } else if (pendingSignatureAction === "CANCEL_ORDER") {
+    // 🚀 執行防賴：取消訂單自動退點鏈
+    const order = activeEditingOrder;
+    
+    // 為了安全，即時撈取該住戶最新餘額 doc
+    const snap = await getDocs(query(collection(db,"balances"), where("uid","==", order.uid)));
+    if(!snap.empty) {
+      const bDoc = snap.docs[0];
+      const bData = bDoc.data();
+      // 退點策略：將點數安全歸還至公設發放點數 granted_amount
+      await updateDoc(doc(db, "balances", bDoc.id), {
+        granted_amount: Number(bData.granted_amount || 0) + Number(order.total || 0),
+        updated_by: "cafe_counter_cancel"
+      });
+    }
+    
+    // 更新訂單狀態為已取消，並覆蓋紀錄取消簽名
+    await updateDoc(doc(db, "orders", order.id), {
+      status: "已取消",
+      counter_signature: signatureDataUrl,
+      updated_at: new Date().toISOString()
+    });
+    
+    alert("訂單已成功取消，扣除點數已全數自動退回住戶帳戶！");
+    
+  } else if (pendingSignatureAction === "EDIT_ORDER") {
+    // 🚀 執行防賴：變更品項多退少補點數鏈
+    const order = activeEditingOrder;
+    const newTotal = activeEditingItems.reduce((s, x) => s + x.price * x.qty, 0);
+    const diff = newTotal - order.total; // 正數代表要多扣，負數代表要退還
+    
+    const snap = await getDocs(query(collection(db,"balances"), where("uid","==", order.uid)));
+    if(!snap.empty) {
+      const bDoc = snap.docs[0];
+      const bData = bDoc.data();
+      let currentGranted = Number(bData.granted_amount || 0);
+      let currentStored = Number(bData.stored_amount || 0);
+      
+      if(diff > 0) {
+        // 多扣點數
+        if((currentGranted + currentStored) < diff) {
+          alert("住戶餘額不足以支付變更後的訂單差額，修改失敗！");
+          closeCafeSignModal();
+          return;
+        }
+        if(currentGranted >= diff) {
+          currentGranted -= diff;
+        } else {
+          currentStored -= (diff - currentGranted);
+          currentGranted = 0;
+        }
+      } else if(diff < 0) {
+        // 退還點數
+        currentGranted += Math.abs(diff);
+      }
+      
+      await updateDoc(doc(db, "balances", bDoc.id), {
+        granted_amount: currentGranted,
+        stored_amount: currentStored,
+        updated_by: "cafe_counter_edit"
+      });
+    }
+    
+    // 更新訂單內容與最新差額金額與新簽名
+    await updateDoc(doc(db, "orders", order.id), {
+      items: activeEditingItems,
+      total: newTotal,
+      counter_signature: signatureDataUrl,
+      updated_at: new Date().toISOString()
+    });
+    
+    alert("訂單規格明細修訂成功！點數差額已自動完成轉帳處理。");
+  }
+  
+  closeCafeSignModal();
+};
+
 
 function listenSettings() {
   onSnapshot(doc(db, "settings", "cafe"), s => {
@@ -586,7 +868,6 @@ window.calculateMonthlyRevenue = async () => {
   } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
 };
 
-initCafeSignatureCanvas();
 function initCafeSignatureCanvas(){
   cafeCanvas=document.getElementById("cafeSigCanvas"); if(!cafeCanvas)return; cafeCtx=cafeCanvas.getContext("2d"); cafeCtx.strokeStyle="#5f574f"; cafeCtx.lineWidth=3; cafeCtx.lineCap="round";
   cafeCanvas.addEventListener("mousedown",(e)=>{ cafeIsDrawing=true; cafeCtx.beginPath(); const rect=cafeCanvas.getBoundingClientRect(); cafeCtx.moveTo(e.clientX-rect.left,e.clientY-rect.top); });
@@ -594,23 +875,16 @@ function initCafeSignatureCanvas(){
   cafeCanvas.addEventListener("mouseup",()=>cafeIsDrawing=false);
 }
 
+window.clearCafeSignature = () => { cafeCtx.clearRect(0,0,450,180); };
 window.closeCafeSignModal = () => { document.getElementById("cafeSignModalBg").style.display = "none"; };
 
 window.prepareCounterSign=()=>{ 
   if(!counterResident) { alert("請先輸入住戶帳號並點擊載入住戶"); return; } if(!counterCart.length) { alert("購物車內尚未加入任何餐點"); return; }
-  const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); cafeSignSummary.innerHTML = `住戶帳號：${counterResident.username}<br>取餐方式：${counterDining.value} ${counterDining.value==="內用"?`（座位：${counterSeat.value}）`:""}<br>總計扣除點數：<b>${total} 點</b>`; cafeCtx.clearRect(0,0,450,180); document.getElementById("cafeSignModalBg").style.display="flex"; 
-};
-
-window.confirmCounterOrderWithSignature=async()=>{
-  const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); if(counterGranted + counterStored < total) { alert("該住戶點數不足以支付此筆訂單！"); return; }
-  await addDoc(collection(db,"orders"),{ order_id:"ZH"+Date.now(), uid:counterResident.username, items:counterCart, total, dining_type:counterDining.value, seat:counterDining.value==="內用"?counterSeat.value:"", status:"等待接單", counter_signature:cafeCanvas.toDataURL("image/png"), created_at:new Date().toISOString() });
-  await updateDoc(doc(db,"balances",counterBalanceDocId),{ granted_amount: counterGranted>=total?counterGranted-total:0, stored_amount: counterGranted>=total?currentStored:currentStored-(total-counterGranted), updated_by:"cafe_counter" }); 
-  
-  // 🚀 執行防賴安全鏈：彈出提示並流暢重置隱藏
-  alert("代客點餐訂單已完全成功送出！"); 
-  counterCart=[]; 
-  renderCounterCart(); 
-  closeCafeSignModal();
+  const total=counterCart.reduce((s,x)=>s+x.price*x.qty,0); 
+  pendingSignatureAction = "NEW_ORDER";
+  cafeSignSummary.innerHTML = `住戶帳號：${counterResident.username}<br>取餐方式：${counterDining.value} ${counterDining.value==="內用"?`（座位：${counterSeat.value}）`:""}<br>總計扣除點數：<b>${total} 點</b>`; 
+  cafeCtx.clearRect(0,0,450,180); 
+  document.getElementById("cafeSignModalBg").style.display="flex"; 
 };
 
 window.toggleSound=()=>{ soundEnabled=!soundEnabled; const btn = document.getElementById("soundBtn"); if(soundEnabled){ btn.innerText = "音效已啟用"; btn.classList.add("on"); } else { btn.innerText = "音效已停用"; btn.classList.remove("on"); } };
