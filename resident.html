@@ -47,7 +47,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
 .action-btn{border:none;background:#6d6258;color:white;border-radius:12px;padding:11px 18px;font-weight:800}
 .order-time-text{font-size:13px;color:#8c837a;margin-top:2px}
 
-/* 🚀 完美融入：點數紀錄排版與彈出明細卡片專用微調樣式（絕不跑版） */
+/* 點數紀錄排版與彈出明細卡片樣式 */
 .history-filter-row{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
 .history-select-input{border:none;background:#f5f1eb;border-radius:8px;padding:10px;font-size:14px;outline:none;color:#5f574f}
 .ledger-table-box{width:100%;overflow-x:auto;margin-top:12px}
@@ -139,7 +139,6 @@ const content=document.getElementById("content");
 let unsubscribeLatestOrder = null;
 let unsubscribeAnnouncements = null;
 
-// 用來在記憶體緩存篩選月份（預設空字串代表顯示全部）
 let selectedFilterMonth = ""; 
 
 function formatLocalTime(isoString) {
@@ -275,7 +274,7 @@ window.showNotice=async function(){
         noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
       }
     } else {
-      announcementBox.innerText = "開前尚無公告";
+      announcementBox.innerText = "目前尚無公告";
       noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
     }
   }, error => {
@@ -285,12 +284,10 @@ window.showNotice=async function(){
   });
 };
 
-// 🚀 核心升級：整合月份過濾機制與點數明細交易帳本（100% 不破壞原有介面）
 window.showOrders=async function(){
   stopAllSnapshots();
   setActive("tabOrders");
   
-  // 建立月份篩選與雙結構框架
   content.innerHTML=`
     <div class="card">
       <div class="section-title">數據紀錄篩選</div>
@@ -326,14 +323,12 @@ window.clearMonthFilter = async function() {
   await renderFilteredData();
 };
 
-// 智慧核心：同時渲染過濾後的點餐與扣點大數據
 async function renderFilteredData() {
   const orderList = document.getElementById("orderList");
   const pointLedgerBox = document.getElementById("pointLedgerBox");
 
   const orders = await getMyOrders();
   
-  // 1. 篩選點餐紀錄
   let filteredOrders = orders;
   if (selectedFilterMonth) {
     filteredOrders = orders.filter(o => o.created_at && o.created_at.startsWith(selectedFilterMonth));
@@ -357,8 +352,6 @@ async function renderFilteredData() {
     });
   }
 
-  // 2. 智慧生成與截圖一模一樣的「點數紀錄」表格（對接或動態解析交易流）
-  // 這裡撈取 balances 的異動或者由 orders 反向解析，為了 100% 精準與系統串接，我們動態整合訂單扣點與配發歷史
   let ledgerHtml = `
     <table class="ledger-table">
       <thead>
@@ -372,17 +365,15 @@ async function renderFilteredData() {
       </thead>
       <tbody>`;
 
-  // 模擬/讀取點數事件流
   let ledgerEvents = [];
   
-  // 從訂單中提取消費事件
   orders.forEach(o => {
     ledgerEvents.push({
       date: o.created_at ? o.created_at.split("T")[0] : "未知日期",
       timeText: o.created_at ? formatLocalTime(o.created_at) : "",
-      type: "消費",
-      amount: `-${o.total || 0}`,
-      granted: `-${o.total || 0}`,
+      type: o.status === "已取消" ? "作廢" : "消費",
+      amount: o.status === "已取消" ? `+0 (已退)` : `-${o.total || 0}`,
+      granted: o.status === "已取消" ? `+${o.total || 0}` : `-${o.total || 0}`,
       stored: "0",
       via: "點餐系統",
       id: o.id,
@@ -390,8 +381,6 @@ async function renderFilteredData() {
     });
   });
 
-  // 如果需要，也可以在此處向 balances 集合拉取手動儲值或配發明細
-  // 為了填補基礎展示防線，加入初始配發與大樓起始儲值事件
   if(profile.created_at) {
     ledgerEvents.push({
       date: profile.created_at.split("T")[0],
@@ -405,24 +394,21 @@ async function renderFilteredData() {
     });
   }
 
-  // 按日期降序
   ledgerEvents.sort((a,b) => b.timeText.localeCompare(a.timeText));
 
-  // 依據月份篩選點數
   if (selectedFilterMonth) {
-    ledgerEvents = ledgerEvents.filter(e => e.timeText.startsWith(selectedFilterMonth.replace("-", "/")));
+    ledgerEvents = ledgerEvents.filter(e => e.timeText.replace(/\//g, "-").startsWith(selectedFilterMonth.replace("-", "-")));
   }
 
   if (ledgerEvents.length === 0) {
     ledgerHtml += `<tr><td colspan="5" style="color:#aaa; padding:20px;">該月份尚無點數異動明細</td></tr>`;
   } else {
-    ledgerEvents.forEach((ev, idx) => {
-      // 🚀 將資料暫存至 JSON 字串，方便點擊明細時彈出
+    ledgerEvents.forEach((ev) => {
       const stringified = JSON.stringify(ev).replace(/"/g, '&quot;');
       ledgerHtml += `
         <tr>
           <td>${ev.date}</td>
-          <td><span class="status ${ev.type==='消費'?'cancel':ev.type==='配發'?'done':'wait'}">${ev.type}</span></td>
+          <td><span class="status ${ev.type==='消費'?'cancel':ev.type==='配發'?'done':ev.type==='作廢'?'wait':'wait'}">${ev.type}</span></td>
           <td style="font-weight:700; color:${ev.type==='消費'?'#c86b62':'#3f7f47'}">${ev.amount}</td>
           <td>${ev.via}</td>
           <td><span class="info-popup-link" onclick="window.openLedgerPopup('${stringified}')">明細</span></td>
@@ -434,7 +420,6 @@ async function renderFilteredData() {
   pointLedgerBox.innerHTML = ledgerHtml;
 }
 
-// 🚀 核心控制：點擊明細時，彈出跟截圖完全一樣的小對話框
 window.openLedgerPopup = function(jsonStr) {
   const ev = JSON.parse(jsonStr);
   document.getElementById("popDateTitle").innerText = ev.timeText || ev.date;
