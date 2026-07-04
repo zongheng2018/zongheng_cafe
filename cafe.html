@@ -212,7 +212,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     </div>
 
     <div class="card">
-      <div class="section-title">住戶首頁大廳公告管理 (對接大廳首頁)</div>
+      <div class="section-title">住戶首頁公告管理</div>
       <div class="form-grid">
         <div>
           <label style="font-weight:800; display:block; margin-bottom:6px;">最新公告訊息內容：</label>
@@ -681,7 +681,7 @@ window.publishBroadcastMessages = async () => {
     notice: nText,
     updated_at: new Date().toISOString()
   }, { merge: true });
-  alert("大廳公告與重要通知已成功發布！");
+  alert("公告與重要通知已成功發布！");
 };
 
 window.saveSystemSchedule = async () => {
