@@ -90,7 +90,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 <body>
 
-<!-- 隱藏用於列印熱感紙的容器結構 -->
 <div id="printKitchenReceiptContainer" style="display: none;"></div>
 
 <div class="header">
@@ -174,7 +173,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <div class="counter-total" id="counterTotal">0 點</div>
         
         <div class="btn-row-giant">
-          <button class="giant-submit-btn" onclick="executeCounterOrderAndPrint()">確認送出訂單並列印簽名單</button>
+          <button class="giant-submit-btn" onclick="window.executeCounterOrderAndPrint()">確認送出訂單並列印簽名單</button>
           <button class="btn danger" style="padding:12px; border-radius:12px;" onclick="clearCounterCart()">清空購物車</button>
         </div>
       </div>
@@ -212,7 +211,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     </div>
 
     <div class="card">
-      <div class="section-title">住戶首頁公告管理</div>
+      <div class="section-title">住戶首頁大廳公告管理 (對接大廳首頁)</div>
       <div class="form-grid">
         <div>
           <label style="font-weight:800; display:block; margin-bottom:6px;">最新公告訊息內容：</label>
@@ -242,52 +241,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
     </div>
   </section>
-</div>
-
-<div class="modal-bg" id="editModalBg">
-  <div class="modal">
-    <div class="section-title">編輯品項</div>
-    <input type="hidden" id="editId">
-    <div class="form-grid">
-      <input id="editName" placeholder="品項名稱"><input id="editPrice" type="number" placeholder="價格">
-      <input id="editCategory" placeholder="分類"><input id="editImage" placeholder="圖片">
-      <input id="editSortOrder" type="number" placeholder="排序">
-      <select id="editAfterMeal"><option value="false">不顯示餐後上</option><option value="true">顯示餐後上</option></select>
-      
-      <div class="time-lock-box">
-        <label class="time-lock-trigger">
-          <input type="checkbox" id="editTimeRestricted" onchange="toggleTimeInputs('edit')">
-          <span>啟用特定時間限制供應</span>
-        </label>
-        <div id="editTimeInputs" style="display:none; grid-template-columns:1fr 1fr; gap:12px;">
-          <div>開始供應：<input id="editStartTime" type="time"></div>
-          <div>結束供應：<input id="editEndTime" type="time"></div>
-        </div>
-      </div>
-      <textarea id="editNote" placeholder="品項備註"></textarea>
-    </div>
-    <div class="option-editor">
-      <div class="option-title">自訂選項</div>
-      <div id="editOptionList"></div>
-      <button class="btn light" type="button" onclick="addEditOptionGroup()">新增選項群組</button>
-    </div>
-    <div class="btn-row"><button class="btn primary" onclick="saveEditMenu()">儲存修改</button><button class="btn light" onclick="closeEditModal()">取消</button></div>
-  </div>
-</div>
-
-<div class="modal-bg" id="counterItemModalBg">
-  <div class="modal">
-    <div class="section-title" id="counterItemTitle">選擇品項</div>
-    <div id="counterOptionArea"></div>
-    <div style="margin-top:10px;"><textarea id="counterItemNote" placeholder="規格備註說明，可空白"></textarea></div>
-    <div class="form-grid" style="margin-top:12px;">
-      <button class="btn light" onclick="counterChangeQty(-1)">−</button>
-      <input id="counterItemQty" type="number" value="1" min="1">
-      <button class="btn light" onclick="counterChangeQty(1)">＋</button>
-      <button class="btn primary" onclick="addCounterItemToCart()">加入購物車</button>
-    </div>
-    <div class="btn-row"><button class="btn light" onclick="document.getElementById('counterItemModalBg').style.display='none'">取消</button></div>
-  </div>
 </div>
 
 <div class="modal-bg" id="cafeOrderEditModalBg">
@@ -423,7 +376,6 @@ function listenOrders(){
   });
 }
 
-// 標準接單（列印基礎出餐聯）
 window.acceptAndPrintOrder = async (id) => {
   const order = globalOrdersCache.find(x => x.id === id);
   if (order) {
@@ -432,7 +384,6 @@ window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
 };
 
-// 🚀 出餐明細列印核心引擎（支援自訂標題與住戶簽名欄位）
 window.printKitchenReceipt = (order, titleType, customContentHtml = "") => {
   const container = document.getElementById("printKitchenReceiptContainer");
   container.style.display = "block";
@@ -455,11 +406,9 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "") => {
   });
 
   let finalReceiptsCombinedHtml = "";
-  // 依據控制台設定張數進行列印
   for (let i = 1; i <= globalReceiptCopyCount; i++) {
     let unionLabel = i === 1 ? "廚房聯" : i === 2 ? "櫃檯聯" : `備用聯 ${i}`;
     
-    // 如果是更動或取消，則在下方塞入簽名格
     let signatureBlock = `
       <div style="text-align:center; margin-top:14px;">========================</div>
       <div style="font-weight:bold; font-size:13px; margin-top:6px;">住戶手寫簽名確認：</div>
@@ -508,7 +457,6 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "") => {
   }, 50);
 };
 
-// 🚀 新增變更：代客點餐直接扣點並印單（明細格式＋住戶簽名欄位）
 window.executeCounterOrderAndPrint = async () => {
   if(!counterResident) { alert("請先輸入住戶帳號並點擊載入住戶"); return; } 
   if(!counterCart.length) { alert("購物車內尚未加入餐點"); return; }
@@ -527,7 +475,6 @@ window.executeCounterOrderAndPrint = async () => {
     created_at: new Date().toISOString() 
   };
 
-  // 寫入 Firebase
   await addDoc(collection(db, "orders"), orderData);
   await updateDoc(doc(db, "balances", counterBalanceDocId), { 
     granted_amount: counterGranted >= total ? counterGranted - total : 0, 
@@ -535,7 +482,6 @@ window.executeCounterOrderAndPrint = async () => {
     updated_by: "cafe_counter" 
   }); 
 
-  // 調用列印明細格式＋住戶簽名欄位
   window.printKitchenReceipt(orderData, "出餐明細");
   
   alert("代客點餐成功！已自動送下列印簽名工作聯。"); 
@@ -543,7 +489,6 @@ window.executeCounterOrderAndPrint = async () => {
   renderCounterCart(); 
 };
 
-// 🚀 新增變更：取消訂單直接退點並印單（取消明細格式＋住戶簽名欄位）
 window.executeCancelOrderAndPrint = async (order) => {
   if(!confirm("確定要取消此筆訂單並執行退點嗎？")) return;
 
@@ -562,7 +507,6 @@ window.executeCancelOrderAndPrint = async (order) => {
     updated_at: new Date().toISOString()
   });
 
-  // 組裝取消項目的更動內容 HTML 結構
   let itemsLinesHtml = (order.items || []).map(i => `<div style="font-size:13px; text-decoration:line-through; color:#666;">${i.name} × ${i.qty}</div>`).join("");
   let customCancelHtml = `
     <div style="color:#c86b62; font-weight:bold; font-size:14px; text-align:center; margin-bottom:6px;">【 本單已申請退點作廢 】</div>
@@ -570,12 +514,90 @@ window.executeCancelOrderAndPrint = async (order) => {
     ${itemsLinesHtml}
   `;
 
-  // 列印取消更動單
   window.printKitchenReceipt(order, "訂單取消通知單", customCancelHtml);
   alert("訂單已成功退點！已送出紙本取消覆簽單列印。");
 };
 
-// 🚀 新增變更：編輯訂單完成後扣點並印單（更動項目＋住戶簽名欄位）
+window.openModifyOrderModal = (order) => {
+  activeEditingOrder = order;
+  activeEditingItems = JSON.parse(JSON.stringify(order.items || []));
+  
+  document.getElementById("editOrderDetailsSummary").innerHTML = `
+    訂單編號：${order.order_id} ｜ 住戶：${order.uid}<br>
+    原本金額：<b>${order.total} 點</b>
+  `;
+  
+  const menuSelect = document.getElementById("editOrderQuickMenuSelect");
+  menuSelect.innerHTML = '<option value="">請選擇欲加入/替換的品項</option>';
+  menuCache.filter(x => x.enabled !== false).forEach(m => {
+    menuSelect.innerHTML += `<option value="${m.id}">${m.name} (${m.price}點)</option>`;
+  });
+  
+  renderEditOrderItemsList();
+  document.getElementById("cafeOrderEditModalBg").style.display = "flex";
+};
+
+function renderEditOrderItemsList() {
+  const container = document.getElementById("editOrderItemsListContainer");
+  container.innerHTML = "";
+  
+  let currentTotal = 0;
+  activeEditingItems.forEach((item, index) => {
+    currentTotal += item.price * item.qty;
+    const optText = item.options ? Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(",") : "";
+    
+    const row = document.createElement("div");
+    row.className = "edit-order-item-row";
+    row.innerHTML = `
+      <div>
+        <div style="font-weight:bold;">${item.name} × ${item.qty} (${item.price * item.qty}點)</div>
+        <div style="font-size:12px;color:#888;">${optText} ${item.note?`[${item.note}]`:''}</div>
+      </div>
+      <div style="display:flex;gap:4px;">
+        <button class="btn light" style="padding:4px 8px;min-width:auto;" onclick="window.changeEditItemQty(${index}, -1)">-</button>
+        <button class="btn light" style="padding:4px 8px;min-width:auto;" onclick="window.changeEditItemQty(${index}, 1)">+</button>
+        <button class="btn danger" style="padding:4px 8px;min-width:auto;" onclick="window.removeEditItem(${index})">刪除</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+  
+  const diff = currentTotal - activeEditingOrder.total;
+  let diffText = "";
+  if(diff > 0) diffText = `<span style="color:#c86b62;">(需補扣 ${diff} 點)</span>`;
+  else if(diff < 0) diffText = `<span style="color:#6b8b61;">(將退回 ${Math.abs(diff)} 點)</span>`;
+  else diffText = `<span>(金額無變動)</span>`;
+  
+  document.getElementById("editOrderLiveTotal").innerHTML = `新總計：<b>${currentTotal} 點</b> ｜ ${diffText}`;
+}
+
+window.changeEditItemQty = (index, delta) => {
+  activeEditingItems[index].qty = Math.max(1, activeEditingItems[index].qty + delta);
+  renderEditOrderItemsList();
+};
+
+window.removeEditItem = (index) => {
+  activeEditingItems.splice(index, 1);
+  renderEditOrderItemsList();
+};
+
+document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
+  const select = document.getElementById("editOrderQuickMenuSelect");
+  if(!select.value) return;
+  const targetMenu = menuCache.find(x => x.id === select.value);
+  if(!targetMenu) return;
+  
+  activeEditingItems.push({
+    id: targetMenu.id,
+    name: targetMenu.name,
+    price: Number(targetMenu.price || 0),
+    qty: 1,
+    options: {},
+    note: "櫃台更換"
+  });
+  renderEditOrderItemsList();
+};
+
 document.getElementById("submitEditedOrderBtn").onclick = async () => {
   if(activeEditingItems.length === 0) {
     alert("訂單內不能沒有任何品項！");
@@ -611,14 +633,12 @@ document.getElementById("submitEditedOrderBtn").onclick = async () => {
     });
   }
   
-  // 更新資料庫
   await updateDoc(doc(db, "orders", order.id), {
     items: activeEditingItems,
     total: newTotal,
     updated_at: new Date().toISOString()
   });
 
-  // 渲染更動前後差額明細的熱感紙內部區塊
   let oldItemsHtml = (order.items || []).map(i => `<div>- ${i.name} × ${i.qty}</div>`).join("");
   let newItemsHtml = activeEditingItems.map(i => `<div>+ ${i.name} × ${i.qty}</div>`).join("");
   
@@ -634,249 +654,11 @@ document.getElementById("submitEditedOrderBtn").onclick = async () => {
     </div>
   `;
 
-  // 列印更動通知聯
   const updatedOrderWrapper = { ...order, items: activeEditingItems, total: newTotal };
   window.printKitchenReceipt(updatedOrderWrapper, "訂單更動明細單", customEditHtml);
 
   alert("訂單規格修改成功！已自動印出更動簽名對帳單。");
   document.getElementById("cafeOrderEditModalBg").style.display = "none";
-};
-
-
-function listenSettings() {
-  onSnapshot(doc(db, "settings", "cafe"), s => {
-    if (!s.exists()) return; 
-    const data = s.data(); 
-    let modeText = "智慧自動控管中";
-    if (data.manual_mode === "force_open") modeText = "強制手動開放中";
-    if (data.manual_mode === "force_closed") modeText = "強制手動關閉中";
-    if (data.manual_mode === "auto") modeText = "智慧自動控管中";
-    
-    systemStatus.innerHTML = `<b>目前系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
-    document.getElementById("openTime").value = data.open_time || "08:30"; 
-    document.getElementById("closeTime").value = data.close_time || "19:00"; 
-    document.getElementById("closedDays").value = data.closed_days || "";
-    
-    if (data.receipt_copy_count) {
-      globalReceiptCopyCount = Number(data.receipt_copy_count);
-      document.getElementById("receiptCopyCountSelect").value = String(globalReceiptCopyCount);
-    }
-  });
-}
-
-function listenBroadcastSettings() {
-  onSnapshot(doc(db, "settings", "broadcast"), s => {
-    if (!s.exists()) return;
-    const d = s.data();
-    document.getElementById("announcementText").value = d.announcement || "";
-    document.getElementById("noticeText").value = d.notice || "";
-  });
-}
-
-window.publishBroadcastMessages = async () => {
-  const aText = document.getElementById("announcementText").value.trim();
-  const nText = document.getElementById("noticeText").value.trim();
-  await setDoc(doc(db, "settings", "broadcast"), {
-    announcement: aText,
-    notice: nText,
-    updated_at: new Date().toISOString()
-  }, { merge: true });
-  alert("公告與重要通知已成功發布！");
-};
-
-window.saveSystemSchedule = async () => {
-  const openTime = document.getElementById("openTime").value; 
-  const closeTime = document.getElementById("closeTime").value; 
-  const closedDays = document.getElementById("closedDays").value.trim();
-  const receiptCount = Number(document.getElementById("receiptCopyCountSelect").value || 2);
-  
-  await setDoc(doc(db, "settings", "cafe"), { 
-    open_time: openTime, 
-    close_time: closeTime, 
-    closed_days: closedDays,
-    receipt_copy_count: receiptCount
-  }, { merge: true }); 
-  
-  alert("設定與列印聯數成功保存！");
-};
-
-window.setSystemManualMode = async (mode) => {
-  await setDoc(doc(db, "settings", "cafe"), { manual_mode: mode }, { merge: true }); alert("切換成功！");
-};
-
-function getCleanOptions(groups) {
-  return groups.map(g => ({ title: g.title.trim(), choices: g.choices.map(c => c.trim()).filter(c => c !== "") })).filter(g => g.title !== "");
-}
-
-window.addMenu=async()=>{
-  const name=mName.value.trim(); const price=Number(mPrice.value); const category=(mCategory.value||mCategorySelect.value).trim(); const isTimeRestricted = document.getElementById("mTimeRestricted").checked;
-  await addDoc(collection(db,"menu"),{ name, price, category, enabled:true, custom_options:getCleanOptions(newOptionGroups), is_time_restricted: isTimeRestricted, start_time: isTimeRestricted ? mStartTime.value : "09:00", end_time: isTimeRestricted ? mEndTime.value : "17:00", created_at:new Date().toISOString() });
-  mName.value=""; mPrice.value=""; mCategory.value=""; mImage.value=""; mSortOrder.value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
-};
-
-async function loadMenu(){
-  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; menuList.innerHTML="";
-  snap.forEach(d => { const m = {id:d.id,...d.data()}; menuCache.push(m); if(m.category && !categoryCache.includes(m.category)) categoryCache.push(m.category); });
-  
-  const mSelect = document.getElementById("mCategorySelect");
-  if(mSelect) {
-    mSelect.innerHTML = '<option value="">選擇既有分類</option>';
-    categoryCache.forEach(c => { mSelect.innerHTML += `<option value="${c}">${c}</option>`; });
-  }
-
-  menuCache.forEach(m=>{
-    const row=document.createElement("div"); row.className="menu-row";
-    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
-    menuList.appendChild(row);
-  });
-  renderCategorySelects();
-}
-
-window.openEditMenu = (id) => {
-  const m = menuCache.find(x => x.id === id); if (!m) return;
-  editId.value = m.id; editName.value = m.name || ""; editPrice.value = m.price || 0; editCategory.value = m.category || ""; editImage.value = m.image || ""; editSortOrder.value = m.sort_order || 999; editAfterMeal.value = String(m.is_after_meal || false);
-  const isRestricted = m.is_time_restricted || false;
-  document.getElementById("editTimeRestricted").checked = isRestricted;
-  document.getElementById("editStartTime").value = m.start_time || "09:00";
-  document.getElementById("editEndTime").value = m.end_time || "17:00";
-  toggleTimeInputs('edit');
-  editOptionGroups = JSON.parse(JSON.stringify(m.custom_options || []));
-  renderEditOptionGroups(); editModalBg.style.display = "flex";
-};
-
-window.closeEditModal=()=>editModalBg.style.display="none";
-
-window.saveEditMenu=async()=>{
-  const isTimeRestricted = document.getElementById("editTimeRestricted").checked;
-  await updateDoc(doc(db,"menu",editId.value),{ 
-    name:editName.value.trim(), price:Number(editPrice.value), category:editCategory.value.trim(), image:editImage.value.trim(), sort_order:Number(editSortOrder.value||999), is_after_meal:(editAfterMeal.value==="true"), is_time_restricted:isTimeRestricted, start_time:isTimeRestricted?editStartTime.value:"", end_time:isTimeRestricted?editEndTime.value:"", custom_options:getCleanOptions(editOptionGroups)
-  });
-  editModalBg.style.display="none"; alert("更新成功"); await loadMenu();
-};
-
-window.toggleMenu=async(id,enabled)=>{ await updateDoc(doc(db,"menu",id),{enabled:!enabled}); await loadMenu(); };
-
-window.addNewOptionGroup=function(){ newOptionGroups.push({title:"",choices:[""]}); renderNewOptionGroups(); };
-window.deleteNewOptionGroup=function(idx){ newOptionGroups.splice(idx,1); renderNewOptionGroups(); };
-window.addNewChoice=function(idx){ newOptionGroups[idx].choices.push(''); renderNewOptionGroups(); };
-window.deleteNewChoice=function(gIdx, cIdx){ newOptionGroups[gIdx].choices.splice(cIdx,1); renderNewOptionGroups(); };
-
-function renderNewOptionGroups(){
-  newOptionList.innerHTML="";
-  newOptionGroups.forEach((group,gIndex)=>{
-    const div=document.createElement("div"); div.className="option-group-box";
-    let choicesHtml = (group.choices || []).map((c, cIndex) => `
-      <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-        <input placeholder="細項，如：去冰" value="${c}" oninput="newOptionGroups[${gIndex}].choices[${cIndex}]=this.value" style="padding:8px 12px; font-size:14px;">
-        <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; font-size:16px; cursor:pointer;" onclick="window.deleteNewChoice(${gIndex},${cIndex})">✕</button>
-      </div>
-    `).join("");
-
-    div.innerHTML=`
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱，如：冰度" value="${group.title}" oninput="newOptionGroups[gIndex].title=this.value">
-        <button class="beautiful-del-group-btn" type="button" onclick="window.deleteNewOptionGroup(${gIndex})">刪除群組</button>
-      </div>
-      <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
-        ${choicesHtml}
-        <button type="button" class="add-choice-btn" onclick="window.addNewChoice(${gIndex})">＋ 新增細項</button>
-      </div>
-    `;
-    newOptionList.appendChild(div);
-  });
-}
-
-window.addEditOptionGroup=function(){ editOptionGroups.push({title:"",choices:[""]}); renderEditOptionGroups(); };
-window.deleteEditOptionGroup=function(idx){ editOptionGroups.splice(idx,1); renderEditOptionGroups(); };
-window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); renderEditOptionGroups(); };
-window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); renderEditOptionGroups(); };
-
-function renderEditOptionGroups(){
-  editOptionList.innerHTML="";
-  editOptionGroups.forEach((group,gIndex)=>{
-    const div=document.createElement("div"); div.className="option-group-box";
-    let choicesHtml = (group.choices || []).map((c, cIndex) => `
-      <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-        <input placeholder="細項值" value="${c}" oninput="editOptionGroups[${gIndex}].choices[${cIndex}]=this.value" style="padding:8px 12px; font-size:14px;">
-        <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; font-size:16px; cursor:pointer;" onclick="window.deleteEditChoice(${gIndex},${cIndex})">✕</button>
-      </div>
-    `).join("");
-
-    div.innerHTML=`
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
-        <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
-      </div>
-      <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
-        ${choicesHtml}
-        <button type="button" class="add-choice-btn" onclick="window.addEditChoice(${gIndex})">＋ 新增細項</button>
-      </div>
-    `;
-    editOptionList.appendChild(div);
-  });
-}
-
-window.loadCounterResident=async()=>{
-  const snap=await getDocs(query(collection(db,"balances"),where("uid","==",counterResidentInput.value.trim())));
-  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:counterResidentInput.value.trim()}; counterResidentInfo.innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
-};
-function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = `<option value="全部">全部分類</option>`; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
-window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
-
-function renderCounterMenu(){
-  const box=document.getElementById("counterMenuList"); box.innerHTML=""; let list = menuCache.filter(x=>x.enabled!==false); if(currentCounterCategory !== "全部") { list = list.filter(x=>x.category === currentCounterCategory); }
-  list.forEach(m=>{
-    const row=document.createElement("div"); row.className="counter-menu-row"; row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.price}點</div></div><button class="btn primary" onclick="openCounterItemModal('${m.id}')" style="padding:8px 14px;min-width:60px;">加入</button></div>`; box.appendChild(row);
-  });
-}
-
-window.openCounterItemModal=(id)=>{
-  counterCurrentItem=menuCache.find(x=>x.id===id); counterItemTitle.innerText=counterCurrentItem.name; counterItemQty.value=1; counterItemNote.value="";
-  const area = document.getElementById("counterOptionArea"); area.innerHTML="";
-  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{
-    area.innerHTML += `<div class="option-title" style="font-weight:800; margin:6px 0;">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
-  });
-  counterItemModalBg.style.display="flex";
-};
-window.closeCounterItemModal=()=>document.getElementById("counterItemModalBg").style.display="none";
-
-window.addCounterItemToCart=()=>{
-  const options = {}; (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
-  counterCart.push({ id:counterCurrentItem.id, name:counterCurrentItem.name, price:Number(counterCurrentItem.price||0), qty:Number(counterItemQty.value||1), options, note:counterItemNote.value.trim() });
-  closeCounterItemModal(); renderCounterCart();
-};
-
-function renderCounterCart(){
-  const box=document.getElementById("counterCartList"); box.innerHTML=""; let total=0;
-  counterCart.forEach((item,idx)=>{ 
-    total+=item.price*item.qty; const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
-    box.innerHTML+=`<div class="counter-cart-item"><div><b>${item.name} × ${item.qty}</b></div><div style="font-size:13px;color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="btn danger" style="padding:4px 8px; font-size:12px; min-width:auto; margin-top:4px;" onclick="counterCart.splice(${idx},1);renderCounterCart();">刪除</button></div>`; 
-  });
-  counterTotal.innerText=`${total} 點`;
-}
-
-function loadStaticSeatsForCounter(){ 
-  const select = document.getElementById("counterSeat"); if(!select) return;
-  select.innerHTML = `<option value="">請選擇座位</option>`;
-  staticSeats.forEach(seatId => { select.innerHTML += `<option value="${seatId}">${seatId}</option>`; });
-}
-
-window.toggleCounterSeat=()=>{ const selectArea = document.getElementById("counterSeatArea"); if(selectArea) { selectArea.style.display = counterDining.value === "內用" ? "block" : "none"; } };
-
-window.calculateMonthlyRevenue = async () => {
-  const targetMonth = document.getElementById("statMonthInput").value; if(!targetMonth) { alert("請先選擇要統計的月份！"); return; }
-  document.getElementById("monthlyStatReport").innerHTML = "正在從資料庫撈取數據，請稍後...";
-  try {
-    const snap = await getDocs(collection(db, "orders")); let totalOrders = 0; let totalRevenue = 0; let itemSummary = {};
-    snap.forEach(d => {
-      const o = d.data(); if(o.status === "已完成" && o.created_at && o.created_at.startsWith(targetMonth)) {
-        totalOrders++; totalRevenue += Number(o.total || 0); (o.items || []).forEach(item => { itemSummary[item.name] = (itemSummary[item.name] || 0) + Number(item.qty || 1); });
-      }
-    });
-    const sortedSummary = Object.entries(itemSummary).sort((a, b) => b[1] - a[1]);
-    let itemsHtml = sortedSummary.map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); if(!itemsHtml) itemsHtml = "<li>該月份無任何餐點銷售紀錄</li>";
-    document.getElementById("monthlyStatReport").innerHTML = `<div style="font-size: 18px; font-weight: 900; color: #7a594c; margin-bottom: 10px;">月度營收結算報告</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總成交訂單數：<br><span style="font-size: 22px; font-weight: 900; color: #6d6258;">${totalOrders} 筆</span></div><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總營業額點數：<br><span style="font-size: 22px; font-weight: 900; color: #6b8b61;">${totalRevenue} 點</span></div></div><div style="font-weight: 800; margin-bottom: 6px;">品項數量排行榜（依販售數由高至低）：</div><ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: #6d6258;">${itemsHtml}</ul>`;
-  } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
 };
 
 function listenSettings() {
@@ -1059,38 +841,6 @@ window.loadCounterResident=async()=>{
 function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = `<option value="全部">全部分類</option>`; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
 window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
 
-function renderCounterMenu(){
-  const box=document.getElementById("counterMenuList"); box.innerHTML=""; let list = menuCache.filter(x=>x.enabled!==false); if(currentCounterCategory !== "全部") { list = list.filter(x=>x.category === currentCounterCategory); }
-  list.forEach(m=>{
-    const row=document.createElement("div"); row.className="counter-menu-row"; row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.price}點</div></div><button class="btn primary" onclick="openCounterItemModal('${m.id}')" style="padding:8px 14px;min-width:60px;">加入</button></div>`; box.appendChild(row);
-  });
-}
-
-window.openCounterItemModal=(id)=>{
-  counterCurrentItem=menuCache.find(x=>x.id===id); counterItemTitle.innerText=counterCurrentItem.name; counterItemQty.value=1; counterItemNote.value="";
-  const area = document.getElementById("counterOptionArea"); area.innerHTML="";
-  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{
-    area.innerHTML += `<div class="option-title" style="font-weight:800; margin:6px 0;">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
-  });
-  counterItemModalBg.style.display="flex";
-};
-window.closeCounterItemModal=()=>document.getElementById("counterItemModalBg").style.display="none";
-
-window.addCounterItemToCart=()=>{
-  const options = {}; (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
-  counterCart.push({ id:counterCurrentItem.id, name:counterCurrentItem.name, price:Number(counterCurrentItem.price||0), qty:Number(counterItemQty.value||1), options, note:counterItemNote.value.trim() });
-  closeCounterItemModal(); renderCounterCart();
-};
-
-function renderCounterCart(){
-  const box=document.getElementById("counterCartList"); box.innerHTML=""; let total=0;
-  counterCart.forEach((item,idx)=>{ 
-    total+=item.price*item.qty; const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
-    box.innerHTML+=`<div class="counter-cart-item"><div><b>${item.name} × ${item.qty}</b></div><div style="font-size:13px;color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="btn danger" style="padding:4px 8px; font-size:12px; min-width:auto; margin-top:4px;" onclick="counterCart.splice(${idx},1);renderCounterCart();">刪除</button></div>`; 
-  });
-  counterTotal.innerText=`${total} 點`;
-}
-
 function loadStaticSeatsForCounter(){ 
   const select = document.getElementById("counterSeat"); if(!select) return;
   select.innerHTML = `<option value="">請選擇座位</option>`;
@@ -1110,7 +860,7 @@ window.calculateMonthlyRevenue = async () => {
       }
     });
     const sortedSummary = Object.entries(itemSummary).sort((a, b) => b[1] - a[1]);
-    let itemsHtml = sortedSummary.map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); if(!itemsHtml) itemsHtml = "<li>該月份無任何餐點銷售紀錄</li>";
+    let itemsHtml = sortedSummary.map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); if(!itemsHtml) itemsHtml = "<li>該月份無 any 餐點銷售紀錄</li>";
     document.getElementById("monthlyStatReport").innerHTML = `<div style="font-size: 18px; font-weight: 900; color: #7a594c; margin-bottom: 10px;">月度營收結算報告</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總成交訂單數：<br><span style="font-size: 22px; font-weight: 900; color: #6d6258;">${totalOrders} 筆</span></div><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總營業額點數：<br><span style="font-size: 22px; font-weight: 900; color: #6b8b61;">${totalRevenue} 點</span></div></div><div style="font-weight: 800; margin-bottom: 6px;">品項數量排行榜（依販售數由高至低）：</div><ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: #6d6258;">${itemsHtml}</ul>`;
   } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
 };
