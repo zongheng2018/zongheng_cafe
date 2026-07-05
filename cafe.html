@@ -390,6 +390,7 @@ function listenOrders(){
       const timeHtml = `<div class="meta" style="color:#8a7e73; font-weight:700;">填寫時間：${formatLocalTime(o.created_at)}</div>`;
 
       const div=document.createElement("div"); div.className="order-card";
+      // 🚀 語法修正核心：將先前殘留的錯位字串指派徹底刪除，恢復最完美健康的 DOM 排版
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       if(status === "等待接單") waitingOrders.appendChild(div); else if(status === "製作中") makingOrders.appendChild(div); else doneOrders.appendChild(div);
     });
@@ -441,7 +442,6 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSign
       `;
     }
 
-    // 🚀 語法除錯核心：完美接回 79mm 乾淨的字串範本排版，無任何跳脫符號殘留
     finalReceiptsCombinedHtml += `
       <div class="receipt-break-page" style="margin-bottom: 20px; padding-bottom: 20px;">
         <div style="text-align:center; font-weight:bold; font-size:14px;">昭揚縱橫 咖啡廳點餐系統</div>
@@ -903,7 +903,7 @@ function renderEditOptionGroups(){
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
+        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
