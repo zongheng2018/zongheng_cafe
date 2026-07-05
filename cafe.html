@@ -160,7 +160,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="counter-grid">
       <div class="card">
         <div class="section-title">菜單</div>
-        <select id="counterCategoryFilter" onchange="changeCounterCategory(this.value)" style="margin-bottom:14px;"></select>
+        <select id="counterCategoryFilter" onchange="window.changeCounterCategory(this.value)" style="margin-bottom:14px;"></select>
         <div id="counterMenuList" class="counter-menu-list"></div>
       </div>
       <div class="card">
@@ -390,7 +390,6 @@ function listenOrders(){
       const timeHtml = `<div class="meta" style="color:#8a7e73; font-weight:700;">填寫時間：${formatLocalTime(o.created_at)}</div>`;
 
       const div=document.createElement("div"); div.className="order-card";
-      // 🚀 語法修正核心：將先前殘留的錯位字串指派徹底刪除，恢復最完美健康的 DOM 排版
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       if(status === "等待接單") waitingOrders.appendChild(div); else if(status === "製作中") makingOrders.appendChild(div); else doneOrders.appendChild(div);
     });
@@ -398,12 +397,15 @@ function listenOrders(){
   });
 }
 
+// 🚀 核心升級：按下接單先秒跳製作中，並彈出 confirm 確認是否印單，按否就不會卡死
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
   setTimeout(() => {
-    const order = globalOrdersCache.find(x => x.id === id);
-    if (order) {
-      window.printKitchenReceipt(order, "出餐明細", "", false); 
+    if (confirm("是否列印本單出餐明細？")) {
+      const order = globalOrdersCache.find(x => x.id === id);
+      if (order) {
+        window.printKitchenReceipt(order, "出餐明細", "", false); 
+      }
     }
   }, 100);
 };
@@ -657,7 +659,7 @@ document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
 
 document.getElementById("submitEditedOrderBtn").onclick = async () => {
   if(activeEditingItems.length === 0) {
-    alert("訂單內不能沒有任何品項！");
+    alert("訂單內不能沒有 any 品項！");
     return;
   }
   
@@ -820,6 +822,52 @@ async function loadMenu(){
     document.getElementById("menuList").appendChild(row);
   });
   renderCategorySelects();
+  
+  // 🚀 核心優化：每次更新菜單快照時，同步連動重新渲染代客點餐面版，防死機制建立
+  if (document.getElementById("counterTab").classList.contains("hidden") === false) {
+    renderCounterMenu();
+  }
+}
+
+// 🚀 出餐菜單控制邏輯：代客點餐面版渲染功能
+function renderCounterMenu(){
+  const box=document.getElementById("counterMenuList"); 
+  if(!box) return;
+  box.innerHTML=""; 
+  let list = menuCache.filter(x=>x.enabled!==false); 
+  if(currentCounterCategory !== "全部") { list = list.filter(x=>x.category === currentCounterCategory); }
+  list.forEach(m=>{
+    const row=document.createElement("div"); row.className="counter-menu-row"; row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.price}點</div></div><button class="btn primary" onclick="window.openCounterItemModal('${m.id}')" style="padding:8px 14px;min-width:60px;">加入</button></div>`; box.appendChild(row);
+  });
+}
+
+window.openCounterItemModal=(id)=>{
+  counterCurrentItem=menuCache.find(x=>x.id===id); 
+  document.getElementById("counterItemTitle").innerText=counterCurrentItem.name; 
+  document.getElementById("counterItemQty").value=1; 
+  document.getElementById("counterItemNote").value="";
+  const area = document.getElementById("counterOptionArea"); area.innerHTML="";
+  (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{
+    area.innerHTML += `<div class="option-title" style="font-weight:800; margin:6px 0;">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
+  });
+  document.getElementById("counterItemModalBg").style.display="flex";
+};
+
+window.closeCounterItemModal=()=>document.getElementById("counterItemModalBg").style.display="none";
+
+window.addCounterItemToCart=()=>{
+  const options = {}; (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
+  counterCart.push({ id:counterCurrentItem.id, name:counterCurrentItem.name, price:Number(counterCurrentItem.price||0), qty:Number(document.getElementById("counterItemQty").value||1), options, note:document.getElementById("counterItemNote").value.trim() });
+  window.closeCounterItemModal(); renderCounterCart();
+};
+
+function renderCounterCart(){
+  const box=document.getElementById("counterCartList"); box.innerHTML=""; let total=0;
+  counterCart.forEach((item,idx)=>{ 
+    total+=item.price*item.qty; const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
+    box.innerHTML+=`<div class="counter-cart-item"><div><b>${item.name} × ${item.qty}</b></div><div style="font-size:13px;color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="btn danger" style="padding:4px 8px; font-size:12px; min-width:auto; margin-top:4px;" onclick="counterCart.splice(${idx},1);renderCounterCart();">刪除</button></div>`; 
+  });
+  document.getElementById("counterTotal").innerText=`${total} 點`;
 }
 
 window.openEditMenu = (id) => {
@@ -903,7 +951,7 @@ function renderEditOptionGroups(){
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
+        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
