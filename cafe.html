@@ -24,6 +24,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 
 .section-title{font-size:24px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
 .order-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.order-card运行時錯誤{background:white;border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
 .order-card{background:white;border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
 .order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
 .order-item{padding:10px 0;border-bottom:1px solid #eee}
@@ -243,6 +244,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </section>
 </div>
 
+<!-- 變更品項彈窗 -->
 <div class="modal-bg" id="cafeOrderEditModalBg">
   <div class="modal" style="max-width: 600px;">
     <div class="section-title">變更 / 編輯住戶訂單</div>
@@ -279,7 +281,11 @@ let activeEditingItems = [];
 let globalOrdersCache = []; 
 let globalReceiptCopyCount = 2; 
 
-const staticSeats = ["A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4", "B5", "B6", "C1", "C2", "C3", "C4", "C5", "C6"];
+const staticSeats = [
+  "A1", "A2", "A3", "A4", 
+  "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", 
+  "C1", "C2", "C3", "C4", "C5", "C6"
+];
 
 function playPremiumCrystalSound() {
   if (!soundEnabled) return;
@@ -376,15 +382,19 @@ function listenOrders(){
   });
 }
 
+// 🚀 核心修正 A：接單時先秒速更新資料庫至「製作中」（讓卡片立刻跳過去），再行觸發背景列印
 window.acceptAndPrintOrder = async (id) => {
-  const order = globalOrdersCache.find(x => x.id === id);
-  if (order) {
-    window.printKitchenReceipt(order, "出餐明細");
-  }
   await window.updateOrder(id, '製作中');
+  setTimeout(() => {
+    const order = globalOrdersCache.find(x => x.id === id);
+    if (order) {
+      window.printKitchenReceipt(order, "出餐明細", "", false); // false 代表不印簽名欄
+    }
+  }, 100);
 };
 
-window.printKitchenReceipt = (order, titleType, customContentHtml = "") => {
+// 🚀 核心修正 B：重新排版熱感紙。住戶咖啡色置頂放大 ➡️ 單號 ➡️ 時間 ➡️ 內容。且接單不印簽名格。
+window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSignature = true) => {
   const container = document.getElementById("printKitchenReceiptContainer");
   container.style.display = "block";
   container.innerHTML = ""; 
@@ -409,22 +419,28 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "") => {
   for (let i = 1; i <= globalReceiptCopyCount; i++) {
     let unionLabel = i === 1 ? "廚房聯" : i === 2 ? "櫃檯聯" : `備用聯 ${i}`;
     
-    let signatureBlock = `
-      <div style="text-align:center; margin-top:14px;">========================</div>
-      <div style="font-weight:bold; font-size:13px; margin-top:6px;">住戶手寫簽名確認：</div>
-      <div style="height:55px; border:1px dashed #aaa; margin-top:6px; border-radius:6px; background:#fff;"></div>
-    `;
+    // 🚀 精準連動：如果是代客點餐(NEW_ORDER)或更動訂單(EDIT_ORDER)，才生成簽名格，普通接單直接不印！
+    let signatureBlock = "";
+    if (needSignature) {
+      signatureBlock = `
+        <div style="text-align:center; margin-top:14px;">========================</div>
+        <div style="font-weight:bold; font-size:13px; margin-top:6px;">住戶手寫簽名確認：</div>
+        <div style="height:55px; border:1px dashed #aaa; margin-top:6px; border-radius:6px; background:#fff;"></div>
+      `;
+    }
 
     finalReceiptsCombinedHtml += `
       <div class="receipt-break-page" style="margin-bottom: 20px; padding-bottom: 20px;">
         <div style="text-align:center; font-weight:bold; font-size:14px;">昭揚縱橫 咖啡廳點餐系統</div>
         <div style="text-align:center; font-weight:bold; font-size:14px; margin:4px 0;">【 ${titleType} - ${unionLabel} 】</div>
         <div style="text-align:center;">========================</div>
-        <div style="padding-left:4px; font-size:13px;">
+        
+        <!-- 🚀 核心修改：住戶資訊改用明顯咖啡色、置頂並顯眼放大 -->
+        <div style="padding-left:4px; font-size:13px; line-height: 1.5;">
+          <div style="font-size:17px; font-weight:bold; color:#6d6258; border-bottom:1px dashed #eedfd3; padding-bottom:4px; margin-bottom:4px;">住戶：${order.uid} 戶 (${order.dining_type || '住戶'})</div>
           <div>單號：${order.order_id || order.id}</div>
-          <div>時間：${formatLocalTime(new Date().toISOString())}</div>
-          <div style="font-size:15px; font-weight:bold; margin-top:2px;">住戶：${order.uid} 戶 (${order.dining_type || '代客'})</div>
-          <div style="font-size:15px; font-weight:bold;">位置：${order.dining_type === "內用" ? (order.seat || "未填") : "外帶"}</div>
+          <div style="color:#666;">時間：${formatLocalTime(order.created_at || new Date().toISOString())}</div>
+          <div style="font-size:14px; font-weight:bold; margin-top:2px;">位置：${order.dining_type === "內用" ? (order.seat || "未填") : "外帶"}</div>
         </div>
         <div style="text-align:center; margin:4px 0;">------------------------</div>
         
@@ -457,20 +473,26 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "") => {
   }, 50);
 };
 
+window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
+
 window.executeCounterOrderAndPrint = async () => {
+  const inputVal = document.getElementById("counterResidentInput").value.trim();
   if(!counterResident) { alert("請先輸入住戶帳號並點擊載入住戶"); return; } 
   if(!counterCart.length) { alert("購物車內尚未加入餐點"); return; }
   
   const total = counterCart.reduce((s, x) => s + x.price * x.qty, 0); 
   if(counterGranted + counterStored < total) { alert("該住戶點數不足以支付此筆訂單！"); return; }
   
+  const counterDiningValue = document.getElementById("counterDining").value;
+  const counterSeatValue = document.getElementById("counterSeat").value;
+
   const orderData = { 
     order_id: "ZH" + Date.now(), 
     uid: counterResident.username, 
     items: counterCart, 
     total, 
-    dining_type: counterDining.value, 
-    seat: counterDining.value === "內用" ? counterSeat.value : "", 
+    dining_type: counterDiningValue, 
+    seat: counterDiningValue === "內用" ? counterSeatValue : "", 
     status: "等待接單", 
     created_at: new Date().toISOString() 
   };
@@ -482,7 +504,8 @@ window.executeCounterOrderAndPrint = async () => {
     updated_by: "cafe_counter" 
   }); 
 
-  window.printKitchenReceipt(orderData, "出餐明細");
+  // 代客點餐需要簽名，傳入 true
+  window.printKitchenReceipt(orderData, "出餐明細", "", true);
   
   alert("代客點餐成功！已自動送下列印簽名工作聯。"); 
   counterCart = []; 
@@ -514,7 +537,8 @@ window.executeCancelOrderAndPrint = async (order) => {
     ${itemsLinesHtml}
   `;
 
-  window.printKitchenReceipt(order, "訂單取消通知單", customCancelHtml);
+  // 取消退點需要簽名，傳入 true
+  window.printKitchenReceipt(order, "訂單取消通知單", customCancelHtml, true);
   alert("訂單已成功退點！已送出紙本取消覆簽單列印。");
 };
 
@@ -528,7 +552,7 @@ window.openModifyOrderModal = (order) => {
   `;
   
   const menuSelect = document.getElementById("editOrderQuickMenuSelect");
-  menuSelect.innerHTML = '<option value="">請選擇欲加入/替換的品項</option>';
+  menuSelect.innerHTML = '<option value="">請選擇欲加入的品項</option>';
   menuCache.filter(x => x.enabled !== false).forEach(m => {
     menuSelect.innerHTML += `<option value="${m.id}">${m.name} (${m.price}點)</option>`;
   });
@@ -654,8 +678,9 @@ document.getElementById("submitEditedOrderBtn").onclick = async () => {
     </div>
   `;
 
+  // 訂單更動需要簽名，傳入 true
   const updatedOrderWrapper = { ...order, items: activeEditingItems, total: newTotal };
-  window.printKitchenReceipt(updatedOrderWrapper, "訂單更動明細單", customEditHtml);
+  window.printKitchenReceipt(updatedOrderWrapper, "訂單更動明細單", customEditHtml, true);
 
   alert("訂單規格修改成功！已自動印出更動簽名對帳單。");
   document.getElementById("cafeOrderEditModalBg").style.display = "none";
@@ -670,7 +695,7 @@ function listenSettings() {
     if (data.manual_mode === "force_closed") modeText = "強制手動關閉中";
     if (data.manual_mode === "auto") modeText = "智慧自動控管中";
     
-    systemStatus.innerHTML = `<b>目前系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
+    document.getElementById("systemStatus").innerHTML = `<b>目前系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
     document.getElementById("openTime").value = data.open_time || "08:30"; 
     document.getElementById("closeTime").value = data.close_time || "19:00"; 
     document.getElementById("closedDays").value = data.closed_days || "";
@@ -727,13 +752,23 @@ function getCleanOptions(groups) {
 }
 
 window.addMenu=async()=>{
-  const name=mName.value.trim(); const price=Number(mPrice.value); const category=(mCategory.value||mCategorySelect.value).trim(); const isTimeRestricted = document.getElementById("mTimeRestricted").checked;
-  await addDoc(collection(db,"menu"),{ name, price, category, enabled:true, custom_options:getCleanOptions(newOptionGroups), is_time_restricted: isTimeRestricted, start_time: isTimeRestricted ? mStartTime.value : "09:00", end_time: isTimeRestricted ? mEndTime.value : "17:00", created_at:new Date().toISOString() });
-  mName.value=""; mPrice.value=""; mCategory.value=""; mImage.value=""; mSortOrder.value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
+  const nElement = document.getElementById("mName");
+  const pElement = document.getElementById("mPrice");
+  const cElement = document.getElementById("mCategory");
+  const sElement = document.getElementById("mCategorySelect");
+  
+  const name = nElement.value.trim(); 
+  const price = Number(pElement.value); 
+  const category = (cElement.value || sElement.value).trim(); 
+  const isTimeRestricted = document.getElementById("mTimeRestricted").checked;
+  
+  await addDoc(collection(db,"menu"),{ name, price, category, enabled:true, custom_options:getCleanOptions(newOptionGroups), is_time_restricted: isTimeRestricted, start_time: isTimeRestricted ? document.getElementById("mStartTime").value : "09:00", end_time: isTimeRestricted ? document.getElementById("mEndTime").value : "17:00", created_at:new Date().toISOString() });
+  
+  nElement.value=""; pElement.value=""; cElement.value=""; document.getElementById("mImage").value=""; document.getElementById("mSortOrder").value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
 };
 
 async function loadMenu(){
-  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; menuList.innerHTML="";
+  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; document.getElementById("menuList").innerHTML="";
   snap.forEach(d => { const m = {id:d.id,...d.data()}; menuCache.push(m); if(m.category && !categoryCache.includes(m.category)) categoryCache.push(m.category); });
   
   const mSelect = document.getElementById("mCategorySelect");
@@ -745,31 +780,38 @@ async function loadMenu(){
   menuCache.forEach(m=>{
     const row=document.createElement("div"); row.className="menu-row";
     row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
-    menuList.appendChild(row);
+    document.getElementById("menuList").appendChild(row);
   });
   renderCategorySelects();
 }
 
 window.openEditMenu = (id) => {
   const m = menuCache.find(x => x.id === id); if (!m) return;
-  editId.value = m.id; editName.value = m.name || ""; editPrice.value = m.price || 0; editCategory.value = m.category || ""; editImage.value = m.image || ""; editSortOrder.value = m.sort_order || 999; editAfterMeal.value = String(m.is_after_meal || false);
+  document.getElementById("editId").value = m.id; 
+  document.getElementById("editName").value = m.name || ""; 
+  document.getElementById("editPrice").value = m.price || 0; 
+  document.getElementById("editCategory").value = m.category || ""; 
+  document.getElementById("editImage").value = m.image || ""; 
+  document.getElementById("editSortOrder").value = m.sort_order || 999; 
+  document.getElementById("editAfterMeal").value = String(m.is_after_meal || false);
+  
   const isRestricted = m.is_time_restricted || false;
   document.getElementById("editTimeRestricted").checked = isRestricted;
   document.getElementById("editStartTime").value = m.start_time || "09:00";
   document.getElementById("editEndTime").value = m.end_time || "17:00";
   toggleTimeInputs('edit');
   editOptionGroups = JSON.parse(JSON.stringify(m.custom_options || []));
-  renderEditOptionGroups(); editModalBg.style.display = "flex";
+  renderEditOptionGroups(); document.getElementById("editModalBg").style.display = "flex";
 };
 
-window.closeEditModal=()=>editModalBg.style.display="none";
+window.closeEditModal=()=>document.getElementById("editModalBg").style.display="none";
 
 window.saveEditMenu=async()=>{
   const isTimeRestricted = document.getElementById("editTimeRestricted").checked;
-  await updateDoc(doc(db,"menu",editId.value),{ 
-    name:editName.value.trim(), price:Number(editPrice.value), category:editCategory.value.trim(), image:editImage.value.trim(), sort_order:Number(editSortOrder.value||999), is_after_meal:(editAfterMeal.value==="true"), is_time_restricted:isTimeRestricted, start_time:isTimeRestricted?editStartTime.value:"", end_time:isTimeRestricted?editEndTime.value:"", custom_options:getCleanOptions(editOptionGroups)
+  await updateDoc(doc(db,"menu",document.getElementById("editId").value),{ 
+    name:document.getElementById("editName").value.trim(), price:Number(document.getElementById("editPrice").value), category:document.getElementById("editCategory").value.trim(), image:document.getElementById("editImage").value.trim(), sort_order:Number(document.getElementById("editSortOrder").value||999), is_after_meal:(document.getElementById("editAfterMeal").value==="true"), is_time_restricted:isTimeRestricted, start_time:isTimeRestricted?document.getElementById("editStartTime").value:"", end_time:isTimeRestricted?document.getElementById("editEndTime").value:"", custom_options:getCleanOptions(editOptionGroups)
   });
-  editModalBg.style.display="none"; alert("更新成功"); await loadMenu();
+  document.getElementById("editModalBg").style.display="none"; alert("更新成功"); await loadMenu();
 };
 
 window.toggleMenu=async(id,enabled)=>{ await updateDoc(doc(db,"menu",id),{enabled:!enabled}); await loadMenu(); };
@@ -780,7 +822,8 @@ window.addNewChoice=function(idx){ newOptionGroups[idx].choices.push(''); render
 window.deleteNewChoice=function(gIdx, cIdx){ newOptionGroups[gIdx].choices.splice(cIdx,1); renderNewOptionGroups(); };
 
 function renderNewOptionGroups(){
-  newOptionList.innerHTML="";
+  const nList = document.getElementById("newOptionList");
+  nList.innerHTML="";
   newOptionGroups.forEach((group,gIndex)=>{
     const div=document.createElement("div"); div.className="option-group-box";
     let choicesHtml = (group.choices || []).map((c, cIndex) => `
@@ -792,7 +835,7 @@ function renderNewOptionGroups(){
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱，如：冰度" value="${group.title}" oninput="newOptionGroups[gIndex].title=this.value">
+        <input placeholder="群組名稱，如：冰度" value="${group.title}" oninput="newOptionGroups[${gIndex}].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteNewOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
@@ -800,7 +843,7 @@ function renderNewOptionGroups(){
         <button type="button" class="add-choice-btn" onclick="window.addNewChoice(${gIndex})">＋ 新增細項</button>
       </div>
     `;
-    newOptionList.appendChild(div);
+    nList.appendChild(div);
   });
 }
 
@@ -810,7 +853,8 @@ window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); rend
 window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); renderEditOptionGroups(); };
 
 function renderEditOptionGroups(){
-  editOptionList.innerHTML="";
+  const eList = document.getElementById("editOptionList");
+  eList.innerHTML="";
   editOptionGroups.forEach((group,gIndex)=>{
     const div=document.createElement("div"); div.className="option-group-box";
     let choicesHtml = (group.choices || []).map((c, cIndex) => `
@@ -822,7 +866,7 @@ function renderEditOptionGroups(){
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
+        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
@@ -830,24 +874,25 @@ function renderEditOptionGroups(){
         <button type="button" class="add-choice-btn" onclick="window.addEditChoice(${gIndex})">＋ 新增細項</button>
       </div>
     `;
-    editOptionList.appendChild(div);
+    eList.appendChild(div);
   });
 }
 
 window.loadCounterResident=async()=>{
-  const snap=await getDocs(query(collection(db,"balances"),where("uid","==",counterResidentInput.value.trim())));
-  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:counterResidentInput.value.trim()}; counterResidentInfo.innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
+  const inputVal = document.getElementById("counterResidentInput").value.trim();
+  const snap=await getDocs(query(collection(db,"balances"),where("uid","==",inputVal)));
+  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
 };
-function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = `<option value="全部">全部分類</option>`; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
+function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = '<option value="全部">全部分類</option>'; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
 window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
 
 function loadStaticSeatsForCounter(){ 
   const select = document.getElementById("counterSeat"); if(!select) return;
-  select.innerHTML = `<option value="">請選擇座位</option>`;
-  staticSeats.forEach(seatId => { select.innerHTML += `<option value="${seatId}">${seatId}</option>`; });
+  select.innerHTML = '<option value="">請選擇座位</option>';
+  staticSeats.forEach(seatId => { select.innerHTML += `<option value="${seatId}">${seatId}</option>'; });
 }
 
-window.toggleCounterSeat=()=>{ const selectArea = document.getElementById("counterSeatArea"); if(selectArea) { selectArea.style.display = counterDining.value === "內用" ? "block" : "none"; } };
+window.toggleCounterSeat=()=>{ const selectArea = document.getElementById("counterSeatArea"); if(selectArea) { selectArea.style.display = document.getElementById("counterDining").value === "內用" ? "block" : "none"; } };
 
 window.calculateMonthlyRevenue = async () => {
   const targetMonth = document.getElementById("statMonthInput").value; if(!targetMonth) { alert("請先選擇要統計的月份！"); return; }
@@ -866,8 +911,8 @@ window.calculateMonthlyRevenue = async () => {
 };
 
 window.toggleSound=()=>{ soundEnabled=!soundEnabled; const btn = document.getElementById("soundBtn"); if(soundEnabled){ btn.innerText = "音效已啟用"; btn.classList.add("on"); } else { btn.innerText = "音效已停用"; btn.classList.remove("on"); } };
-window.counterChangeQty=(n)=>{ let q=Number(counterItemQty.value||1); q=Math.max(1,q+n); counterItemQty.value=q; }; window.clearCounterCart=()=>{ counterCart=[]; renderCounterCart(); };
-logoutBtn.addEventListener("click",async()=>{ await signOut(auth); localStorage.removeItem("zh_user"); location.href="index.html"; });
+window.counterChangeQty=(n)=>{ let q=Number(document.getElementById("counterItemQty").value||1); q=Math.max(1,q+n); document.getElementById("counterItemQty").value=q; }; window.clearCounterCart=()=>{ counterCart=[]; renderCounterCart(); };
+document.getElementById("logoutBtn").addEventListener("click",async()=>{ await signOut(auth); localStorage.removeItem("zh_user"); location.href="index.html"; });
 </script>
 </body>
 </html>
