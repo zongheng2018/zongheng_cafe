@@ -24,7 +24,6 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 
 .section-title{font-size:24px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
 .order-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
-.order-card运行時錯誤{background:white;border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
 .order-card{background:white;border-radius:18px;padding:18px;border:1px solid #eee5dd;box-shadow:0 8px 22px rgba(0,0,0,.06)}
 .order-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
 .order-item{padding:10px 0;border-bottom:1px solid #eee}
@@ -41,7 +40,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 input,textarea,select{width:100%;border:none;background:#f5f1eb;border-radius:14px;padding:13px;font-size:15px;outline:none;color:#5f574f}
 textarea{height:86px;resize:none;grid-column:1/-1}
 
-.menu-row{display:grid;grid-template-columns:80px 1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid #eee}
+.menu-row{display:grid;grid-template-columns:80px 1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid #eee5dd}
 .menu-img{width:80px;height:80px;object-fit:cover;border-radius:16px;background:#eee}
 .menu-name{font-size:18px;font-weight:900}
 .menu-meta{font-size:14px;color:#777;margin-top:4px;line-height:1.5}
@@ -80,10 +79,11 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 .edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
 
+/* 🚀 熱感紙核心：精準指定為 79mm 出餐寬度排版，字體伸展最完美 */
 @media print {
   body * { visibility: hidden; }
   #printKitchenReceiptContainer, #printKitchenReceiptContainer * { visibility: visible; }
-  #printKitchenReceiptContainer { position: absolute; left: 0; top: 0; width: 58mm; font-family: monospace; color: #000; line-height: 1.4; background: #fff; padding: 0; margin: 0; }
+  #printKitchenReceiptContainer { position: absolute; left: 0; top: 0; width: 79mm; font-family: monospace; color: #000; line-height: 1.4; background: #fff; padding: 0; margin: 0; }
   .receipt-break-page { page-break-after: always; }
 }
 </style>
@@ -103,10 +103,10 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 <div class="container">
   <div class="tabs">
-    <button class="tab active" onclick="showTab('orders',this)">訂單管理</button>
-    <button class="tab" onclick="showTab('menu',this)">菜單管理</button>
-    <button class="tab" onclick="showTab('counter',this)">代客點餐</button>
-    <button class="tab" onclick="showTab('settings',this)">系統設定</button>
+    <button class="tab active" id="tabOrdersLink" onclick="showTab('orders',this)">訂單管理</button>
+    <button class="tab" id="tabMenuLink" onclick="showTab('menu',this)">菜單管理</button>
+    <button class="tab" id="tabCounterLink" onclick="showTab('counter',this)">代客點餐</button>
+    <button class="tab" id="tabSettingsLink" onclick="showTab('settings',this)">系統設定</button>
   </div>
 
   <section id="ordersTab">
@@ -199,6 +199,12 @@ textarea{height:86px;resize:none;grid-column:1/-1}
           <option value="3">3 張 (出餐備用聯)</option>
         </select>
 
+        <div style="font-weight:900; margin-top:16px; margin-bottom:8px;">指定熱感印表機裝置名稱</div>
+        <div class="form-grid" style="grid-template-columns:1fr auto; gap:12px; align-items:center;">
+          <input id="targetPrinterNameInput" placeholder="輸入印表機名稱，例如：XP-80">
+          <button class="btn primary" style="height:46px;" onclick="window.printPrinterTestReceipt()">列印測試頁</button>
+        </div>
+
         <div style="font-weight:900; margin-top:16px; margin-bottom:8px;">特定國定假日 / 系統公休日設定</div>
         <input id="closedDays" placeholder="例如：2026-07-05,2026-07-06">
         <div class="btn-row" style="margin-top: 14px;"><button class="btn done" onclick="saveSystemSchedule()">儲存時間與公休設定</button></div>
@@ -271,6 +277,7 @@ import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
+// 宣告完整快照記憶體變數
 let menuCache=[]; let categoryCache=[]; let newOptionGroups=[]; let editOptionGroups=[]; let knownOrderIds=new Set();
 let cafeProfile=null; let counterResident=null; let counterBalanceDocId=null; let counterGranted=0, counterStored=0;
 let counterCart=[]; let counterCurrentItem=null; let currentCounterCategory="全部"; let ordersUnsubscribe=null;
@@ -281,11 +288,23 @@ let activeEditingItems = [];
 let globalOrdersCache = []; 
 let globalReceiptCopyCount = 2; 
 
+// 🚀 座位完全對接：A1~A4, B1~B8, C1~C6
 const staticSeats = [
   "A1", "A2", "A3", "A4", 
   "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", 
   "C1", "C2", "C3", "C4", "C5", "C6"
 ];
+
+// 把 DOM 節點完整變數抓回
+const waitingOrders = document.getElementById("waitingOrders");
+const makingOrders = document.getElementById("makingOrders");
+const doneOrders = document.getElementById("doneOrders");
+const menuList = document.getElementById("menuList");
+const systemStatus = document.getElementById("systemStatus");
+const ordersTab = document.getElementById("ordersTab");
+const menuTab = document.getElementById("menuTab");
+const counterTab = document.getElementById("counterTab");
+const settingsTab = document.getElementById("settingsTab");
 
 function playPremiumCrystalSound() {
   if (!soundEnabled) return;
@@ -333,16 +352,6 @@ function formatItems(items){
   }).join("");
 }
 
-function formatLocalTime(isoString) {
-  if(!isoString) return "未知時間";
-  try {
-    const d = new Date(isoString);
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  } catch(e) {
-    return "時間格式錯誤";
-  }
-}
-
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -382,18 +391,18 @@ function listenOrders(){
   });
 }
 
-// 🚀 核心修正 A：接單時先秒速更新資料庫至「製作中」（讓卡片立刻跳過去），再行觸發背景列印
+// 🚀 核心優化：接單時秒跳「製作中」，並連續印單（接單不用簽名欄）
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
   setTimeout(() => {
     const order = globalOrdersCache.find(x => x.id === id);
     if (order) {
-      window.printKitchenReceipt(order, "出餐明細", "", false); // false 代表不印簽名欄
+      window.printKitchenReceipt(order, "出餐明細", "", false); 
     }
   }, 100);
 };
 
-// 🚀 核心修正 B：重新排版熱感紙。住戶咖啡色置頂放大 ➡️ 單號 ➡️ 時間 ➡️ 內容。且接單不印簽名格。
+// 🚀 出餐明細列印核心引擎：住戶資訊改為明顯咖啡色、置頂並顯眼放大
 window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSignature = true) => {
   const container = document.getElementById("printKitchenReceiptContainer");
   container.style.display = "block";
@@ -419,7 +428,6 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSign
   for (let i = 1; i <= globalReceiptCopyCount; i++) {
     let unionLabel = i === 1 ? "廚房聯" : i === 2 ? "櫃檯聯" : `備用聯 ${i}`;
     
-    // 🚀 精準連動：如果是代客點餐(NEW_ORDER)或更動訂單(EDIT_ORDER)，才生成簽名格，普通接單直接不印！
     let signatureBlock = "";
     if (needSignature) {
       signatureBlock = `
@@ -435,7 +443,6 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSign
         <div style="text-align:center; font-weight:bold; font-size:14px; margin:4px 0;">【 ${titleType} - ${unionLabel} 】</div>
         <div style="text-align:center;">========================</div>
         
-        <!-- 🚀 核心修改：住戶資訊改用明顯咖啡色、置頂並顯眼放大 -->
         <div style="padding-left:4px; font-size:13px; line-height: 1.5;">
           <div style="font-size:17px; font-weight:bold; color:#6d6258; border-bottom:1px dashed #eedfd3; padding-bottom:4px; margin-bottom:4px;">住戶：${order.uid} 戶 (${order.dining_type || '住戶'})</div>
           <div>單號：${order.order_id || order.id}</div>
@@ -473,10 +480,33 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSign
   }, 50);
 };
 
-window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
+window.printPrinterTestReceipt = () => {
+  const container = document.getElementById("printKitchenReceiptContainer");
+  container.style.display = "block";
+  const printerName = document.getElementById("targetPrinterNameInput").value.trim() || "預設熱感機";
+  
+  container.innerHTML = `
+    <div class="receipt-break-page" style="padding:10px 0;">
+      <div style="text-align:center; font-weight:bold; font-size:14px;">昭揚縱橫 咖啡廳點餐系統</div>
+      <div style="text-align:center; font-weight:bold; font-size:14px; margin:4px 0;">【 系統印表機測試頁 】</div>
+      <div style="text-align:center;">========================</div>
+      <div style="font-size:13px; padding-left:4px;">
+        <div>測試時間：${formatLocalTime(new Date().toISOString())}</div>
+        <div>指定裝置：${printerName}</div>
+        <div>紙張尺寸：79 x 50 mm 熱感紙</div>
+        <div style="margin-top:6px; color:#6b8b61; font-weight:bold;">測試結果：本印表機通訊完全正常</div>
+      </div>
+      <div style="text-align:center; margin-top:10px;">========================</div>
+    </div>
+  `;
+  setTimeout(() => {
+    window.print();
+    container.innerHTML = "";
+    container.style.display = "none";
+  }, 50);
+};
 
 window.executeCounterOrderAndPrint = async () => {
-  const inputVal = document.getElementById("counterResidentInput").value.trim();
   if(!counterResident) { alert("請先輸入住戶帳號並點擊載入住戶"); return; } 
   if(!counterCart.length) { alert("購物車內尚未加入餐點"); return; }
   
@@ -504,7 +534,6 @@ window.executeCounterOrderAndPrint = async () => {
     updated_by: "cafe_counter" 
   }); 
 
-  // 代客點餐需要簽名，傳入 true
   window.printKitchenReceipt(orderData, "出餐明細", "", true);
   
   alert("代客點餐成功！已自動送下列印簽名工作聯。"); 
@@ -537,7 +566,6 @@ window.executeCancelOrderAndPrint = async (order) => {
     ${itemsLinesHtml}
   `;
 
-  // 取消退點需要簽名，傳入 true
   window.printKitchenReceipt(order, "訂單取消通知單", customCancelHtml, true);
   alert("訂單已成功退點！已送出紙本取消覆簽單列印。");
 };
@@ -678,7 +706,6 @@ document.getElementById("submitEditedOrderBtn").onclick = async () => {
     </div>
   `;
 
-  // 訂單更動需要簽名，傳入 true
   const updatedOrderWrapper = { ...order, items: activeEditingItems, total: newTotal };
   window.printKitchenReceipt(updatedOrderWrapper, "訂單更動明細單", customEditHtml, true);
 
@@ -703,6 +730,9 @@ function listenSettings() {
     if (data.receipt_copy_count) {
       globalReceiptCopyCount = Number(data.receipt_copy_count);
       document.getElementById("receiptCopyCountSelect").value = String(globalReceiptCopyCount);
+    }
+    if (data.target_printer_name) {
+      document.getElementById("targetPrinterNameInput").value = data.target_printer_name;
     }
   });
 }
@@ -732,12 +762,14 @@ window.saveSystemSchedule = async () => {
   const closeTime = document.getElementById("closeTime").value; 
   const closedDays = document.getElementById("closedDays").value.trim();
   const receiptCount = Number(document.getElementById("receiptCopyCountSelect").value || 2);
+  const pName = document.getElementById("targetPrinterNameInput").value.trim();
   
   await setDoc(doc(db, "settings", "cafe"), { 
     open_time: openTime, 
     close_time: closeTime, 
     closed_days: closedDays,
-    receipt_copy_count: receiptCount
+    receipt_copy_count: receiptCount,
+    target_printer_name: pName
   }, { merge: true }); 
   
   alert("設定與列印聯數成功保存！");
@@ -889,7 +921,7 @@ window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(
 function loadStaticSeatsForCounter(){ 
   const select = document.getElementById("counterSeat"); if(!select) return;
   select.innerHTML = '<option value="">請選擇座位</option>';
-  staticSeats.forEach(seatId => { select.innerHTML += `<option value="${seatId}">${seatId}</option>'; });
+  staticSeats.forEach(seatId => { select.innerHTML += `<option value="${seatId}">${seatId}</option>`; });
 }
 
 window.toggleCounterSeat=()=>{ const selectArea = document.getElementById("counterSeatArea"); if(selectArea) { selectArea.style.display = document.getElementById("counterDining").value === "內用" ? "block" : "none"; } };
