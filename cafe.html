@@ -292,16 +292,6 @@ const staticSeats = [
   "C1", "C2", "C3", "C4", "C5", "C6"
 ];
 
-const waitingOrders = document.getElementById("waitingOrders");
-const makingOrders = document.getElementById("makingOrders");
-const doneOrders = document.getElementById("doneOrders");
-const menuList = document.getElementById("menuList");
-const systemStatus = document.getElementById("systemStatus");
-const ordersTab = document.getElementById("ordersTab");
-const menuTab = document.getElementById("menuTab");
-const counterTab = document.getElementById("counterTab");
-const settingsTab = document.getElementById("settingsTab");
-
 function playPremiumCrystalSound() {
   if (!soundEnabled) return;
   try {
@@ -335,9 +325,13 @@ onAuthStateChanged(auth,async user=>{
 });
 
 window.showTab=(tab,btn)=>{
-  ordersTab.classList.add("hidden"); menuTab.classList.add("hidden"); counterTab.classList.add("hidden"); settingsTab.classList.add("hidden");
+  document.getElementById("ordersTab").classList.add("hidden"); 
+  document.getElementById("menuTab").classList.add("hidden"); 
+  document.getElementById("counterTab").classList.add("hidden"); 
+  document.getElementById("settingsTab").classList.add("hidden");
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); btn.classList.add("active");
-  document.getElementById(tab+"Tab").classList.remove("hidden"); if(tab === "counter"){ renderCounterMenu(); renderCounterCart(); }
+  document.getElementById(tab+"Tab").classList.remove("hidden"); 
+  if(tab === "counter"){ renderCounterMenu(); renderCounterCart(); }
 };
 
 function formatItems(items){
@@ -361,8 +355,12 @@ function formatLocalTime(isoString) {
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
-    waitingOrders.innerHTML=""; makingOrders.innerHTML=""; doneOrders.innerHTML=""; if(snap.empty) { isInitialLoad = false; return; }
-    let hasNewIncomingOrder = false;
+    const waitingBox = document.getElementById("waitingOrders");
+    const makingBox = document.getElementById("makingOrders");
+    const doneBox = document.getElementById("doneOrders");
+    
+    waitingBox.innerHTML=""; makingBox.innerHTML=""; doneBox.innerHTML=""; 
+    if(snap.empty) { isInitialLoad = false; return; }
     globalOrdersCache = [];
     snap.forEach(d=>{
       const o=d.data(); o.id = d.id; 
@@ -391,13 +389,12 @@ function listenOrders(){
 
       const div=document.createElement("div"); div.className="order-card";
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
-      if(status === "等待接單") waitingOrders.appendChild(div); else if(status === "製作中") makingOrders.appendChild(div); else doneOrders.appendChild(div);
+      if(status === "等待接單") waitingBox.appendChild(div); else if(status === "製作中") makingBox.appendChild(div); else doneBox.appendChild(div);
     });
-    if(hasNewIncomingOrder){ playPremiumCrystalSound(); } isInitialLoad = false;
+    if(typeof hasNewIncomingOrder !== 'undefined' && hasNewIncomingOrder){ playPremiumCrystalSound(); } isInitialLoad = false;
   });
 }
 
-// 🚀 核心升級：按下接單先秒跳製作中，並彈出 confirm 確認是否印單，按否就不會卡死
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
   setTimeout(() => {
@@ -659,7 +656,7 @@ document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
 
 document.getElementById("submitEditedOrderBtn").onclick = async () => {
   if(activeEditingItems.length === 0) {
-    alert("訂單內不能沒有 any 品項！");
+    alert("訂單內不能沒有任何品項！");
     return;
   }
   
@@ -822,14 +819,9 @@ async function loadMenu(){
     document.getElementById("menuList").appendChild(row);
   });
   renderCategorySelects();
-  
-  // 🚀 核心優化：每次更新菜單快照時，同步連動重新渲染代客點餐面版，防死機制建立
-  if (document.getElementById("counterTab").classList.contains("hidden") === false) {
-    renderCounterMenu();
-  }
+  renderCounterMenu();
 }
 
-// 🚀 出餐菜單控制邏輯：代客點餐面版渲染功能
 function renderCounterMenu(){
   const box=document.getElementById("counterMenuList"); 
   if(!box) return;
