@@ -331,7 +331,7 @@ window.showTab=(tab,btn)=>{
   document.getElementById("settingsTab").classList.add("hidden");
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); btn.classList.add("active");
   document.getElementById(tab+"Tab").classList.remove("hidden"); 
-  if(tab === "counter"){ renderCounterMenu(); renderCounterCart(); }
+  if(tab === "counter"){ window.renderCounterMenu(); renderCounterCart(); }
 };
 
 function formatItems(items){
@@ -358,6 +358,7 @@ function listenOrders(){
     const waitingBox = document.getElementById("waitingOrders");
     const makingBox = document.getElementById("makingOrders");
     const doneBox = document.getElementById("doneOrders");
+    if(!waitingBox || !makingBox || !doneBox) return;
     
     waitingBox.innerHTML=""; makingBox.innerHTML=""; doneBox.innerHTML=""; 
     if(snap.empty) { isInitialLoad = false; return; }
@@ -379,7 +380,7 @@ function listenOrders(){
       } else if (status === "製作中") {
         btnHtml = `
           <div class="btn-row">
-            <button class="btn done" onclick="updateOrder('${d.id}','已完成')">完成</button>
+            <button class="btn done" onclick="window.updateOrder('${d.id}','已完成')">完成</button>
             <button class="btn light" onclick="window.openModifyOrderModal(${JSON.stringify(o).replace(/"/g, '&quot;')})">編輯訂單</button>
             <button class="btn danger" onclick="window.executeCancelOrderAndPrint(${JSON.stringify(o).replace(/"/g, '&quot;')})">取消退點</button>
           </div>`;
@@ -409,6 +410,7 @@ window.acceptAndPrintOrder = async (id) => {
 
 window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSignature = true) => {
   const container = document.getElementById("printKitchenReceiptContainer");
+  if(!container) return;
   container.style.display = "block";
   container.innerHTML = ""; 
 
@@ -486,6 +488,7 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSign
 
 window.printPrinterTestReceipt = () => {
   const container = document.getElementById("printKitchenReceiptContainer");
+  if(!container) return;
   container.style.display = "block";
   const printerName = document.getElementById("targetPrinterNameInput").value.trim() || "預設熱感機";
   
@@ -517,16 +520,13 @@ window.executeCounterOrderAndPrint = async () => {
   const total = counterCart.reduce((s, x) => s + x.price * x.qty, 0); 
   if(counterGranted + counterStored < total) { alert("該住戶點數不足以支付此筆訂單！"); return; }
   
-  const counterDiningValue = document.getElementById("counterDining").value;
-  const counterSeatValue = document.getElementById("counterSeat").value;
-
   const orderData = { 
     order_id: "ZH" + Date.now(), 
     uid: counterResident.username, 
     items: counterCart, 
     total, 
-    dining_type: counterDiningValue, 
-    seat: counterDiningValue === "內用" ? counterSeatValue : "", 
+    dining_type: document.getElementById("counterDining").value, 
+    seat: document.getElementById("counterDining").value === "內用" ? document.getElementById("counterSeat").value : "", 
     status: "等待接單", 
     created_at: new Date().toISOString() 
   };
@@ -595,6 +595,7 @@ window.openModifyOrderModal = (order) => {
 
 function renderEditOrderItemsList() {
   const container = document.getElementById("editOrderItemsListContainer");
+  if(!container) return;
   container.innerHTML = "";
   
   let currentTotal = 0;
@@ -639,7 +640,7 @@ window.removeEditItem = (index) => {
 
 document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
   const select = document.getElementById("editOrderQuickMenuSelect");
-  if(!select.value) return;
+  if(!select || !select.value) return;
   const targetMenu = menuCache.find(x => x.id === select.value);
   if(!targetMenu) return;
   
@@ -705,8 +706,8 @@ document.getElementById("submitEditedOrderBtn").onclick = async () => {
     <div style="font-weight:bold; font-size:13px; color:#6b8b61;">更動後新餐點明細：</div>
     <div style="font-size:12px; color:#333; padding-left:6px;">${newItemsHtml}</div>
     <div style="margin:4px 0; border-top:1px dashed #ccc;"></div>
-    <div style="font-size:13px; font-weight:bold; color:${diff > 0 ? '#c86b62' : '#3f7f47'}">
-      異動差額結算：${diff > 0 ? `補扣 ${diff} 點` : diff < 0 ? `退還 ${Math.abs(diff)} 點` : '金額無變動'}
+    <div style="font-size:13px; font-weight:bold; color:${diff > 0 ? '_c86b62' : '_3f7f47'}">
+      異動差額結算：${diff > 0 ? '補扣 ' + diff + ' 點' : diff < 0 ? '退還 ' + Math.abs(diff) + ' 點' : '金額無變動'}
     </div>
   `;
 
@@ -726,7 +727,10 @@ function listenSettings() {
     if (data.manual_mode === "force_closed") modeText = "強制手動關閉中";
     if (data.manual_mode === "auto") modeText = "智慧自動控管中";
     
-    document.getElementById("systemStatus").innerHTML = `<b>目前系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
+    const systemStatusBox = document.getElementById("systemStatus");
+    if(systemStatusBox) {
+      systemStatusBox.innerHTML = `<b>目前系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
+    }
     document.getElementById("openTime").value = data.open_time || "08:30"; 
     document.getElementById("closeTime").value = data.close_time || "19:00"; 
     document.getElementById("closedDays").value = data.closed_days || "";
@@ -804,7 +808,10 @@ window.addMenu=async()=>{
 };
 
 async function loadMenu(){
-  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; document.getElementById("menuList").innerHTML="";
+  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; 
+  const menuListBox = document.getElementById("menuList");
+  if(menuListBox) menuListBox.innerHTML="";
+  
   snap.forEach(d => { const m = {id:d.id,...d.data()}; menuCache.push(m); if(m.category && !categoryCache.includes(m.category)) categoryCache.push(m.category); });
   
   const mSelect = document.getElementById("mCategorySelect");
@@ -816,13 +823,13 @@ async function loadMenu(){
   menuCache.forEach(m=>{
     const row=document.createElement("div"); row.className="menu-row";
     row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
-    document.getElementById("menuList").appendChild(row);
+    if(menuListBox) menuListBox.appendChild(row);
   });
   renderCategorySelects();
-  renderCounterMenu();
+  window.renderCounterMenu();
 }
 
-function renderCounterMenu(){
+window.renderCounterMenu = () => {
   const box=document.getElementById("counterMenuList"); 
   if(!box) return;
   box.innerHTML=""; 
@@ -831,7 +838,7 @@ function renderCounterMenu(){
   list.forEach(m=>{
     const row=document.createElement("div"); row.className="counter-menu-row"; row.innerHTML=`<img class="counter-mini-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name}</div><div class="menu-meta">${m.price}點</div></div><button class="btn primary" onclick="window.openCounterItemModal('${m.id}')" style="padding:8px 14px;min-width:60px;">加入</button></div>`; box.appendChild(row);
   });
-}
+};
 
 window.openCounterItemModal=(id)=>{
   counterCurrentItem=menuCache.find(x=>x.id===id); 
@@ -854,7 +861,8 @@ window.addCounterItemToCart=()=>{
 };
 
 function renderCounterCart(){
-  const box=document.getElementById("counterCartList"); box.innerHTML=""; let total=0;
+  const box=document.getElementById("counterCartList"); if(!box) return;
+  box.innerHTML=""; let total=0;
   counterCart.forEach((item,idx)=>{ 
     total+=item.price*item.qty; const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
     box.innerHTML+=`<div class="counter-cart-item"><div><b>${item.name} × ${item.qty}</b></div><div style="font-size:13px;color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="btn danger" style="padding:4px 8px; font-size:12px; min-width:auto; margin-top:4px;" onclick="counterCart.splice(${idx},1);renderCounterCart();">刪除</button></div>`; 
@@ -899,7 +907,7 @@ window.addNewChoice=function(idx){ newOptionGroups[idx].choices.push(''); render
 window.deleteNewChoice=function(gIdx, cIdx){ newOptionGroups[gIdx].choices.splice(cIdx,1); renderNewOptionGroups(); };
 
 function renderNewOptionGroups(){
-  const nList = document.getElementById("newOptionList");
+  const nList = document.getElementById("newOptionList"); if(!nList) return;
   nList.innerHTML="";
   newOptionGroups.forEach((group,gIndex)=>{
     const div=document.createElement("div"); div.className="option-group-box";
@@ -930,7 +938,7 @@ window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); rend
 window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); renderEditOptionGroups(); };
 
 function renderEditOptionGroups(){
-  const eList = document.getElementById("editOptionList");
+  const eList = document.getElementById("editOptionList"); if(!eList) return;
   eList.innerHTML="";
   editOptionGroups.forEach((group,gIndex)=>{
     const div=document.createElement("div"); div.className="option-group-box";
@@ -943,7 +951,7 @@ function renderEditOptionGroups(){
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
+        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
@@ -961,7 +969,7 @@ window.loadCounterResident=async () => {
   if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
 };
 function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = '<option value="全部">全部分類</option>'; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
-window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
+window.changeCounterCategory=(c)=>{ currentCounterCategory=c; window.renderCounterMenu(); };
 
 function loadStaticSeatsForCounter(){ 
   const select = document.getElementById("counterSeat"); if(!select) return;
