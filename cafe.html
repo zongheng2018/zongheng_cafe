@@ -441,6 +441,7 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSign
       `;
     }
 
+    // 🚀 語法除錯核心：完美接回 79mm 乾淨的字串範本排版，無任何跳脫符號殘留
     finalReceiptsCombinedHtml += `
       <div class="receipt-break-page" style="margin-bottom: 20px; padding-bottom: 20px;">
         <div style="text-align:center; font-weight:bold; font-size:14px;">昭揚縱橫 咖啡廳點餐系統</div>
@@ -902,7 +903,7 @@ function renderEditOptionGroups(){
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
+        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
@@ -914,10 +915,10 @@ function renderEditOptionGroups(){
   });
 }
 
-window.loadCounterResident=async()=>{
+window.loadCounterResident=async () => {
   const inputVal = document.getElementById("counterResidentInput").value.trim();
-  const snap=await getDocs(query(collection(db,"balances"),where("uid","==",inputVal)));
-  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=\`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點\`; }
+  const snap = await getDocs(query(collection(db,"balances"),where("uid","==",inputVal)));
+  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
 };
 function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = '<option value="全部">全部分類</option>'; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
 window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
