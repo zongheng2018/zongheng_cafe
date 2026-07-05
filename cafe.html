@@ -79,7 +79,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 .edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
 
-/* 🚀 熱感紙核心：精準指定為 79mm 出餐寬度排版，字體伸展最完美 */
 @media print {
   body * { visibility: hidden; }
   #printKitchenReceiptContainer, #printKitchenReceiptContainer * { visibility: visible; }
@@ -277,7 +276,6 @@ import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
-// 宣告完整快照記憶體變數
 let menuCache=[]; let categoryCache=[]; let newOptionGroups=[]; let editOptionGroups=[]; let knownOrderIds=new Set();
 let cafeProfile=null; let counterResident=null; let counterBalanceDocId=null; let counterGranted=0, counterStored=0;
 let counterCart=[]; let counterCurrentItem=null; let currentCounterCategory="全部"; let ordersUnsubscribe=null;
@@ -288,14 +286,12 @@ let activeEditingItems = [];
 let globalOrdersCache = []; 
 let globalReceiptCopyCount = 2; 
 
-// 🚀 座位完全對接：A1~A4, B1~B8, C1~C6
 const staticSeats = [
   "A1", "A2", "A3", "A4", 
   "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", 
   "C1", "C2", "C3", "C4", "C5", "C6"
 ];
 
-// 把 DOM 節點完整變數抓回
 const waitingOrders = document.getElementById("waitingOrders");
 const makingOrders = document.getElementById("makingOrders");
 const doneOrders = document.getElementById("doneOrders");
@@ -352,6 +348,16 @@ function formatItems(items){
   }).join("");
 }
 
+function formatLocalTime(isoString) {
+  if(!isoString) return "未知時間";
+  try {
+    const d = new Date(isoString);
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  } catch(e) {
+    return "時間格式錯誤";
+  }
+}
+
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -391,7 +397,6 @@ function listenOrders(){
   });
 }
 
-// 🚀 核心優化：接單時秒跳「製作中」，並連續印單（接單不用簽名欄）
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
   setTimeout(() => {
@@ -402,7 +407,6 @@ window.acceptAndPrintOrder = async (id) => {
   }, 100);
 };
 
-// 🚀 出餐明細列印核心引擎：住戶資訊改為明顯咖啡色、置頂並顯眼放大
 window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSignature = true) => {
   const container = document.getElementById("printKitchenReceiptContainer");
   container.style.display = "block";
@@ -913,7 +917,7 @@ function renderEditOptionGroups(){
 window.loadCounterResident=async()=>{
   const inputVal = document.getElementById("counterResidentInput").value.trim();
   const snap=await getDocs(query(collection(db,"balances"),where("uid","==",inputVal)));
-  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
+  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=\`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點\`; }
 };
 function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = '<option value="全部">全部分類</option>'; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
 window.changeCounterCategory=(c)=>{ currentCounterCategory=c; renderCounterMenu(); };
