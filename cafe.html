@@ -79,6 +79,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 .edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
 
+/* 🚀 熱感紙規格：79mm 出餐寬度排版 */
 @media print {
   body * { visibility: hidden; }
   #printKitchenReceiptContainer, #printKitchenReceiptContainer * { visibility: visible; }
@@ -95,17 +96,17 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <div class="header">
   <div class="brand"><img src="logo.png"><div class="title">咖啡廳櫃台</div></div>
   <div class="header-actions">
-    <button class="sound-btn on" id="soundBtn" onclick="toggleSound()">音效已啟用</button>
+    <button class="sound-btn on" id="soundBtn" onclick="window.toggleSound()">音效已啟用</button>
     <button class="logout" id="logoutBtn">登出</button>
   </div>
 </div>
 
 <div class="container">
   <div class="tabs">
-    <button class="tab active" id="tabOrdersLink" onclick="showTab('orders',this)">訂單管理</button>
-    <button class="tab" id="tabMenuLink" onclick="showTab('menu',this)">菜單管理</button>
-    <button class="tab" id="tabCounterLink" onclick="showTab('counter',this)">代客點餐</button>
-    <button class="tab" id="tabSettingsLink" onclick="showTab('settings',this)">系統設定</button>
+    <button class="tab active" id="tabOrdersLink" onclick="window.showTab('orders',this)">訂單管理</button>
+    <button class="tab" id="tabMenuLink" onclick="window.showTab('menu',this)">菜單管理</button>
+    <button class="tab" id="tabCounterLink" onclick="window.showTab('counter',this)">代客點餐</button>
+    <button class="tab" id="tabSettingsLink" onclick="window.showTab('settings',this)">系統設定</button>
   </div>
 
   <section id="ordersTab">
@@ -127,7 +128,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         
         <div class="time-lock-box">
           <label class="time-lock-trigger">
-            <input type="checkbox" id="mTimeRestricted" onchange="toggleTimeInputs('m')">
+            <input type="checkbox" id="mTimeRestricted" onchange="window.toggleTimeInputs('m')">
             <span>啟用特定時間限制供應</span>
           </label>
           <div id="mTimeInputs" style="display:none; grid-template-columns:1fr 1fr; gap:12px;">
@@ -141,9 +142,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="option-editor">
         <div class="option-title">自訂選項</div>
         <div id="newOptionList"></div>
-        <button class="btn light" type="button" onclick="addNewOptionGroup()">新增選項群組</button>
+        <button class="btn light" type="button" onclick="window.addNewOptionGroup()">新增選項群組</button>
       </div>
-      <div class="btn-row"><button class="btn primary" onclick="addMenu()">新增品項</button></div>
+      <div class="btn-row"><button class="btn primary" onclick="window.addMenu()">新增品項</button></div>
     </div>
     <div class="card"><div class="section-title">菜單列表</div><div id="menuList"></div></div>
   </section>
@@ -153,7 +154,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="section-title">代客點餐</div>
       <div class="form-grid">
         <input id="counterResidentInput" placeholder="輸入住戶帳號，例如 A001">
-        <button class="btn primary" onclick="loadCounterResident()">載入住戶</button>
+        <button class="btn primary" onclick="window.loadCounterResident()">載入住戶</button>
       </div>
       <div class="setting-status" id="counterResidentInfo" style="margin-top:16px;">尚未選擇住戶</div>
     </div>
@@ -167,14 +168,14 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <div class="section-title">櫃台購物車</div>
         <div id="counterCartList"></div>
         <div class="form-grid" style="margin-top:14px;">
-          <select id="counterDining" onchange="toggleCounterSeat()"><option value="內用">內用</option><option value="外帶">外帶</option></select>
+          <select id="counterDining" onchange="window.toggleCounterSeat()"><option value="內用">內用</option><option value="外帶">外帶</option></select>
           <div id="counterSeatArea"><select id="counterSeat"></select></div>
         </div>
         <div class="counter-total" id="counterTotal">0 點</div>
         
         <div class="btn-row-giant">
           <button class="giant-submit-btn" onclick="window.executeCounterOrderAndPrint()">確認送出訂單並列印簽名單</button>
-          <button class="btn danger" style="padding:12px; border-radius:12px;" onclick="clearCounterCart()">清空購物車</button>
+          <button class="btn danger" style="padding:12px; border-radius:12px;" onclick="window.clearCounterCart()">清空購物車</button>
         </div>
       </div>
     </div>
@@ -206,13 +207,13 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
         <div style="font-weight:900; margin-top:16px; margin-bottom:8px;">特定國定假日 / 系統公休日設定</div>
         <input id="closedDays" placeholder="例如：2026-07-05,2026-07-06">
-        <div class="btn-row" style="margin-top: 14px;"><button class="btn done" onclick="saveSystemSchedule()">儲存時間與公休設定</button></div>
+        <div class="btn-row" style="margin-top: 14px;"><button class="btn done" onclick="window.saveSystemSchedule()">儲存時間與公休設定</button></div>
       </div>
       
       <div class="btn-row" style="margin-top: 18px;">
-        <button class="btn done" style="background:#43a047;" onclick="setSystemManualMode('force_open')">手動強制開放點餐</button>
-        <button class="btn danger" style="background:#e53935;" onclick="setSystemManualMode('force_closed')">手動強制關閉點餐</button>
-        <button class="btn light" onclick="setSystemManualMode('auto')">恢復自動模式</button>
+        <button class="btn done" style="background:#43a047;" onclick="window.setSystemManualMode('force_open')">手動強制開放點餐</button>
+        <button class="btn danger" style="background:#e53935;" onclick="window.setSystemManualMode('force_closed')">手動強制關閉點餐</button>
+        <button class="btn light" onclick="window.setSystemManualMode('auto')">恢復自動模式</button>
       </div>
     </div>
 
@@ -229,7 +230,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         </div>
       </div>
       <div class="btn-row" style="margin-top:14px;">
-        <button class="btn primary" onclick="publishBroadcastMessages()">儲存並發布公告內容</button>
+        <button class="btn primary" onclick="window.publishBroadcastMessages()">儲存並發布公告內容</button>
       </div>
     </div>
 
@@ -240,7 +241,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
           <label style="font-weight: 800; display: block; margin-bottom: 6px;">請選擇統計月份：</label>
           <input type="month" id="statMonthInput" value="2026-06">
         </div>
-        <button class="btn primary" style="height: 48px; margin-top: 22px;" onclick="calculateMonthlyRevenue()">開始統計月營收</button>
+        <button class="btn primary" style="height: 48px; margin-top: 22px;" onclick="window.calculateMonthlyRevenue()">開始統計月營收</button>
       </div>
       <div class="setting-status" id="monthlyStatReport" style="margin-top: 16px; background: #fdfaf7; border: 1px solid #eedfd3; font-size: 16px;">
         請選擇月份並點擊上方按鈕生成報表。
@@ -268,6 +269,54 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </div>
 </div>
 
+<!-- 編輯選單獨立彈窗 -->
+<div class="modal-bg" id="editModalBg">
+  <div class="modal">
+    <div class="section-title">編輯品項</div>
+    <input type="hidden" id="editId">
+    <div class="form-grid">
+      <input id="editName" placeholder="品項名稱"><input id="editPrice" type="number" placeholder="價格">
+      <input id="editCategory" placeholder="分類"><input id="editImage" placeholder="圖片">
+      <input id="editSortOrder" type="number" placeholder="排序">
+      <select id="editAfterMeal"><option value="false">不顯示餐後上</option><option value="true">顯示餐後上</option></select>
+      
+      <div class="time-lock-box">
+        <label class="time-lock-trigger">
+          <input type="checkbox" id="editTimeRestricted" onchange="window.toggleTimeInputs('edit')">
+          <span>啟用特定時間限制供應</span>
+        </label>
+        <div id="editTimeInputs" style="display:none; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>開始供應：<input id="editStartTime" type="time"></div>
+          <div>結束供應：<input id="editEndTime" type="time"></div>
+        </div>
+      </div>
+      <textarea id="editNote" placeholder="品項備註"></textarea>
+    </div>
+    <div class="option-editor">
+      <div class="option-title">自訂選項</div>
+      <div id="editOptionList"></div>
+      <button class="btn light" type="button" onclick="window.addEditOptionGroup()">新增選項群組</button>
+    </div>
+    <div class="btn-row"><button class="btn primary" onclick="window.saveEditMenu()">儲存修改</button><button class="btn light" onclick="window.closeEditModal()">取消</button></div>
+  </div>
+</div>
+
+<!-- 代客點餐餐點規格彈窗 -->
+<div class="modal-bg" id="counterItemModalBg">
+  <div class="modal">
+    <div class="section-title" id="counterItemTitle">選擇品項</div>
+    <div id="counterOptionArea"></div>
+    <div style="margin-top:10px;"><textarea id="counterItemNote" placeholder="規格備註說明，可空白"></textarea></div>
+    <div class="form-grid" style="margin-top:12px;">
+      <button class="btn light" onclick="window.counterChangeQty(-1)">−</button>
+      <input id="counterItemQty" type="number" value="1" min="1">
+      <button class="btn light" onclick="window.counterChangeQty(1)">＋</button>
+      <button class="btn primary" onclick="window.addCounterItemToCart()">加入購物車</button>
+    </div>
+    <div class="btn-row"><button class="btn light" onclick="window.closeCounterItemModal()">取消</button></div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -292,26 +341,9 @@ const staticSeats = [
   "C1", "C2", "C3", "C4", "C5", "C6"
 ];
 
-function playPremiumCrystalSound() {
-  if (!soundEnabled) return;
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return; const ctx = new AudioContext();
-    const frequencies = [523.25, 659.25]; const now = ctx.currentTime;
-    frequencies.forEach(freq => {
-      const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-      osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + 1.2);
-    });
-  } catch (e) { console.error(e); }
-}
-
-function getBadgeStatusClass(status) {
-  if (status === "等待接單") return "wait";
-  if (status === "製作中") return "making";
-  if (status === "已完成") return "done";
-  if (status === "已取消") return "cancel";
-  return "";
-}
+window.toggleSound = () => { soundEnabled=!soundEnabled; const btn = document.getElementById("soundBtn"); if(soundEnabled){ btn.innerText = "音效已啟用"; btn.classList.add("on"); } else { btn.innerText = "音效已停用"; btn.classList.remove("on"); } };
+window.counterChangeQty = (n) => { let q=Number(document.getElementById("counterItemQty").value||1); q=Math.max(1,q+n); document.getElementById("counterItemQty").value=q; }; 
+window.clearCounterCart = () => { counterCart=[]; window.renderCounterCart(); };
 
 window.toggleTimeInputs = (prefix) => {
   const checkbox = document.getElementById(`${prefix}TimeRestricted`); const div = document.getElementById(`${prefix}TimeInputs`);
@@ -331,7 +363,7 @@ window.showTab=(tab,btn)=>{
   document.getElementById("settingsTab").classList.add("hidden");
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); btn.classList.add("active");
   document.getElementById(tab+"Tab").classList.remove("hidden"); 
-  if(tab === "counter"){ window.renderCounterMenu(); renderCounterCart(); }
+  if(tab === "counter"){ window.renderCounterMenu(); window.renderCounterCart(); }
 };
 
 function formatItems(items){
@@ -396,16 +428,9 @@ function listenOrders(){
   });
 }
 
+// 🚀 核心優化：接單直接執行跳轉，完全略過印單詢問，流暢放行
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
-  setTimeout(() => {
-    if (confirm("是否列印本單出餐明細？")) {
-      const order = globalOrdersCache.find(x => x.id === id);
-      if (order) {
-        window.printKitchenReceipt(order, "出餐明細", "", false); 
-      }
-    }
-  }, 100);
 };
 
 window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSignature = true) => {
@@ -542,7 +567,7 @@ window.executeCounterOrderAndPrint = async () => {
   
   alert("代客點餐成功！已自動送下列印簽名工作聯。"); 
   counterCart = []; 
-  renderCounterCart(); 
+  window.renderCounterCart(); 
 };
 
 window.executeCancelOrderAndPrint = async (order) => {
@@ -589,11 +614,11 @@ window.openModifyOrderModal = (order) => {
     menuSelect.innerHTML += `<option value="${m.id}">${m.name} (${m.price}點)</option>`;
   });
   
-  renderEditOrderItemsList();
+  window.renderEditOrderItemsList();
   document.getElementById("cafeOrderEditModalBg").style.display = "flex";
 };
 
-function renderEditOrderItemsList() {
+window.renderEditOrderItemsList = () => {
   const container = document.getElementById("editOrderItemsListContainer");
   if(!container) return;
   container.innerHTML = "";
@@ -626,97 +651,19 @@ function renderEditOrderItemsList() {
   else diffText = `<span>(金額無變動)</span>`;
   
   document.getElementById("editOrderLiveTotal").innerHTML = `新總計：<b>${currentTotal} 點</b> ｜ ${diffText}`;
-}
+};
 
 window.changeEditItemQty = (index, delta) => {
   activeEditingItems[index].qty = Math.max(1, activeEditingItems[index].qty + delta);
-  renderEditOrderItemsList();
+  window.renderEditOrderItemsList();
 };
 
 window.removeEditItem = (index) => {
   activeEditingItems.splice(index, 1);
-  renderEditOrderItemsList();
+  window.renderEditOrderItemsList();
 };
 
-document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
-  const select = document.getElementById("editOrderQuickMenuSelect");
-  if(!select || !select.value) return;
-  const targetMenu = menuCache.find(x => x.id === select.value);
-  if(!targetMenu) return;
-  
-  activeEditingItems.push({
-    id: targetMenu.id,
-    name: targetMenu.name,
-    price: Number(targetMenu.price || 0),
-    qty: 1,
-    options: {},
-    note: "櫃台更換"
-  });
-  renderEditOrderItemsList();
-};
-
-document.getElementById("submitEditedOrderBtn").onclick = async () => {
-  if(activeEditingItems.length === 0) {
-    alert("訂單內不能沒有任何品項！");
-    return;
-  }
-  
-  const order = activeEditingOrder;
-  const newTotal = activeEditingItems.reduce((s, x) => s + x.price * x.qty, 0);
-  const diff = newTotal - order.total; 
-  
-  const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", order.uid)));
-  if(!snap.empty) {
-    const bDoc = snap.docs[0];
-    const bData = bDoc.data();
-    let currentGranted = Number(bData.granted_amount || 0);
-    let currentStored = Number(bData.stored_amount || 0);
-    
-    if(diff > 0) {
-      if((currentGranted + currentStored) < diff) {
-        alert("住戶餘額不足以支付變更後的訂單差額，修改失敗！");
-        return;
-      }
-      if(currentGranted >= diff) { currentGranted -= diff; } 
-      else { currentStored -= (diff - currentGranted); currentGranted = 0; }
-    } else if(diff < 0) {
-      currentGranted += Math.abs(diff);
-    }
-    
-    await updateDoc(doc(db, "balances", bDoc.id), {
-      granted_amount: currentGranted,
-      stored_amount: currentStored,
-      updated_by: "cafe_counter_edit"
-    });
-  }
-  
-  await updateDoc(doc(db, "orders", order.id), {
-    items: activeEditingItems,
-    total: newTotal,
-    updated_at: new Date().toISOString()
-  });
-
-  let oldItemsHtml = (order.items || []).map(i => `<div>- ${i.name} × ${i.qty}</div>`).join("");
-  let newItemsHtml = activeEditingItems.map(i => `<div>+ ${i.name} × ${i.qty}</div>`).join("");
-  
-  let customEditHtml = `
-    <div style="font-weight:bold; font-size:13px; color:#6d6258;">原訂單品項：</div>
-    <div style="font-size:12px; color:#777; padding-left:6px;">${oldItemsHtml}</div>
-    <div style="margin:4px 0; border-top:1px dashed #ccc;"></div>
-    <div style="font-weight:bold; font-size:13px; color:#6b8b61;">更動後新餐點明細：</div>
-    <div style="font-size:12px; color:#333; padding-left:6px;">${newItemsHtml}</div>
-    <div style="margin:4px 0; border-top:1px dashed #ccc;"></div>
-    <div style="font-size:13px; font-weight:bold; color:${diff > 0 ? '_c86b62' : '_3f7f47'}">
-      異動差額結算：${diff > 0 ? '補扣 ' + diff + ' 點' : diff < 0 ? '退還 ' + Math.abs(diff) + ' 點' : '金額無變動'}
-    </div>
-  `;
-
-  const updatedOrderWrapper = { ...order, items: activeEditingItems, total: newTotal };
-  window.printKitchenReceipt(updatedOrderWrapper, "訂單更動明細單", customEditHtml, true);
-
-  alert("訂單規格修改成功！已自動印出更動簽名對帳單。");
-  document.getElementById("cafeOrderEditModalBg").style.display = "none";
-};
+window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
 
 function listenSettings() {
   onSnapshot(doc(db, "settings", "cafe"), s => {
@@ -822,7 +769,7 @@ async function loadMenu(){
 
   menuCache.forEach(m=>{
     const row=document.createElement("div"); row.className="menu-row";
-    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
+    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="window.toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
     if(menuListBox) menuListBox.appendChild(row);
   });
   renderCategorySelects();
@@ -857,18 +804,18 @@ window.closeCounterItemModal=()=>document.getElementById("counterItemModalBg").s
 window.addCounterItemToCart=()=>{
   const options = {}; (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
   counterCart.push({ id:counterCurrentItem.id, name:counterCurrentItem.name, price:Number(counterCurrentItem.price||0), qty:Number(document.getElementById("counterItemQty").value||1), options, note:document.getElementById("counterItemNote").value.trim() });
-  window.closeCounterItemModal(); renderCounterCart();
+  window.closeCounterItemModal(); window.renderCounterCart();
 };
 
-function renderCounterCart(){
+window.renderCounterCart = () => {
   const box=document.getElementById("counterCartList"); if(!box) return;
   box.innerHTML=""; let total=0;
   counterCart.forEach((item,idx)=>{ 
     total+=item.price*item.qty; const optText = Object.entries(item.options).map(([k,v])=>`${k}:${v}`).join(", ");
-    box.innerHTML+=`<div class="counter-cart-item"><div><b>${item.name} × ${item.qty}</b></div><div style="font-size:13px;color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="btn danger" style="padding:4px 8px; font-size:12px; min-width:auto; margin-top:4px;" onclick="counterCart.splice(${idx},1);renderCounterCart();">刪除</button></div>`; 
+    box.innerHTML+=`<div class="counter-cart-item"><div><b>${item.name} × ${item.qty}</b></div><div style="font-size:13px;color:#777;">${optText} ${item.note?`[${item.note}]`:''}</div><div>小計：${item.price*item.qty} 點</div><button class="btn danger" style="padding:4px 8px; font-size:12px; min-width:auto; margin-top:4px;" onclick="counterCart.splice(${idx},1);window.renderCounterCart();">刪除</button></div>`; 
   });
   document.getElementById("counterTotal").innerText=`${total} 點`;
-}
+};
 
 window.openEditMenu = (id) => {
   const m = menuCache.find(x => x.id === id); if (!m) return;
@@ -884,9 +831,9 @@ window.openEditMenu = (id) => {
   document.getElementById("editTimeRestricted").checked = isRestricted;
   document.getElementById("editStartTime").value = m.start_time || "09:00";
   document.getElementById("editEndTime").value = m.end_time || "17:00";
-  toggleTimeInputs('edit');
+  window.toggleTimeInputs('edit');
   editOptionGroups = JSON.parse(JSON.stringify(m.custom_options || []));
-  renderEditOptionGroups(); document.getElementById("editModalBg").style.display = "flex";
+  window.renderEditOptionGroups(); document.getElementById("editModalBg").style.display = "flex";
 };
 
 window.closeEditModal=()=>document.getElementById("editModalBg").style.display="none";
@@ -932,12 +879,12 @@ function renderNewOptionGroups(){
   });
 }
 
-window.addEditOptionGroup=function(){ editOptionGroups.push({title:"",choices:[""]}); renderEditOptionGroups(); };
-window.deleteEditOptionGroup=function(idx){ editOptionGroups.splice(idx,1); renderEditOptionGroups(); };
-window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); renderEditOptionGroups(); };
-window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); renderEditOptionGroups(); };
+window.addEditOptionGroup=function(){ editOptionGroups.push({title:"",choices:[""]}); window.renderEditOptionGroups(); };
+window.deleteEditOptionGroup=function(idx){ editOptionGroups.splice(idx,1); window.renderEditOptionGroups(); };
+window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); window.renderEditOptionGroups(); };
+window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); window.renderEditOptionGroups(); };
 
-function renderEditOptionGroups(){
+window.renderEditOptionGroups = () => {
   const eList = document.getElementById("editOptionList"); if(!eList) return;
   eList.innerHTML="";
   editOptionGroups.forEach((group,gIndex)=>{
@@ -961,7 +908,7 @@ function renderEditOptionGroups(){
     `;
     eList.appendChild(div);
   });
-}
+};
 
 window.loadCounterResident=async () => {
   const inputVal = document.getElementById("counterResidentInput").value.trim();
@@ -995,8 +942,6 @@ window.calculateMonthlyRevenue = async () => {
   } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
 };
 
-window.toggleSound=()=>{ soundEnabled=!soundEnabled; const btn = document.getElementById("soundBtn"); if(soundEnabled){ btn.innerText = "音效已啟用"; btn.classList.add("on"); } else { btn.innerText = "音效已停用"; btn.classList.remove("on"); } };
-window.counterChangeQty=(n)=>{ let q=Number(document.getElementById("counterItemQty").value||1); q=Math.max(1,q+n); document.getElementById("counterItemQty").value=q; }; window.clearCounterCart=()=>{ counterCart=[]; renderCounterCart(); };
 document.getElementById("logoutBtn").addEventListener("click",async()=>{ await signOut(auth); localStorage.removeItem("zh_user"); location.href="index.html"; });
 </script>
 </body>
