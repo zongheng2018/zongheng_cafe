@@ -79,7 +79,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 .edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
 
-/* 🚀 熱感紙規格：79mm 出餐寬度排版 */
 @media print {
   body * { visibility: hidden; }
   #printKitchenReceiptContainer, #printKitchenReceiptContainer * { visibility: visible; }
@@ -399,6 +398,7 @@ function listenOrders(){
       const o=d.data(); o.id = d.id; 
       globalOrdersCache.push(o);
       const status=o.status||"等待接單";
+      let hasNewIncomingOrder = false;
       if(status === "等待接單" && !knownOrderIds.has(d.id)){ if(!isInitialLoad){ hasNewIncomingOrder = true; } knownOrderIds.add(d.id); } else { knownOrderIds.add(d.id); }
       
       let btnHtml = "";
@@ -423,12 +423,13 @@ function listenOrders(){
       const div=document.createElement("div"); div.className="order-card";
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       if(status === "等待接單") waitingBox.appendChild(div); else if(status === "製作中") makingBox.appendChild(div); else doneBox.appendChild(div);
+      
+      if(hasNewIncomingOrder){ playPremiumCrystalSound(); }
     });
-    if(typeof hasNewIncomingOrder !== 'undefined' && hasNewIncomingOrder){ playPremiumCrystalSound(); } isInitialLoad = false;
+    isInitialLoad = false;
   });
 }
 
-// 🚀 核心優化：接單直接執行跳轉，完全略過印單詢問，流暢放行
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
 };
@@ -663,7 +664,85 @@ window.removeEditItem = (index) => {
   window.renderEditOrderItemsList();
 };
 
-window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
+document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
+  const select = document.getElementById("editOrderQuickMenuSelect");
+  if(!select || !select.value) return;
+  const targetMenu = menuCache.find(x => x.id === select.value);
+  if(!targetMenu) return;
+  
+  activeEditingItems.push({
+    id: targetMenu.id,
+    name: targetMenu.name,
+    price: Number(targetMenu.price || 0),
+    qty: 1,
+    options: {},
+    note: "櫃台更換"
+  });
+  window.renderEditOrderItemsList();
+};
+
+document.getElementById("submitEditedOrderBtn").onclick = async () => {
+  if(activeEditingItems.length === 0) {
+    alert("訂單內不能沒有任何品項！");
+    return;
+  }
+  
+  const order = activeEditingOrder;
+  const newTotal = activeEditingItems.reduce((s, x) => s + x.price * x.qty, 0);
+  const diff = newTotal - order.total; 
+  
+  const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", order.uid)));
+  if(!snap.empty) {
+    const bDoc = snap.docs[0];
+    const bData = bDoc.data();
+    let currentGranted = Number(bData.granted_amount || 0);
+    let currentStored = Number(bData.stored_amount || 0);
+    
+    if(diff > 0) {
+      if((currentGranted + currentStored) < diff) {
+        alert("住戶餘額不足以支付變更後的訂單差額，修改失敗！");
+        return;
+      }
+      if(currentGranted >= diff) { currentGranted -= diff; } 
+      else { currentStored -= (diff - currentGranted); currentGranted = 0; }
+    } else if(diff < 0) {
+      currentGranted += Math.abs(diff);
+    }
+    
+    await updateDoc(doc(db, "balances", bDoc.id), {
+      granted_amount: currentGranted,
+      stored_amount: currentStored,
+      updated_by: "cafe_counter_edit"
+    });
+  }
+  
+  await updateDoc(doc(db, "orders", order.id), {
+    items: activeEditingItems,
+    total: newTotal,
+    updated_at: new Date().toISOString()
+  });
+
+  let oldItemsHtml = (order.items || []).map(i => `<div>- ${i.name} × ${i.qty}</div>`).join("");
+  let newItemsHtml = activeEditingItems.map(i => `<div>+ ${i.name} × ${i.qty}</div>`).join("");
+  
+  let customEditHtml = `
+    <div style="font-weight:bold; font-size:13px; color:#6d6258;">原訂單品項：</div>
+    <div style="font-size:12px; color:#777; padding-left:6px;">${oldItemsHtml}</div>
+    <div style="margin:4px 0; border-top:1px dashed #ccc;"></div>
+    <div style="font-weight:bold; font-size:13px; color:#6b8b61;">更動後新餐點明細：</div>
+    <div style="font-size:12px; color:#333; padding-left:6px;">${newItemsHtml}</div>
+    <div style="margin:4px 0; border-top:1px dashed #ccc;"></div>
+    <div style="font-size:13px; font-weight:bold; color:${diff > 0 ? '_c86b62' : '_3f7f47'}">
+      異動差額結算：${diff > 0 ? '補扣 ' + diff + ' 點' : diff < 0 ? '退還 ' + Math.abs(diff) + ' 點' : '金額無變動'}
+    </div>
+  `;
+
+  const updatedOrderWrapper = { ...order, items: activeEditingItems, total: newTotal };
+  window.printKitchenReceipt(updatedOrderWrapper, "訂單更動明細單", customEditHtml, true);
+
+  alert("訂單規格修改成功！已自動印出更動簽名對帳單。");
+  document.getElementById("cafeOrderEditModalBg").style.display = "none";
+};
 
 function listenSettings() {
   onSnapshot(doc(db, "settings", "cafe"), s => {
@@ -898,7 +977,7 @@ window.renderEditOptionGroups = () => {
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
+        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
@@ -942,7 +1021,7 @@ window.calculateMonthlyRevenue = async () => {
   } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
 };
 
-document.getElementById("logoutBtn").addEventListener("click",async()=>{ await signOut(auth); localStorage.removeItem("zh_user"); location.href="index.html"; });
+window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
 </script>
 </body>
 </html>
