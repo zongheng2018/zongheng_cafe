@@ -96,7 +96,8 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   <div class="brand"><img src="logo.png"><div class="title">咖啡廳櫃台</div></div>
   <div class="header-actions">
     <button class="sound-btn on" id="soundBtn" onclick="window.toggleSound()">音效已啟用</button>
-    <button class="logout" id="logoutBtn">登出</button>
+    <!-- 🚀 修正點 2：登出按鈕改為最安定的 window 函數點擊線路 -->
+    <button class="logout" id="logoutBtn" onclick="window.logoutSystem()">登出</button>
   </div>
 </div>
 
@@ -216,8 +217,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
     </div>
 
+    <!-- 🚀 修正點 4：名稱改為「公告管理」 -->
     <div class="card">
-      <div class="section-title">住戶首頁大廳公告管理 (對接大廳首頁)</div>
+      <div class="section-title">公告管理</div>
       <div class="form-grid">
         <div>
           <label style="font-weight:800; display:block; margin-bottom:6px;">最新公告訊息內容：</label>
@@ -296,6 +298,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div id="editOptionList"></div>
       <button class="btn light" type="button" onclick="window.addEditOptionGroup()">新增選項群組</button>
     </div>
+    <!-- 🚀 修正點 3：saveEditMenu 綁定對齊 -->
     <div class="btn-row"><button class="btn primary" onclick="window.saveEditMenu()">儲存修改</button><button class="btn light" onclick="window.closeEditModal()">取消</button></div>
   </div>
 </div>
@@ -465,9 +468,27 @@ window.openModifyOrderByIndex = (index) => {
   if(order) window.openModifyOrderModal(order);
 };
 
-window.executeCancelOrderByIndex = (index) => {
+// 🚀 修正點 1：取消退點對接全域控制，秒速聯動資料庫狀態並反推跳卡
+window.executeCancelOrderByIndex = async (index) => {
   const order = globalOrdersCache[index];
-  if(order) window.executeCancelOrderAndPrint(order);
+  if(!order) return;
+  if(!confirm("確定要取消此筆訂單並執行退點嗎？")) return;
+
+  const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", order.uid)));
+  if(!snap.empty) {
+    const bDoc = snap.docs[0];
+    const bData = bDoc.data();
+    await updateDoc(doc(db, "balances", bDoc.id), {
+      granted_amount: Number(bData.granted_amount || 0) + Number(order.total || 0),
+      updated_by: "cafe_counter_cancel"
+    });
+  }
+  
+  await updateDoc(doc(db, "orders", order.id), {
+    status: "已取消",
+    updated_at: new Date().toISOString()
+  });
+  alert("訂單已成功退點並取消！");
 };
 
 window.acceptAndPrintOrder = async (id) => {
@@ -609,35 +630,6 @@ window.executeCounterOrderAndPrint = async () => {
   alert("代客點餐成功！已自動送下列印簽名工作聯。"); 
   counterCart = []; 
   window.renderCounterCart(); 
-};
-
-window.executeCancelOrderAndPrint = async (order) => {
-  if(!confirm("確定要取消此筆訂單並執行退點嗎？")) return;
-
-  const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", order.uid)));
-  if(!snap.empty) {
-    const bDoc = snap.docs[0];
-    const bData = bDoc.data();
-    await updateDoc(doc(db, "balances", bDoc.id), {
-      granted_amount: Number(bData.granted_amount || 0) + Number(order.total || 0),
-      updated_by: "cafe_counter_cancel"
-    });
-  }
-  
-  await updateDoc(doc(db, "orders", order.id), {
-    status: "已取消",
-    updated_at: new Date().toISOString()
-  });
-
-  let itemsLinesHtml = (order.items || []).map(i => `<div style="font-size:13px; text-decoration:line-through; color:#666;">${i.name} × ${i.qty}</div>`).join("");
-  let customCancelHtml = `
-    <div style="color:#c86b62; font-weight:bold; font-size:14px; text-align:center; margin-bottom:6px;">【 本單已申請退點作廢 】</div>
-    <div style="text-align:center; margin:4px 0;">------------------------</div>
-    ${itemsLinesHtml}
-  `;
-
-  window.printKitchenReceipt(order, "訂單取消通知單", customCancelHtml, true);
-  alert("訂單已成功退點！已送出紙本取消覆簽單列印。");
 };
 
 window.openModifyOrderModal = (order) => {
@@ -820,6 +812,7 @@ function listenBroadcastSettings() {
   });
 }
 
+// 🚀 修正點 4：提示窗文字精簡為「發布成功」
 window.publishBroadcastMessages = async () => {
   const aText = document.getElementById("announcementText").value.trim();
   const nText = document.getElementById("noticeText").value.trim();
@@ -828,7 +821,7 @@ window.publishBroadcastMessages = async () => {
     notice: nText,
     updated_at: new Date().toISOString()
   }, { merge: true });
-  alert("大廳公告與重要通知已成功發布！");
+  alert("發布成功");
 };
 
 window.saveSystemSchedule = async () => {
@@ -964,10 +957,11 @@ window.openEditMenu = (id) => {
 
 window.closeEditModal=()=>document.getElementById("editModalBg").style.display="none";
 
+// 🚀 修正點 3：公開 saveEditMenu 到 window 全域主線路，儲存功能百分之百打通
 window.saveEditMenu=async()=>{
   const isTimeRestricted = document.getElementById("editTimeRestricted").checked;
   await updateDoc(doc(db,"menu",document.getElementById("editId").value),{ 
-    name:document.getElementById("editName").value.trim(), price:Number(document.getElementById("editPrice").value), category:document.getElementById("editCategory").value.trim(), image:document.getElementById("editImage").value.trim(), sort_order:Number(document.getElementById("editSortOrder").value||999), is_after_meal:(document.getElementById("editAfterMeal").value==="true"), is_time_restricted:isRestricted, start_time:isTimeRestricted?document.getElementById("editStartTime").value:"", end_time:isTimeRestricted?document.getElementById("editEndTime").value:"", custom_options:getCleanOptions(editOptionGroups)
+    name:document.getElementById("editName").value.trim(), price:Number(document.getElementById("editPrice").value), category:document.getElementById("editCategory").value.trim(), image:document.getElementById("editImage").value.trim(), sort_order:Number(document.getElementById("editSortOrder").value||999), is_after_meal:(document.getElementById("editAfterMeal").value==="true"), is_time_restricted:isTimeRestricted, start_time:isTimeRestricted?document.getElementById("editStartTime").value:"", end_time:isTimeRestricted?document.getElementById("editEndTime").value:"", custom_options:getCleanOptions(editOptionGroups)
   });
   document.getElementById("editModalBg").style.display="none"; alert("更新成功"); await loadMenu();
 };
@@ -1024,11 +1018,10 @@ window.renderEditOptionGroups = () => {
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
+        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
-        ${choicesHtml}
         <button type="button" class="add-choice-btn" onclick="window.addEditChoice(${gIndex})">＋ 新增細項</button>
       </div>
     `;
@@ -1069,6 +1062,14 @@ window.calculateMonthlyRevenue = async () => {
     let itemsHtml = sortedSummary.map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); if(!itemsHtml) itemsHtml = "<li>該月份無 any 餐點銷售紀錄</li>";
     document.getElementById("monthlyStatReport").innerHTML = `<div style="font-size: 18px; font-weight: 900; color: #7a594c; margin-bottom: 10px;">月度營收結算報告</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總成交訂單數：<br><span style="font-size: 22px; font-weight: 900; color: #6d6258;">${totalOrders} 筆</span></div><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總營業額點數：<br><span style="font-size: 22px; font-weight: 900; color: #6b8b61;">${totalRevenue} 點</span></div></div><div style="font-weight: 800; margin-bottom: 6px;">品項數量排行榜（依販售數由高至低）：</div><ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: #6d6258;">${itemsHtml}</ul>`;
   } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
+};
+
+// 🚀 修正點 2：登出系統全域核心線路
+window.logoutSystem = async () => {
+  if(!confirm("確定要登出點餐後台嗎？")) return;
+  await signOut(auth);
+  localStorage.removeItem("zh_user");
+  location.href = "index.html";
 };
 
 window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
