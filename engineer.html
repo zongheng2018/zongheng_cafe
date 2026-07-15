@@ -16,7 +16,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .logout{border:1px solid #c9c0b7;background:rgba(255,255,255,.88);color:#6d6258;border-radius:10px;padding:9px 16px}
 .container{max-width:1180px;margin:22px auto;padding:0 16px 40px}
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-.tab{border:none;background:rgba(255,255,255,.88);color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.tab{border:none;background:rgba(255,255,255,.88);color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06);cursor:pointer}
 .tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 .card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
 .section-title{font-size:26px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
@@ -40,9 +40,7 @@ textarea{height:100px;resize:none}
 .eye-btn{border:none;background:#f5f1eb;border-radius:14px;padding:0 10px;cursor:pointer;color:#8b8178;font-weight:bold;display:flex;align-items:center;justify-content:center}
 .hidden{display:none}
 .empty{text-align:center;color:#999;padding:40px}
-.seat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px}
-.seat-card{background:#f8f5f1;border-radius:16px;padding:14px;text-align:center;font-weight:900;color:#6d6258}
-.seat-card.off{opacity:.45;text-decoration:line-through}
+
 @media(max-width:900px){.tabs{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.title{font-size:18px}.brand img{width:60px}}
 </style>
 </head>
@@ -58,10 +56,11 @@ textarea{height:100px;resize:none}
 
 <div class="container">
   <div class="tabs">
-    <button class="tab active" onclick="showTab('dashboard',this)">系統總覽</button>
-    <button class="tab" onclick="showTab('accounts',this)">帳號管理</button>
-    <button class="tab" onclick="showTab('announcements',this)">公告管理</button>
-    <button class="tab" onclick="showTab('seats',this)">座位管理</button>
+    <button class="tab active" onclick="window.showTab('dashboard',this)">系統總覽</button>
+    <button class="tab" onclick="window.showTab('accounts',this)">帳號管理</button>
+    <button class="tab" onclick="window.showTab('announcements',this)">公告管理</button>
+    <!-- 🚀 修正點：就地取材取代座位管理，改為「系統公告」控制台 -->
+    <button class="tab" onclick="window.showTab('seats',this)">系統公告</button>
   </div>
 
   <section id="dashboardTab">
@@ -92,7 +91,7 @@ textarea{height:100px;resize:none}
         <input id="newUnit" placeholder="戶號，可空白">
       </div>
       <div class="btn-row">
-        <button class="btn primary" onclick="addAccount()">新增帳號</button>
+        <button class="btn primary" onclick="window.addAccount()">新增帳號</button>
       </div>
     </div>
 
@@ -109,7 +108,7 @@ textarea{height:100px;resize:none}
       <br><br>
       <textarea id="annContent" placeholder="公告內容"></textarea>
       <div class="btn-row">
-        <button class="btn primary" onclick="addAnnouncement()">發布公告</button>
+        <button class="btn primary" onclick="window.addAnnouncement()">發布公告</button>
       </div>
     </div>
 
@@ -119,24 +118,43 @@ textarea{height:100px;resize:none}
     </div>
   </section>
 
+  <!-- 🚀 核心改造：精準接軌住戶端 Kiosk 大公告的系統後台控制面板 -->
   <section id="seatsTab" class="hidden">
     <div class="card">
-      <div class="section-title">新增座位</div>
-      <div class="form-grid">
-        <input id="newSeat" placeholder="座位代號，例如 A1">
-        <select id="newSeatAvailable">
-          <option value="true">可用</option>
-          <option value="false">停用</option>
+      <div class="section-title">系統緊急公告主控台</div>
+      <div style="background:#f8f5f1; padding:14px; border-radius:14px; margin-bottom:14px; font-size:14px; color:#6d6258; font-weight:700;">
+        ⚠️ 本公告發布後將以大彈窗形式直接阻斷住戶首頁（支援文字、獨立圖片開關與不再顯示防卡死追蹤功能）。
+      </div>
+      
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:800; display:block; margin-bottom:6px;">公告總啟用開關：</label>
+        <select id="engBroadcastEnabled">
+          <option value="false">關閉公告 (不對住戶跳出)</option>
+          <option value="true">開啟公告 (住戶登入立刻彈出)</option>
         </select>
       </div>
-      <div class="btn-row">
-        <button class="btn primary" onclick="addSeat()">新增座位</button>
-      </div>
-    </div>
 
-    <div class="card">
-      <div class="section-title">座位清單</div>
-      <div id="seatList" class="seat-grid"></div>
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:800; display:block; margin-bottom:6px;">公告訊息內文：</label>
+        <textarea id="engBroadcastContent" placeholder="請輸入欲通知住戶的系統故障或緊急維護內容..."></textarea>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:800; display:block; margin-bottom:6px;">公告附加圖片開關：</label>
+        <select id="engBroadcastImgEnabled" onchange="window.toggleEngImgInput()">
+          <option value="false">關閉圖片 (純文字顯示)</option>
+          <option value="true">開啟圖片 (同步顯示附加圖片)</option>
+        </select>
+      </div>
+
+      <div id="engBroadcastImgUrlArea" style="margin-bottom:12px; display:none;">
+        <label style="font-weight:800; display:block; margin-bottom:6px;">附加圖片網址 (URL)：</label>
+        <input id="engBroadcastImageUrl" placeholder="請輸入完整的網址，例如 https://.../img.jpg">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn danger" style="background:#6d6258; padding:12px 24px;" onclick="window.saveSystemEngineerBroadcast()">儲存並即時發布系統公告</button>
+      </div>
     </div>
   </section>
 </div>
@@ -144,7 +162,7 @@ textarea{height:100px;resize:none}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore,collection,getDocs,addDoc,doc,updateDoc,deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore,collection,getDocs,addDoc,doc,updateDoc,deleteDoc,setDoc,onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getFunctions,httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
@@ -166,6 +184,7 @@ onAuthStateChanged(auth,async user=>{
   const profile=JSON.parse(raw);
   if(profile.role!=="engineer"){alert("沒有權限");location.href="index.html";return}
   await loadAll();
+  listenCurrentEngineerBroadcast(); // 監聽當前公告以便回填
 });
 
 window.showTab=(tab,btn)=>{
@@ -182,7 +201,6 @@ async function loadAll(){
   await loadStats();
   await loadAccounts();
   await loadAnnouncements();
-  await loadSeats();
 }
 
 async function loadStats(){
@@ -216,7 +234,6 @@ async function loadAccounts(){
     const div=document.createElement("div");
     div.className="list-card";
     
-    // 安全微調：密碼欄位預設改為 password 隱碼類型，並增加眼睛按鈕切換顯示狀態，避免直接在大螢幕曝光
     div.innerHTML=`
       <div class="item-title">${x.username||""}</div>
       <div class="meta">角色：<span class="badge">${x.role||""}</span></div>
@@ -224,23 +241,19 @@ async function loadAccounts(){
       <div class="meta">戶號：${x.unit_number||x.room||""}</div>
       <div class="small-form">
         <input id="pw-${x.docId}" type="password" value="${x.password||""}" placeholder="新密碼，至少 6 碼">
-        <button class="eye-btn" onclick="togglePasswordVisibility('${x.docId}')">👁️</button>
-        <button class="btn primary" onclick="savePassword('${x.docId}')">儲存</button>
+        <button class="eye-btn" onclick="window.togglePasswordVisibility('${x.docId}')">👁️</button>
+        <button class="btn primary" onclick="window.savePassword('${x.docId}')">儲存</button>
       </div>
     `;
     accountList.appendChild(div);
   });
 }
 
-// 密碼眼睛圖示切換函數
 window.togglePasswordVisibility=(id)=>{
   const input = document.getElementById(`pw-${id}`);
   if(input) {
-    if(input.type === "password") {
-      input.type = "text";
-    } else {
-      input.type = "password";
-    }
+    if(input.type === "password") input.type = "text";
+    else input.type = "password";
   }
 };
 
@@ -288,14 +301,12 @@ window.addAccount=async()=>{
 
 window.savePassword=async(id)=>{
   const acc=accounts.find(x=>x.docId===id);
-
   if(!acc||!acc.username){
     alert("找不到帳號資料");
     return;
   }
 
   const value=document.getElementById(`pw-${id}`).value.trim();
-
   if(!value){
     alert("請輸入密碼");
     return;
@@ -317,7 +328,6 @@ window.savePassword=async(id)=>{
     });
 
     alert("密碼已同步更新 Firebase Auth 與 Firestore");
-
     await loadAccounts();
 
   }catch(error){
@@ -343,7 +353,7 @@ async function loadAnnouncements(){
       <div class="item-title">${x.title||"通知"}</div>
       <div class="meta">${x.content||""}</div>
       <div class="btn-row">
-        <button class="btn danger" onclick="deleteAnnouncement('${d.id}')">刪除</button>
+        <button class="btn danger" onclick="window.deleteAnnouncement('${d.id}')">刪除</button>
       </div>
     `;
     announcementList.appendChild(div);
@@ -377,62 +387,53 @@ window.deleteAnnouncement=async(id)=>{
   await loadAnnouncements();
 };
 
-async function loadSeats(){
-  const snap=await getDocs(collection(db,"seats"));
-  seatList.innerHTML="";
+// 🚀 核心新增：圖片輸入框動態顯隱機制
+window.toggleEngImgInput = () => {
+  const isImgEnabled = document.getElementById("engBroadcastImgEnabled").value === "true";
+  document.getElementById("engBroadcastImgUrlArea").style.display = isImgEnabled ? "block" : "none";
+};
 
-  if(snap.empty){
-    seatList.innerHTML='<div class="empty">目前沒有座位，住戶端會使用預設 A1-A4 / B1-B4</div>';
-    return;
-  }
-
-  snap.forEach(d=>{
-    const x=d.data();
-    const div=document.createElement("div");
-    div.className="seat-card "+(x.available===false?"off":"");
-    div.innerHTML=`
-      ${x.seatId||d.id}
-      <div class="meta">${x.available===false?"停用":"可用"}</div>
-      <div class="btn-row" style="justify-content:center">
-        <button class="btn ${x.available===false?"done":"danger"}" onclick="toggleSeat('${d.id}',${x.available!==false})">
-          ${x.available===false?"啟用":"停用"}
-        </button>
-      </div>
-    `;
-    seatList.appendChild(div);
+// 🚀 核心新增：監聽並回填當前公告內容，方便工程師維護
+function listenCurrentEngineerBroadcast() {
+  onSnapshot(doc(db, "settings", "engineer_broadcast"), s => {
+    if(!s.exists()) return;
+    const d = s.data();
+    document.getElementById("engBroadcastEnabled").value = String(d.enabled || false);
+    document.getElementById("engBroadcastContent").value = d.content || "";
+    document.getElementById("engBroadcastImgEnabled").value = String(d.image_enabled || false);
+    document.getElementById("engBroadcastImageUrl").value = d.image_url || "";
+    window.toggleEngImgInput();
   });
 }
 
-window.addSeat=async()=>{
-  const seatId=newSeat.value.trim();
-  const available=newSeatAvailable.value==="true";
+// 🚀 核心新增：保存公告資料並覆寫發布時間戳記，使住戶端不再顯示標籤就地刷新
+window.saveSystemEngineerBroadcast = async () => {
+  const isEnabled = document.getElementById("engBroadcastEnabled").value === "true";
+  const contentText = document.getElementById("engBroadcastContent").value.trim();
+  const isImgEnabled = document.getElementById("engBroadcastImgEnabled").value === "true";
+  const imgUrl = document.getElementById("engBroadcastImageUrl").value.trim();
 
-  if(!seatId){
-    alert("請輸入座位代號");
+  if(isEnabled && !contentText) {
+    alert("開啟公告時，內容不能為空！");
     return;
   }
 
-  await addDoc(collection(db,"seats"),{
-    seatId,
-    available,
-    created_at:new Date().toISOString()
-  });
+  await setDoc(doc(db, "settings", "engineer_broadcast"), {
+    enabled: isEnabled,
+    content: contentText,
+    image_enabled: isImgEnabled,
+    image_url: imgUrl,
+    updated_at: new Date().toISOString() // 自動刷新時間戳，迫使點擊過不再顯示的住戶重新喚醒彈窗
+  }, { merge: true });
 
-  newSeat.value="";
-  await loadSeats();
+  alert("系統公告已成功同步保存並發布！");
 };
 
-window.toggleSeat=async(id,currentAvailable)=>{
-  await updateDoc(doc(db,"seats",id),{available:!currentAvailable});
-  await loadSeats();
-};
-
-logoutBtn.addEventListener("click",async()=>{
+document.getElementById("logoutBtn").addEventListener("click",async()=>{
   await signOut(auth);
   localStorage.removeItem("zh_user");
   location.href="index.html";
 });
 </script>
-
 </body>
 </html>
