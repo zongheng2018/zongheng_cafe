@@ -383,6 +383,27 @@ function formatLocalTime(isoString) {
   }
 }
 
+function playPremiumCrystalSound() {
+  if (!soundEnabled) return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return; const ctx = new AudioContext();
+    const frequencies = [523.25, 659.25]; const now = ctx.currentTime;
+    frequencies.forEach(freq => {
+      const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + 1.2);
+    });
+  } catch (e) { console.error(e); }
+}
+
+function getBadgeStatusClass(status) {
+  if (status === "等待接單") return "wait";
+  if (status === "製作中") return "making";
+  if (status === "已完成") return "done";
+  if (status === "已取消") return "cancel";
+  return "";
+}
+
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -870,7 +891,7 @@ async function loadMenu(){
     row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button><button class="btn danger" style="background:#c86b62;" onclick="window.deleteMenuCategoryItem('${m.id}')">刪除</button></div>`;
     if(menuListBox) menuListBox.appendChild(row);
   });
-  renderCategorySelects();
+  window.renderCategorySelects();
   window.renderCounterMenu();
 }
 
@@ -1020,8 +1041,7 @@ window.loadCounterResident=async () => {
   const snap = await getDocs(query(collection(db,"balances"),where("uid","==",inputVal)));
   if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
 };
-// 🚀 世紀修復核心：將先前多印出的單引號錯位完全修正為正確的 ` 反引號
-function renderCategorySelects(){ const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = '<option value="全部">全部分類</option>'; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } }
+window.renderCategorySelects = () => { const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = '<option value="全部">全部分類</option>'; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } };
 window.changeCounterCategory=(c)=>{ currentCounterCategory=c; window.renderCounterMenu(); };
 
 function loadStaticSeatsForCounter(){ 
