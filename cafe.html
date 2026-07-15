@@ -20,7 +20,6 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
 .tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06);cursor:pointer}
 .tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
-.card(background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
 .card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
 
 .section-title{font-size:24px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
@@ -378,13 +377,12 @@ function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
   try {
     const d = new Date(isoString);
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate())+1}/${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   } catch(e) {
     return "時間格式錯誤";
   }
 }
 
-// 🚀 終極流暢線路修復：徹底移去干擾的亂碼碎字，將布林值宣告拉到最外圍！
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -397,7 +395,6 @@ function listenOrders(){
     if(snap.empty) { isInitialLoad = false; return; }
     globalOrdersCache = [];
     
-    // 💡 關鍵修正點：把 hasNewIncomingOrder 的宣告完美拉到 snap.forEach 迴圈外面！防止作用域混亂與拋錯！
     let hasNewIncomingOrder = false;
     let idx = 0;
 
@@ -428,7 +425,7 @@ function listenOrders(){
 
       const div=document.createElement("div"); div.className="order-card";
       
-      // 💡 乾淨無瑕的標準賦值等號線路，絕對再也沒有任何殘留垃圾單字
+      // 🚀 核心修正：正式回歸乾淨無瑕的標準 '=' 賦值線路，CSS標籤同步修復完成
       div.innerHTML = `<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       
       if(status === "等待接單") waitingBox.appendChild(div); 
