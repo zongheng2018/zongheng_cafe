@@ -167,7 +167,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <div class="section-title">櫃台購物車</div>
         <div id="counterCartList"></div>
         <div class="form-grid" style="margin-top:14px;">
-          <select id="counterDining" onchange="toggleCounterSeat()"><option value="內用">內用</option><option value="外帶">外帶</option></select>
+          <select id="counterDining" onchange="window.toggleCounterSeat()"><option value="內用">內用</option><option value="外帶">外帶</option></select>
           <div id="counterSeatArea"><select id="counterSeat"></select></div>
         </div>
         <div class="counter-total" id="counterTotal">0 點</div>
@@ -383,6 +383,7 @@ function formatLocalTime(isoString) {
   }
 }
 
+// 🚀 終極修復：完全比照以前能讀取的安全寫法，以全域陣列索引安全傳遞，徹底解決卡死空白問題！
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -396,6 +397,7 @@ function listenOrders(){
     globalOrdersCache = [];
     
     let hasNewIncomingOrder = false;
+    let idx = 0;
 
     snap.forEach(d=>{
       const o=d.data(); o.id = d.id; 
@@ -408,30 +410,45 @@ function listenOrders(){
         btnHtml = `
           <div class="btn-row">
             <button class="btn primary" onclick="window.acceptAndPrintOrder('${d.id}')">接單</button>
-            <button class="btn light" onclick="window.openModifyOrderModal(${JSON.stringify(o).replace(/"/g, '&quot;')})">編輯訂單</button>
-            <button class="btn danger" onclick="window.executeCancelOrderAndPrint(${JSON.stringify(o).replace(/"/g, '&quot;')})">取消退點</button>
+            <button class="btn light" onclick="window.openModifyOrderByIndex(${idx})">編輯訂單</button>
+            <button class="btn danger" onclick="window.executeCancelOrderByIndex(${idx})">取消退點</button>
           </div>`;
       } else if (status === "製作中") {
         btnHtml = `
           <div class="btn-row">
             <button class="btn done" onclick="window.updateOrder('${d.id}','已完成')">完成</button>
-            <button class="btn light" onclick="window.openModifyOrderModal(${JSON.stringify(o).replace(/"/g, '&quot;')})">編輯訂單</button>
-            <button class="btn danger" onclick="window.executeCancelOrderAndPrint(${JSON.stringify(o).replace(/"/g, '&quot;')})">取消退點</button>
+            <button class="btn light" onclick="window.openModifyOrderByIndex(${idx})">編輯訂單</button>
+            <button class="btn danger" onclick="window.executeCancelOrderByIndex(${idx})">取消退點</button>
           </div>`;
       }
       
       const timeHtml = `<div class="meta" style="color:#8a7e73; font-weight:700;">填寫時間：${formatLocalTime(o.created_at)}</div>`;
 
       const div=document.createElement("div"); div.className="order-card";
-      // 🚀 終極除錯核心：完美清空打錯的殘留亂碼，還原乾淨賦值！下單時間完美留存
       div.innerHTML = `<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
-      if(status === "等待接單") waitingBox.appendChild(div); else if(status === "製作中") makingBox.appendChild(div); else doneBox.appendChild(div);
+      
+      if(status === "等待接單") waitingBox.appendChild(div); 
+      else if(status === "製作中") makingBox.appendChild(div); 
+      else doneBox.appendChild(div);
+      
+      idx++;
     });
 
     if(hasNewIncomingOrder){ playPremiumCrystalSound(); }
     isInitialLoad = false;
   });
 }
+
+// 🚀 安全公開媒介函數：對接全域陣列索引，不再因 JSON 字串逸出字元斷線
+window.openModifyOrderByIndex = (index) => {
+  const order = globalOrdersCache[index];
+  if(order) window.openModifyOrderModal(order);
+};
+
+window.executeCancelOrderByIndex = (index) => {
+  const order = globalOrdersCache[index];
+  if(order) window.executeCancelOrderAndPrint(order);
+};
 
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
