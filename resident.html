@@ -271,7 +271,7 @@ window.showNotice=async function(){
       // 🚀 核心優化：同時對齊 iOS 與 Android Service Worker 雙推播容器線路，徹底防堵 Android 漏單不響問題
       if (lastKnownStatus && lastKnownStatus !== "已完成" && o.status === "已完成") {
         if (profile.is_notification_enabled !== false && "Notification" in window && Notification.permission === "granted") {
-          const msgBody = "咖啡廳櫃台通知：餐點完成，請至櫃台取餐，謝謝您";
+          const msgBody = "餐點製作完成，請至櫃台取餐";
           if (navigator.serviceWorker && navigator.serviceWorker.ready) {
             navigator.serviceWorker.ready.then(reg => {
               reg.showNotification("昭揚縱橫咖啡廳", { body: msgBody, icon: "logo.png" });
