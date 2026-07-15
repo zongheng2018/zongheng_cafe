@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#9c8e81">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="縱橫點餐">
+<meta name="apple-mobile-web-app-title" content="縱橫cafe">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="logo.png">
 
@@ -266,7 +266,7 @@ window.closeCart = () => { document.getElementById("bottomCheckoutSlide").style.
 window.delCartItem = (idx) => { cart.splice(idx,1); openCart(); updateCartSummary(); };
 window.toggleSeatSelect = () => { seatArea.style.display = diningType.value === "內用" ? "block" : "none"; };
 
-// 🚀 鎖死座位配置：住戶端下拉選單直接對接
+// 鎖死座位配置：住戶端下拉選單直接對接
 function loadStaticSeats() {
   const select = document.getElementById("seatSelect"); if(!select) return;
   select.innerHTML = "";
