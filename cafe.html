@@ -96,7 +96,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   <div class="brand"><img src="logo.png"><div class="title">咖啡廳櫃台</div></div>
   <div class="header-actions">
     <button class="sound-btn on" id="soundBtn" onclick="window.toggleSound()">音效已啟用</button>
-    <!-- 🚀 修正點 2：登出按鈕改為最安定的 window 函數點擊線路 -->
     <button class="logout" id="logoutBtn" onclick="window.logoutSystem()">登出</button>
   </div>
 </div>
@@ -217,7 +216,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
     </div>
 
-    <!-- 🚀 修正點 4：名稱改為「公告管理」 -->
     <div class="card">
       <div class="section-title">公告管理</div>
       <div class="form-grid">
@@ -298,7 +296,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div id="editOptionList"></div>
       <button class="btn light" type="button" onclick="window.addEditOptionGroup()">新增選項群組</button>
     </div>
-    <!-- 🚀 修正點 3：saveEditMenu 綁定對齊 -->
     <div class="btn-row"><button class="btn primary" onclick="window.saveEditMenu()">儲存修改</button><button class="btn light" onclick="window.closeEditModal()">取消</button></div>
   </div>
 </div>
@@ -429,19 +426,20 @@ function listenOrders(){
       if(status === "等待接單" && !knownOrderIds.has(d.id)){ if(!isInitialLoad){ hasNewIncomingOrder = true; } knownOrderIds.add(d.id); } else { knownOrderIds.add(d.id); }
       
       let btnHtml = "";
+      // 🚀 核心大復活：取消退點全面改為丟入唯一固定的字串 id ('${d.id}')，徹底解決快照重整後的陣列錯位卡死問題！
       if (status === "等待接單") {
         btnHtml = `
           <div class="btn-row">
             <button class="btn primary" onclick="window.acceptAndPrintOrder('${d.id}')">接單</button>
             <button class="btn light" onclick="window.openModifyOrderByIndex(${idx})">編輯訂單</button>
-            <button class="btn danger" onclick="window.executeCancelOrderByIndex(${idx})">取消退點</button>
+            <button class="btn danger" onclick="window.executeCancelOrderById('${d.id}')">取消退點</button>
           </div>`;
       } else if (status === "製作中") {
         btnHtml = `
           <div class="btn-row">
             <button class="btn done" onclick="window.updateOrder('${d.id}','已完成')">完成</button>
             <button class="btn light" onclick="window.openModifyOrderByIndex(${idx})">編輯訂單</button>
-            <button class="btn danger" onclick="window.executeCancelOrderByIndex(${idx})">取消退點</button>
+            <button class="btn danger" onclick="window.executeCancelOrderById('${d.id}')">取消退點</button>
           </div>`;
       }
       
@@ -468,9 +466,9 @@ window.openModifyOrderByIndex = (index) => {
   if(order) window.openModifyOrderModal(order);
 };
 
-// 🚀 修正點 1：取消退點對接全域控制，秒速聯動資料庫狀態並反推跳卡
-window.executeCancelOrderByIndex = async (index) => {
-  const order = globalOrdersCache[index];
+// 🚀 取消退點直連核心：徹底解決不能執行的問題，精準提取緩存庫內匹配該 id 的正確物件
+window.executeCancelOrderById = async (id) => {
+  const order = globalOrdersCache.find(x => x.id === id);
   if(!order) return;
   if(!confirm("確定要取消此筆訂單並執行退點嗎？")) return;
 
@@ -488,7 +486,7 @@ window.executeCancelOrderByIndex = async (index) => {
     status: "已取消",
     updated_at: new Date().toISOString()
   });
-  alert("訂單已成功退點並取消！");
+  alert("已成功取消並退點！");
 };
 
 window.acceptAndPrintOrder = async (id) => {
@@ -812,7 +810,6 @@ function listenBroadcastSettings() {
   });
 }
 
-// 🚀 修正點 4：提示窗文字精簡為「發布成功」
 window.publishBroadcastMessages = async () => {
   const aText = document.getElementById("announcementText").value.trim();
   const nText = document.getElementById("noticeText").value.trim();
@@ -957,11 +954,10 @@ window.openEditMenu = (id) => {
 
 window.closeEditModal=()=>document.getElementById("editModalBg").style.display="none";
 
-// 🚀 修正點 3：公開 saveEditMenu 到 window 全域主線路，儲存功能百分之百打通
 window.saveEditMenu=async()=>{
   const isTimeRestricted = document.getElementById("editTimeRestricted").checked;
   await updateDoc(doc(db,"menu",document.getElementById("editId").value),{ 
-    name:document.getElementById("editName").value.trim(), price:Number(document.getElementById("editPrice").value), category:document.getElementById("editCategory").value.trim(), image:document.getElementById("editImage").value.trim(), sort_order:Number(document.getElementById("editSortOrder").value||999), is_after_meal:(document.getElementById("editAfterMeal").value==="true"), is_time_restricted:isTimeRestricted, start_time:isTimeRestricted?document.getElementById("editStartTime").value:"", end_time:isTimeRestricted?document.getElementById("editEndTime").value:"", custom_options:getCleanOptions(editOptionGroups)
+    name:document.getElementById("editName").value.trim(), price:Number(document.getElementById("editPrice").value), category:document.getElementById("editCategory").value.trim(), image:document.getElementById("editImage").value.trim(), sort_order:Number(document.getElementById("editSortOrder").value||999), is_after_meal:(document.getElementById("editAfterMeal").value==="true"), is_time_restricted:isRestricted, start_time:isTimeRestricted?document.getElementById("editStartTime").value:"", end_time:isTimeRestricted?document.getElementById("editEndTime").value:"", custom_options:getCleanOptions(editOptionGroups)
   });
   document.getElementById("editModalBg").style.display="none"; alert("更新成功"); await loadMenu();
 };
@@ -1018,10 +1014,11 @@ window.renderEditOptionGroups = () => {
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
+        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[gIndex].title=this.value">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
+        ${choicesHtml}
         <button type="button" class="add-choice-btn" onclick="window.addEditChoice(${gIndex})">＋ 新增細項</button>
       </div>
     `;
@@ -1064,7 +1061,6 @@ window.calculateMonthlyRevenue = async () => {
   } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
 };
 
-// 🚀 修正點 2：登出系統全域核心線路
 window.logoutSystem = async () => {
   if(!confirm("確定要登出點餐後台嗎？")) return;
   await signOut(auth);
