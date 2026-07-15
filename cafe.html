@@ -167,14 +167,14 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <div class="section-title">櫃台購物車</div>
         <div id="counterCartList"></div>
         <div class="form-grid" style="margin-top:14px;">
-          <select id="counterDining" onchange="window.toggleCounterSeat()"><option value="內用">內用</option><option value="外帶">外帶</option></select>
+          <select id="counterDining" onchange="toggleCounterSeat()"><option value="內用">內用</option><option value="外帶">外帶</option></select>
           <div id="counterSeatArea"><select id="counterSeat"></select></div>
         </div>
         <div class="counter-total" id="counterTotal">0 點</div>
         
         <div class="btn-row-giant">
           <button class="giant-submit-btn" onclick="window.executeCounterOrderAndPrint()">確認送出訂單並列印簽名單</button>
-          <button class="btn danger" style="padding:12px; border-radius:12px;" onclick="window.clearCounterCart()">清空購物車</button>
+          <button class="btn danger" style="padding:12px; border-radius:12px;" onclick="clearCounterCart()">清空購物車</button>
         </div>
       </div>
     </div>
@@ -319,7 +319,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
@@ -383,6 +383,7 @@ function formatLocalTime(isoString) {
   }
 }
 
+// 🚀 核心大復活：修正大錯字殘留，完美連動狀態並保留「填寫時間」下單紀錄與音效
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -395,7 +396,6 @@ function listenOrders(){
     if(snap.empty) { isInitialLoad = false; return; }
     globalOrdersCache = [];
     
-    // 🚀 核心修復：在迴圈前正確定義新單追蹤布林值，防止 ReferenceError 崩潰
     let hasNewIncomingOrder = false;
 
     snap.forEach(d=>{
@@ -424,6 +424,7 @@ function listenOrders(){
       const timeHtml = `<div class="meta" style="color:#8a7e73; font-weight:700;">填寫時間：${formatLocalTime(o.created_at)}</div>`;
 
       const div=document.createElement("div"); div.className="order-card";
+      // 精準除錯完畢：徹底拔除意外留下的殘留錯字，正常通訊
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       if(status === "等待接單") waitingBox.appendChild(div); else if(status === "製作中") makingBox.appendChild(div); else doneBox.appendChild(div);
     });
@@ -433,7 +434,6 @@ function listenOrders(){
   });
 }
 
-// 接單直接執行狀態跳轉，完全不跳彈窗與印單
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
 };
@@ -837,6 +837,7 @@ window.addMenu=async()=>{
   nElement.value=""; pElement.value=""; cElement.value=""; document.getElementById("mImage").value=""; document.getElementById("mSortOrder").value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
 };
 
+// 🚀 核心升級：完美新增紅色「刪除」按鈕，對接雲端資料庫作廢刪除
 async function loadMenu(){
   const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; 
   const menuListBox = document.getElementById("menuList");
@@ -852,12 +853,19 @@ async function loadMenu(){
 
   menuCache.forEach(m=>{
     const row=document.createElement("div"); row.className="menu-row";
-    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
+    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button><button class="btn danger" style="background:#c86b62;" onclick="window.deleteMenuCategoryItem('${m.id}')">刪除</button></div>`;
     if(menuListBox) menuListBox.appendChild(row);
   });
   renderCategorySelects();
   window.renderCounterMenu();
 }
+
+window.deleteMenuCategoryItem = async (id) => {
+  if(!confirm("確定要將此品項從系統中永久刪除嗎？刪除後將無法復原。")) return;
+  await deleteDoc(doc(db, "menu", id));
+  alert("品項已成功刪除！");
+  await loadMenu();
+};
 
 window.renderCounterMenu = () => {
   const box=document.getElementById("counterMenuList"); 
@@ -884,7 +892,7 @@ window.openCounterItemModal=(id)=>{
 
 window.closeCounterItemModal=()=>document.getElementById("counterItemModalBg").style.display="none";
 
-window.addCounterItemToCart=()=>{
+window.addCounterItemToCart=function(){
   const options = {}; (counterCurrentItem.custom_options||[]).forEach((g,idx)=>{ options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
   counterCart.push({ id:counterCurrentItem.id, name:counterCurrentItem.name, price:Number(counterCurrentItem.price||0), qty:Number(document.getElementById("counterItemQty").value||1), options, note:document.getElementById("counterItemNote").value.trim() });
   window.closeCounterItemModal(); window.renderCounterCart();
