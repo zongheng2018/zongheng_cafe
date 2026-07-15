@@ -59,7 +59,6 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
 .detail-modal-card{background:white;width:100%;max-width:340px;border-radius:14px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.15);line-height:1.6}
 .detail-modal-header{font-size:16px;font-weight:900;color:#6d6258;border-bottom:1px dashed #ddd;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between}
 
-/* 🚀 核心新增：工程師系統公告彈窗樣式 */
 .eng-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
 .eng-modal-card{background:white;width:100%;max-width:420px;border-radius:16px;padding:22px;box-shadow:0 12px 36px rgba(0,0,0,0.2);line-height:1.7}
 .eng-author-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;background:#f8f5f1;padding:10px;border-radius:10px}
@@ -112,13 +111,13 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
   </div>
 </div>
 
-<!-- 🚀 核心新增：工程師緊急系統公告大彈窗 HTML 結構 -->
 <div class="eng-modal-bg" id="systemEngineerBroadcastModal" onclick="if(event.target===this) window.closeEngineerBroadcast(false)">
   <div class="eng-modal-card">
     <div class="section-title" style="font-size:20px; margin-bottom:12px; border-bottom:2px solid #6d6258; padding-bottom:6px;">系統公告</div>
     
     <div class="eng-author-row">
-      <div class="eng-avatar">秉</div>
+      <!-- 🚀 修正點：將頭像文字精密修正為「謝」 -->
+      <div class="eng-avatar">謝</div>
       <div class="eng-meta-info">
         <div class="eng-name">系統工程師 - 謝秉諺</div>
         <div class="eng-time" id="engBroadcastTimeText">發布時間：未知</div>
@@ -173,11 +172,11 @@ const content=document.getElementById("content");
 
 let unsubscribeLatestOrder = null;
 let unsubscribeAnnouncements = null;
-let unsubscribeEngineerBroadcast = null; // 🚀 監聽工程師集合
+let unsubscribeEngineerBroadcast = null;
 
 let selectedFilterMonth = ""; 
 let lastKnownStatus = null;
-let currentBroadcastTimeTag = ""; // 紀錄發布時間戳記防反覆跳出
+let currentBroadcastTimeTag = "";
 
 function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
@@ -199,7 +198,7 @@ onAuthStateChanged(auth,async user=>{
 
   await loadAccountInfo();
   checkNotificationPermission();
-  listenEngineerBroadcast(); // 啟動工程師公告監聽
+  listenEngineerBroadcast();
   document.getElementById("loading").style.display="none";
   appDiv.style.display="block";
   await showNotice();
@@ -226,32 +225,22 @@ async function loadAccountInfo(){
   }
 }
 
-// 🚀 核心新增：即時接軌監聽工程師後台公告，並做不再顯示的防呆攔截
 function listenEngineerBroadcast() {
   if(unsubscribeEngineerBroadcast) unsubscribeEngineerBroadcast();
   unsubscribeEngineerBroadcast = onSnapshot(doc(db, "settings", "engineer_broadcast"), s => {
     if(!s.exists()) return;
     const data = s.data();
-    
-    // 如果工程師關閉公告，直接隱藏
     if(data.enabled !== true) {
       document.getElementById("systemEngineerBroadcastModal").style.display = "none";
       return;
     }
-    
     currentBroadcastTimeTag = data.updated_at || "default";
     const neverShowTag = localStorage.getItem("zh_hide_eng_broadcast");
-    
-    // 智慧過濾：如果住戶點過不再顯示，且發布時間沒變，直接跳過不打擾
     if(neverShowTag === currentBroadcastTimeTag) {
       return;
     }
-    
-    // 填入文字內容
     document.getElementById("engBroadcastContentText").innerText = data.content || "";
     document.getElementById("engBroadcastTimeText").innerText = "發布時間：" + formatLocalTime(data.updated_at);
-    
-    // 圖片顯示與開關防呆防碎圖
     const imgArea = document.getElementById("engBroadcastImgArea");
     if(data.image_enabled === true && data.image_url && data.image_url.trim() !== "") {
       imgArea.src = data.image_url.trim();
@@ -260,13 +249,10 @@ function listenEngineerBroadcast() {
       imgArea.src = "";
       imgArea.style.display = "none";
     }
-    
-    // 彈出大視窗
     document.getElementById("systemEngineerBroadcastModal").style.display = "flex";
   });
 }
 
-// 🚀 核心新增：公告關閉與不再顯示的本地 Local Storage 綁定
 window.closeEngineerBroadcast = function(isNeverShowAgain) {
   document.getElementById("systemEngineerBroadcastModal").style.display = "none";
   if(isNeverShowAgain === true) {
@@ -337,7 +323,7 @@ window.showNotice=async function(){
 
   unsubscribeLatestOrder = onSnapshot(orderQuery, snap => {
     if(snap.empty){
-      latestOrderBox.innerHTML='<div class="order-item">目尚無進行中的訂單</div>';
+      latestOrderBox.innerHTML='<div class="order-item">目前尚無進行中的訂單</div>';
       lastKnownStatus = null;
     }else{
       let orders = [];
@@ -390,7 +376,7 @@ window.showNotice=async function(){
         noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
       }
     } else {
-      announcementBox.innerText = "目前尚無公告";
+      announcementBox.innerText = "開目前尚無公告";
       noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
     }
   }, error => {
