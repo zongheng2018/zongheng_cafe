@@ -319,6 +319,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"
 import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88"};
@@ -377,7 +378,8 @@ function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
   try {
     const d = new Date(isoString);
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate())+1}/${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    // 🚀 精密修復：修正日期的拼寫與字串連接格式錯誤
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   } catch(e) {
     return "時間格式錯誤";
   }
@@ -425,7 +427,7 @@ function listenOrders(){
 
       const div=document.createElement("div"); div.className="order-card";
       
-      // 🚀 核心修正：正式回歸乾淨無瑕的標準 '=' 賦值線路，CSS標籤同步修復完成
+      // 🚀 核心保證：乾淨健康的 HTML 字串，下單時間永不遺失
       div.innerHTML = `<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       
       if(status === "等待接單") waitingBox.appendChild(div); 
@@ -1036,7 +1038,11 @@ window.calculateMonthlyRevenue = async () => {
   const targetMonth = document.getElementById("statMonthInput").value; if(!targetMonth) { alert("請先選擇要統計的月份！"); return; }
   document.getElementById("monthlyStatReport").innerHTML = "正在從資料庫撈取數據，請稍後...";
   try {
-    const snap = await getDocs(collection(db, "orders")); let totalOrders = 0; totalRevenue = 0; let itemSummary = {};
+    const snap = await getDocs(collection(db, "orders")); 
+    let totalOrders = 0; 
+    // 🚀 精密修復：為 totalRevenue 補上正確的 let 變數宣告，防止背景拋錯中斷
+    let totalRevenue = 0; 
+    let itemSummary = {};
     snap.forEach(d => {
       const o = d.data(); if(o.status === "已完成" && o.created_at && o.created_at.startsWith(targetMonth)) {
         totalOrders++; totalRevenue += Number(o.total || 0); (o.items || []).forEach(item => { itemSummary[item.name] = (itemSummary[item.name] || 0) + Number(item.qty || 1); });
