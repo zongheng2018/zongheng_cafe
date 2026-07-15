@@ -206,7 +206,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
         <div style="font-weight:900; margin-top:16px; margin-bottom:8px;">特定國定假日 / 系統公休日設定</div>
         <input id="closedDays" placeholder="例如：2026-07-05,2026-07-06">
-        <div class="btn-row" style="margin-top: 14px;"><button class="btn done" onclick="window.saveSystemSchedule()">儲存時間與公休設定</button></div>
+        <div class="btn-row" style="margin-top: 14px;"><button class="btn done" onclick="saveSystemSchedule()">儲存時間與公休設定</button></div>
       </div>
       
       <div class="btn-row" style="margin-top: 18px;">
@@ -394,11 +394,14 @@ function listenOrders(){
     waitingBox.innerHTML=""; makingBox.innerHTML=""; doneBox.innerHTML=""; 
     if(snap.empty) { isInitialLoad = false; return; }
     globalOrdersCache = [];
+    
+    // 🚀 核心修復：在迴圈前正確定義新單追蹤布林值，防止 ReferenceError 崩潰
+    let hasNewIncomingOrder = false;
+
     snap.forEach(d=>{
       const o=d.data(); o.id = d.id; 
       globalOrdersCache.push(o);
       const status=o.status||"等待接單";
-      let hasNewIncomingOrder = false;
       if(status === "等待接單" && !knownOrderIds.has(d.id)){ if(!isInitialLoad){ hasNewIncomingOrder = true; } knownOrderIds.add(d.id); } else { knownOrderIds.add(d.id); }
       
       let btnHtml = "";
@@ -423,13 +426,14 @@ function listenOrders(){
       const div=document.createElement("div"); div.className="order-card";
       div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       if(status === "等待接單") waitingBox.appendChild(div); else if(status === "製作中") makingBox.appendChild(div); else doneBox.appendChild(div);
-      
-      if(hasNewIncomingOrder){ playPremiumCrystalSound(); }
     });
+
+    if(hasNewIncomingOrder){ playPremiumCrystalSound(); }
     isInitialLoad = false;
   });
 }
 
+// 接單直接執行狀態跳轉，完全不跳彈窗與印單
 window.acceptAndPrintOrder = async (id) => {
   await window.updateOrder(id, '製作中');
 };
@@ -848,7 +852,7 @@ async function loadMenu(){
 
   menuCache.forEach(m=>{
     const row=document.createElement("div"); row.className="menu-row";
-    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="window.toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
+    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button></div>`;
     if(menuListBox) menuListBox.appendChild(row);
   });
   renderCategorySelects();
