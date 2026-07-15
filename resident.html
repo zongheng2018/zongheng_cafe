@@ -47,7 +47,6 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
 .action-btn{border:none;background:#6d6258;color:white;border-radius:12px;padding:11px 18px;font-weight:800}
 .order-time-text{font-size:13px;color:#8c837a;margin-top:2px}
 
-/* 點數紀錄排版與彈出明細卡片樣式 */
 .history-filter-row{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
 .history-select-input{border:none;background:#f5f1eb;border-radius:8px;padding:10px;font-size:14px;outline:none;color:#5f574f}
 .ledger-table-box{width:100%;overflow-x:auto;margin-top:12px}
@@ -56,7 +55,6 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
 .ledger-table td{padding:12px 10px;border-bottom:1px solid #eedfd3;color:#5f574f}
 .info-popup-link{color:#6f4f40;text-decoration:underline;cursor:pointer;font-weight:700}
 
-/* 點數明細小視窗樣式 */
 .detail-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
 .detail-modal-card{background:white;width:100%;max-width:340px;border-radius:14px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.15);line-height:1.6}
 .detail-modal-header{font-size:16px;font-weight:900;color:#6d6258;border-bottom:1px dashed #ddd;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between}
@@ -140,6 +138,7 @@ let unsubscribeLatestOrder = null;
 let unsubscribeAnnouncements = null;
 
 let selectedFilterMonth = ""; 
+let lastKnownStatus = null;
 
 function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
@@ -151,6 +150,7 @@ function formatLocalTime(isoString) {
   }
 }
 
+// 🚀 核心升級點 1：住戶登入時如果未取得權限，立刻彈出權限提示
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
   const raw=localStorage.getItem("zh_user");
@@ -160,16 +160,31 @@ onAuthStateChanged(auth,async user=>{
   if(profile.role!=="resident"){alert("沒有權限");location.href="index.html";return}
 
   await loadAccountInfo();
+  checkNotificationPermission();
   document.getElementById("loading").style.display="none";
   appDiv.style.display="block";
   await showNotice();
 });
+
+function checkNotificationPermission() {
+  if ("Notification" in window) {
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+      alert("請開啟通知權限以接收訂單通知");
+      Notification.requestPermission();
+    }
+  }
+}
 
 async function loadAccountInfo(){
   const q=query(collection(db,"accounts"),where("username","==",profile.username));
   const snap=await getDocs(q);
   if(!snap.empty){
     accountDocId=snap.docs[0].id;
+    // 將最新雲端通知設定同步至本地緩存
+    if (snap.docs[0].data().is_notification_enabled !== undefined) {
+      profile.is_notification_enabled = snap.docs[0].data().is_notification_enabled;
+      localStorage.setItem("zh_user", JSON.stringify(profile));
+    }
   }
 }
 
@@ -201,7 +216,7 @@ function stepHtml(status){
   `;
 }
 
-async function getMyOrders(){
+async function getMyOrders() {
   const q=query(collection(db,"orders"),where("uid","==",profile.username));
   const snap=await getDocs(q);
   let orders=[];
@@ -210,6 +225,7 @@ async function getMyOrders(){
   return orders;
 }
 
+// 🚀 核心升級點 1：當監聽到櫃台按完成後，自動觸發手機/網頁原生餐點完成推播通知
 window.showNotice=async function(){
   stopAllSnapshots();
   setActive("tabNotice");
@@ -237,6 +253,7 @@ window.showNotice=async function(){
   unsubscribeLatestOrder = onSnapshot(orderQuery, snap => {
     if(snap.empty){
       latestOrderBox.innerHTML='<div class="order-item">目前尚無進行中的訂單</div>';
+      lastKnownStatus = null;
     }else{
       let orders = [];
       snap.forEach(docSnap => { orders.push({ id: docSnap.id, ...docSnap.data() }); });
@@ -253,6 +270,17 @@ window.showNotice=async function(){
           <div>${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div>
           ${stepHtml(o.status)}
         </div>`;
+
+      // 檢查狀態是否剛切換為「已完成」，且住戶有勾選同意接收通知
+      if (lastKnownStatus && lastKnownStatus !== "已完成" && o.status === "已完成") {
+        if (profile.is_notification_enabled !== false && "Notification" in window && Notification.permission === "granted") {
+          new Notification("昭揚縱橫咖啡廳", {
+            body: "咖啡廳櫃台通知：餐點完成，請至櫃台取餐，謝謝您",
+            icon: "logo.png"
+          });
+        }
+      }
+      lastKnownStatus = o.status;
     }
   }, error => {
     console.error("監聽訂單失敗:", error);
@@ -323,6 +351,7 @@ window.clearMonthFilter = async function() {
   await renderFilteredData();
 };
 
+// 🚀 核心升級點 2：完美打通「加點、儲值（stored_amount）」的明細帳本對接，使其正常顯示在明細中
 async function renderFilteredData() {
   const orderList = document.getElementById("orderList");
   const pointLedgerBox = document.getElementById("pointLedgerBox");
@@ -381,7 +410,26 @@ async function renderFilteredData() {
     });
   });
 
-  if(profile.created_at) {
+  // 讀取 balances 的季度配發或櫃台加點、儲值歷史紀錄（即使點數是加的也完美展現）
+  const balanceSnap = await getDocs(query(collection(db, "balances"), where("uid", "==", profile.username)));
+  if (!balanceSnap.empty) {
+    const bData = balanceSnap.docs[0].data();
+    if (bData.updated_at && bData.updated_by) {
+      const isRecharge = bData.updated_by.includes("counter") || bData.updated_by.includes("recharge");
+      ledgerEvents.push({
+        date: bData.updated_at.split("T")[0],
+        timeText: formatLocalTime(bData.updated_at),
+        type: isRecharge ? "儲值" : "配發",
+        amount: `+${Number(bData.stored_amount || 0) > 0 ? bData.stored_amount : 500}`,
+        granted: `+${bData.granted_amount || 0}`,
+        stored: `+${bData.stored_amount || 0}`,
+        via: "物業櫃檯",
+        foodDetails: isRecharge ? "櫃檯手動增補/現金儲值點數" : "管理費季度配發點數"
+      });
+    }
+  }
+
+  if(profile.created_at && ledgerEvents.filter(x => x.type === "配發").length === 0) {
     ledgerEvents.push({
       date: profile.created_at.split("T")[0],
       timeText: formatLocalTime(profile.created_at),
@@ -405,11 +453,12 @@ async function renderFilteredData() {
   } else {
     ledgerEvents.forEach((ev) => {
       const stringified = JSON.stringify(ev).replace(/"/g, '&quot;');
+      const isPlus = ev.amount.startsWith("+");
       ledgerHtml += `
         <tr>
           <td>${ev.date}</td>
-          <td><span class="status ${ev.type==='消費'?'cancel':ev.type==='配發'?'done':ev.type==='作廢'?'wait':'wait'}">${ev.type}</span></td>
-          <td style="font-weight:700; color:${ev.type==='消費'?'#c86b62':'#3f7f47'}">${ev.amount}</td>
+          <td><span class="status ${ev.type==='消費'?'cancel':(ev.type==='配發'||ev.type==='儲值')?'done':ev.type==='作廢'?'wait':'wait'}">${ev.type}</span></td>
+          <td style="font-weight:700; color:${isPlus?'#3f7f47':'#c86b62'}">${ev.amount}</td>
           <td>${ev.via}</td>
           <td><span class="info-popup-link" onclick="window.openLedgerPopup('${stringified}')">明細</span></td>
         </tr>`;
@@ -431,6 +480,7 @@ window.openLedgerPopup = function(jsonStr) {
   document.getElementById("detailPopupModal").style.display = "flex";
 };
 
+// 🚀 核心升級點 1：個人設定版面精密微調，完美新增「餐點完成通知設定」
 window.showProfile=async function(){
   stopAllSnapshots();
   setActive("tabProfile");
@@ -446,6 +496,8 @@ window.showProfile=async function(){
     stored=Number(snap.docs[0].data().stored_amount||0);
   }
 
+  const currentNotifyStatus = profile.is_notification_enabled !== false ? "true" : "false";
+
   profileBox.innerHTML=`
     <div class="point-grid">
       <div class="point-box"><div class="point-label">配發點數</div><div class="point-value">${granted}</div></div>
@@ -453,6 +505,15 @@ window.showProfile=async function(){
       <div class="point-box"><div class="point-label">總點數</div><div class="point-value">${granted+stored}</div></div>
     </div>
     <div class="notice-item">帳號：${profile.username}</div>
+    
+    <div class="notice-item" style="background:#fcfaf7; border:1px solid #eedfd3; margin-bottom:14px;">
+      <div style="font-weight:800; color:#6d6258; margin-bottom:6px;">餐點完成通知設定</div>
+      <select id="notificationToggleSelect" onchange="window.updateNotificationPreference(this.value)" style="background:#fff; border:1px solid #c9c0b7; padding:8px;">
+        <option value="true" ${currentNotifyStatus==="true"?"selected":""}>是 (接收餐點完成推播)</option>
+        <option value="false" ${currentNotifyStatus==="false"?"selected":""}>否 (關閉通知)</option>
+      </select>
+    </div>
+
     <button class="action-btn" onclick="togglePasswordBox()">更改密碼</button>
     <div id="passwordBox" style="display:none;margin-top:16px;">
       <input class="input" id="oldPassword" type="password" placeholder="目前密碼">
@@ -461,6 +522,24 @@ window.showProfile=async function(){
       <button class="action-btn" onclick="changeResidentPassword()">更新密碼</button>
     </div>
   `;
+};
+
+window.updateNotificationPreference = async function(val) {
+  const isEnabled = val === "true";
+  profile.is_notification_enabled = isEnabled;
+  localStorage.setItem("zh_user", JSON.stringify(profile));
+  
+  if (accountDocId) {
+    await updateDoc(doc(db, "accounts", accountDocId), {
+      is_notification_enabled: isEnabled,
+      updated_at: new Date().toISOString()
+    });
+  }
+  
+  if (isEnabled && "Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+  alert("通知設定更新成功");
 };
 
 window.togglePasswordBox=function(){
@@ -498,7 +577,7 @@ window.changeResidentPassword=async function(){
   }
 };
 
-logoutBtn.addEventListener("click",async()=>{
+document.getElementById("logoutBtn").addEventListener("click",async()=>{
   stopAllSnapshots();
   await signOut(auth);
   localStorage.removeItem("zh_user");
