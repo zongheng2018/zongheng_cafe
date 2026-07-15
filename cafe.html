@@ -383,7 +383,6 @@ function formatLocalTime(isoString) {
   }
 }
 
-// 🚀 核心大復活：修正大錯字殘留，完美連動狀態並保留「填寫時間」下單紀錄與音效
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -424,8 +423,8 @@ function listenOrders(){
       const timeHtml = `<div class="meta" style="color:#8a7e73; font-weight:700;">填寫時間：${formatLocalTime(o.created_at)}</div>`;
 
       const div=document.createElement("div"); div.className="order-card";
-      // 精準除錯完畢：徹底拔除意外留下的殘留錯字，正常通訊
-      div.innerHTML=`<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
+      // 🚀 終極除錯核心：完美清空打錯的殘留亂碼，還原乾淨賦值！下單時間完美留存
+      div.innerHTML = `<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       if(status === "等待接單") waitingBox.appendChild(div); else if(status === "製作中") makingBox.appendChild(div); else doneBox.appendChild(div);
     });
 
@@ -837,7 +836,6 @@ window.addMenu=async()=>{
   nElement.value=""; pElement.value=""; cElement.value=""; document.getElementById("mImage").value=""; document.getElementById("mSortOrder").value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
 };
 
-// 🚀 核心升級：完美新增紅色「刪除」按鈕，對接雲端資料庫作廢刪除
 async function loadMenu(){
   const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; 
   const menuListBox = document.getElementById("menuList");
