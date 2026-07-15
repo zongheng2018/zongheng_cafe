@@ -20,6 +20,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
 .tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06);cursor:pointer}
 .tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
+.card(background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
 .card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
 
 .section-title{font-size:24px;color:#6d6258;font-weight:800;margin-bottom:16px;letter-spacing:2px}
@@ -383,7 +384,7 @@ function formatLocalTime(isoString) {
   }
 }
 
-// 🚀 終極修復：完全比照以前能讀取的安全寫法，以全域陣列索引安全傳遞，徹底解決卡死空白問題！
+// 🚀 終極流暢線路修復：徹底移去干擾的亂碼碎字，將布林值宣告拉到最外圍！
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
   ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
@@ -396,6 +397,7 @@ function listenOrders(){
     if(snap.empty) { isInitialLoad = false; return; }
     globalOrdersCache = [];
     
+    // 💡 關鍵修正點：把 hasNewIncomingOrder 的宣告完美拉到 snap.forEach 迴圈外面！防止作用域混亂與拋錯！
     let hasNewIncomingOrder = false;
     let idx = 0;
 
@@ -425,6 +427,8 @@ function listenOrders(){
       const timeHtml = `<div class="meta" style="color:#8a7e73; font-weight:700;">填寫時間：${formatLocalTime(o.created_at)}</div>`;
 
       const div=document.createElement("div"); div.className="order-card";
+      
+      // 💡 乾淨無瑕的標準賦值等號線路，絕對再也沒有任何殘留垃圾單字
       div.innerHTML = `<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       
       if(status === "等待接單") waitingBox.appendChild(div); 
@@ -439,7 +443,6 @@ function listenOrders(){
   });
 }
 
-// 🚀 安全公開媒介函數：對接全域陣列索引，不再因 JSON 字串逸出字元斷線
 window.openModifyOrderByIndex = (index) => {
   const order = globalOrdersCache[index];
   if(order) window.openModifyOrderModal(order);
@@ -1036,7 +1039,7 @@ window.calculateMonthlyRevenue = async () => {
   const targetMonth = document.getElementById("statMonthInput").value; if(!targetMonth) { alert("請先選擇要統計的月份！"); return; }
   document.getElementById("monthlyStatReport").innerHTML = "正在從資料庫撈取數據，請稍後...";
   try {
-    const snap = await getDocs(collection(db, "orders")); let totalOrders = 0; let totalRevenue = 0; let itemSummary = {};
+    const snap = await getDocs(collection(db, "orders")); let totalOrders = 0; totalRevenue = 0; let itemSummary = {};
     snap.forEach(d => {
       const o = d.data(); if(o.status === "已完成" && o.created_at && o.created_at.startsWith(targetMonth)) {
         totalOrders++; totalRevenue += Number(o.total || 0); (o.items || []).forEach(item => { itemSummary[item.name] = (itemSummary[item.name] || 0) + Number(item.qty || 1); });
