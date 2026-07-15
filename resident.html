@@ -150,7 +150,6 @@ function formatLocalTime(isoString) {
   }
 }
 
-// 🚀 核心升級點 1：住戶登入時如果未取得權限，立刻彈出權限提示
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
   const raw=localStorage.getItem("zh_user");
@@ -180,7 +179,6 @@ async function loadAccountInfo(){
   const snap=await getDocs(q);
   if(!snap.empty){
     accountDocId=snap.docs[0].id;
-    // 將最新雲端通知設定同步至本地緩存
     if (snap.docs[0].data().is_notification_enabled !== undefined) {
       profile.is_notification_enabled = snap.docs[0].data().is_notification_enabled;
       localStorage.setItem("zh_user", JSON.stringify(profile));
@@ -225,7 +223,6 @@ async function getMyOrders() {
   return orders;
 }
 
-// 🚀 核心升級點 1：當監聽到櫃台按完成後，自動觸發手機/網頁原生餐點完成推播通知
 window.showNotice=async function(){
   stopAllSnapshots();
   setActive("tabNotice");
@@ -271,13 +268,17 @@ window.showNotice=async function(){
           ${stepHtml(o.status)}
         </div>`;
 
-      // 檢查狀態是否剛切換為「已完成」，且住戶有勾選同意接收通知
+      // 🚀 核心優化：同時對齊 iOS 與 Android Service Worker 雙推播容器線路，徹底防堵 Android 漏單不響問題
       if (lastKnownStatus && lastKnownStatus !== "已完成" && o.status === "已完成") {
         if (profile.is_notification_enabled !== false && "Notification" in window && Notification.permission === "granted") {
-          new Notification("昭揚縱橫咖啡廳", {
-            body: "咖啡廳櫃台通知：餐點完成，請至櫃台取餐，謝謝您",
-            icon: "logo.png"
-          });
+          const msgBody = "咖啡廳櫃台通知：餐點完成，請至櫃台取餐，謝謝您";
+          if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready.then(reg => {
+              reg.showNotification("昭揚縱橫咖啡廳", { body: msgBody, icon: "logo.png" });
+            });
+          } else {
+            new Notification("昭揚縱橫咖啡廳", { body: msgBody, icon: "logo.png" });
+          }
         }
       }
       lastKnownStatus = o.status;
@@ -351,7 +352,6 @@ window.clearMonthFilter = async function() {
   await renderFilteredData();
 };
 
-// 🚀 核心升級點 2：完美打通「加點、儲值（stored_amount）」的明細帳本對接，使其正常顯示在明細中
 async function renderFilteredData() {
   const orderList = document.getElementById("orderList");
   const pointLedgerBox = document.getElementById("pointLedgerBox");
@@ -410,7 +410,6 @@ async function renderFilteredData() {
     });
   });
 
-  // 讀取 balances 的季度配發或櫃台加點、儲值歷史紀錄（即使點數是加的也完美展現）
   const balanceSnap = await getDocs(query(collection(db, "balances"), where("uid", "==", profile.username)));
   if (!balanceSnap.empty) {
     const bData = balanceSnap.docs[0].data();
@@ -423,7 +422,7 @@ async function renderFilteredData() {
         amount: `+${Number(bData.stored_amount || 0) > 0 ? bData.stored_amount : 500}`,
         granted: `+${bData.granted_amount || 0}`,
         stored: `+${bData.stored_amount || 0}`,
-        via: "物業櫃檯",
+        via: "環境櫃檯",
         foodDetails: isRecharge ? "櫃檯手動增補/現金儲值點數" : "管理費季度配發點數"
       });
     }
@@ -480,7 +479,7 @@ window.openLedgerPopup = function(jsonStr) {
   document.getElementById("detailPopupModal").style.display = "flex";
 };
 
-// 🚀 核心升級點 1：個人設定版面精密微調，完美新增「餐點完成通知設定」
+// 🚀 核心升級點 2：完美修復通知設定卡片的外觀！徹底移除多餘紅褐色邊框與白底，與上方「帳號：A001」百分之百完全統一
 window.showProfile=async function(){
   stopAllSnapshots();
   setActive("tabProfile");
@@ -506,9 +505,10 @@ window.showProfile=async function(){
     </div>
     <div class="notice-item">帳號：${profile.username}</div>
     
-    <div class="notice-item" style="background:#fcfaf7; border:1px solid #eedfd3; margin-bottom:14px;">
-      <div style="font-weight:800; color:#6d6258; margin-bottom:6px;">餐點完成通知設定</div>
-      <select id="notificationToggleSelect" onchange="window.updateNotificationPreference(this.value)" style="background:#fff; border:1px solid #c9c0b7; padding:8px;">
+    <!-- 完美統一化：採用與上方完全相同的 notice-item 類別，移除獨立外框、白底，換上純淨選單樣式 -->
+    <div class="notice-item">
+      <div style="font-weight:700; color:#6d6258; font-size:16px; margin-bottom:4px;">餐點完成通知設定</div>
+      <select id="notificationToggleSelect" onchange="window.updateNotificationPreference(this.value)" style="width:100%; border:none; background:transparent; font-size:15px; outline:none; color:#5f574f; padding:0; cursor:pointer;">
         <option value="true" ${currentNotifyStatus==="true"?"selected":""}>是 (接收餐點完成推播)</option>
         <option value="false" ${currentNotifyStatus==="false"?"selected":""}>否 (關閉通知)</option>
       </select>
