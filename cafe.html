@@ -79,7 +79,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 .edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
 
-/* 🚀 核心新增：分類管理單元專屬樣式 */
 .category-sort-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee5dd; font-weight: bold; }
 
 @media print {
@@ -149,7 +148,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <div class="btn-row"><button class="btn primary" onclick="window.addMenu()">新增品項</button></div>
     </div>
 
-    <!-- 🚀 核心新增：可收合式「品項分類順序調整」區域 -->
     <div class="card">
       <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="window.toggleCategoryPanel()">
         <span>分類顯示順序調整</span>
@@ -165,7 +163,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
     <div class="card">
       <div class="section-title">菜單列表</div>
-      <!-- 🚀 核心新增：菜單即時關鍵字搜尋列 -->
       <input id="menuSearchInput" placeholder="🔍 輸入關鍵字即時搜尋品項..." oninput="window.handleMenuSearchFilter(this.value)" style="margin-bottom: 16px; background: #fff; border: 1px solid #ddd5cc;">
       <div id="menuList"></div>
     </div>
@@ -413,7 +410,7 @@ function playPremiumCrystalSound() {
     const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return; const ctx = new AudioContext();
     const frequencies = [523.25, 659.25]; const now = ctx.currentTime;
     frequencies.forEach(freq => {
-      const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
+      const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.frequency.setValueAtTime(freq, now);
       gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
       osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + 1.2);
     });
@@ -869,7 +866,6 @@ function getCleanOptions(groups) {
   return groups.map(g => ({ title: g.title.trim(), choices: g.choices.map(c => c.trim()).filter(c => c !== "") })).filter(g => g.title !== "");
 }
 
-// 🚀 核心優化：修正新增菜單，打通 sort_order 與 image 的直接儲存線路，免去二次編輯！
 window.addMenu=async()=>{
   const nElement = document.getElementById("mName");
   const pElement = document.getElementById("mPrice");
@@ -905,7 +901,6 @@ window.addMenu=async()=>{
   newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
 };
 
-// 🚀 核心新增：分類收合與上移下移調整邏輯
 window.toggleCategoryPanel = () => {
   const panel = document.getElementById("categorySortPanelContainer");
   const btn = document.getElementById("categoryPanelToggleBtn");
@@ -930,7 +925,7 @@ window.renderCategorySortList = () => {
       <span>${cat}</span>
       <div style="display:flex; gap:6px;">
         <button class="btn light" style="padding:4px 10px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, -1)">⬆️ 上移</button>
-        <button class="btn light" style="padding:4px 10px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, 1)">⬇️ 下移</button>
+        <button class="btn light" style="padding:4px 8px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, 1)">⬇️ 下移</button>
       </div>
     `;
     container.appendChild(item);
@@ -990,7 +985,6 @@ async function loadMenu(){
   
   menuCache.sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));
   
-  // 讀取分類排序設定
   const orderDoc = await getDoc(doc(db, "settings", "categories_order"));
   if(orderDoc.exists() && orderDoc.data().order_list) {
     const savedOrder = orderDoc.data().order_list;
@@ -1183,7 +1177,7 @@ window.renderEditOptionGroups = () => {
 window.loadCounterResident=async () => {
   const inputVal = document.getElementById("counterResidentInput").value.trim();
   const snap = await getDocs(query(collection(db,"balances"),where("uid","==",inputVal)));
-  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=\"住戶：\"+counterResident.username+\" ｜ 剩餘：\"+(counterGranted+counterStored)+\"點\"; }
+  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML = "住戶：" + counterResident.username + " ｜ 剩餘：" + (counterGranted + counterStored) + "點"; }
 };
 window.renderCategorySelects = () => { const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = '<option value="全部">全部分類</option>'; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } };
 window.changeCounterCategory=(c)=>{ currentCounterCategory=c; window.renderCounterMenu(); };
