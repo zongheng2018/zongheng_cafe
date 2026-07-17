@@ -141,17 +141,19 @@ textarea{height:60px;resize:none}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, query, where, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, query, where, doc, onSnapshot, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
 let profile=null; let menuList=[]; let cart=[]; let currentSelectItem=null; let balanceDocId=null;
 let currentGranted=0, currentStored=0; let sysConfig={manual_mode:"auto"};
+/* 🚀 核心新增：住戶端同步使用的分類排序緩存庫 */
+let categoryCache=[];
 
 const staticSeats = [
   "A1", "A2", "A3", "A4",
-  "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8",
+  "B1", "B2", "B3", "B4", "B5", "B6", "7", "B8",
   "C1", "C2", "C3", "C4", "C5", "C6"
 ];
 
@@ -171,16 +173,43 @@ async function loadBalance() {
   if (!snap.empty) { balanceDocId = snap.docs[0].id; currentGranted = Number(snap.docs[0].data().granted_amount||0); currentStored = Number(snap.docs[0].data().stored_amount||0); }
 }
 
+// 🚀 核心改裝：導入 categories_order 聯動線路，使分類順序與管理員後台 100% 同步
 async function loadMenuData() {
-  const snap = await getDocs(collection(db, "menu")); menuList = []; snap.forEach(d => { menuList.push({id:d.id,...d.data()}); });
+  const snap = await getDocs(collection(db, "menu")); 
+  menuList = []; 
+  let rawCategories = [];
+  
+  snap.forEach(d => { 
+    const m = {id:d.id,...d.data()}; 
+    menuList.push(m); 
+    if (m.category && !rawCategories.includes(m.category)) {
+      rawCategories.push(m.category);
+    }
+  });
+  
   menuList.sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));
+  
+  try {
+    const orderDoc = await getDoc(doc(db, "settings", "categories_order"));
+    if (orderDoc.exists() && orderDoc.data().order_list) {
+      const savedOrder = orderDoc.data().order_list;
+      categoryCache = savedOrder.filter(c => rawCategories.includes(c));
+      rawCategories.forEach(c => { if (!categoryCache.includes(c)) categoryCache.push(c); });
+    } else {
+      categoryCache = rawCategories;
+    }
+  } catch (e) {
+    console.error("讀取分類自訂順序失敗:", e);
+    categoryCache = rawCategories;
+  }
+  
   renderCategoryNav(); renderMenu();
 }
 
 function renderCategoryNav() {
   const nav = document.getElementById("categoryNav"); nav.innerHTML = "";
-  const categories = [...new Set(menuList.map(x => x.category || "其他"))];
-  categories.forEach((cat, idx) => {
+  // 🚀 修正點：改用對齊後台排序的 categoryCache 進行導覽標籤循環
+  categoryCache.forEach((cat, idx) => {
     const btn = document.createElement("button"); btn.className = `nav-item ${idx === 0 ? 'active' : ''}`; btn.innerText = cat;
     btn.onclick = () => {
       document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active")); btn.classList.add("active");
@@ -203,8 +232,8 @@ function renderMenu() {
   }
   if (!systemOpen) { container.innerHTML = `<div class="status-banner">咖啡廳系統關閉中<br>【原因：${closeReason}】</div>`; return; }
 
-  const categories = [...new Set(menuList.map(x => x.category || "其他"))];
-  categories.forEach((cat, idx) => {
+  // 🚀 修正點：改用對齊後台排序的 categoryCache 進行商品分區區塊循環
+  categoryCache.forEach((cat, idx) => {
     const section = document.createElement("div"); section.className = "category-section"; section.id = `cat_sec_${idx}`;
     section.innerHTML = `<div class="category-title">${cat}</div>`;
     const grid = document.createElement("div"); grid.className = "menu-grid";
