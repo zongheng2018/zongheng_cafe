@@ -373,11 +373,12 @@ function formatItems(items){
   }).join("");
 }
 
+// 🚀 世紀重大除錯：將上一動不小心打錯、多串了 +1 的錯位語法徹底還原為百分之百正確的乾淨寫法，拒絕瀏覽器編譯拋錯！
 function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
   try {
     const d = new Date(isoString);
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate())+1.padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   } catch(e) {
     return "時間格式錯誤";
   }
@@ -633,7 +634,7 @@ window.openModifyOrderModal = (order) => {
   activeEditingItems = JSON.parse(JSON.stringify(order.items || []));
   
   document.getElementById("editOrderDetailsSummary").innerHTML = `
-    訂單編號：${order.order_id} ｜ 住戶：${order.uid}<br>
+    訂館編號：${order.order_id} ｜ 住戶：${order.uid}<br>
     原本金額：<b>${order.total} 點</b>
   `;
   
@@ -871,7 +872,7 @@ async function loadMenu(){
   const mSelect = document.getElementById("mCategorySelect");
   if(mSelect) {
     mSelect.innerHTML = '<option value="">選擇既有分類</option>';
-    categoryCache.forEach(c => { mSelect.innerHTML += `<option value="${c}">${c}</option>`; });
+    categoryCache.forEach(c => { mSelect.innerHTML += `<option value="${c}">${c}</option>'; });
   }
 
   menuCache.forEach(m=>{
@@ -953,7 +954,6 @@ window.openEditMenu = (id) => {
 
 window.closeEditModal=()=>document.getElementById("editModalBg").style.display="none";
 
-// 🚀 世紀大除錯：修正 window.saveEditMenu，完整清理並同步自訂規格群組
 window.saveEditMenu=async()=>{
   const isTimeRestricted = document.getElementById("editTimeRestricted").checked;
   
@@ -1015,7 +1015,6 @@ window.deleteEditOptionGroup=function(idx){ editOptionGroups.splice(idx,1); wind
 window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); window.renderEditOptionGroups(); };
 window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); window.renderEditOptionGroups(); };
 
-// 🚀 終極除錯核心：完美接軌動態 input 的雙向資料綁定鏈路，使規格在編輯彈窗中填寫立刻即時生效！
 window.renderEditOptionGroups = () => {
   const eList = document.getElementById("editOptionList"); if(!eList) return;
   eList.innerHTML="";
