@@ -1014,10 +1014,16 @@ window.deleteEditOptionGroup=function(idx){ editOptionGroups.splice(idx,1); wind
 window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); window.renderEditOptionGroups(); };
 window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); window.renderEditOptionGroups(); };
 
-// 🚀 核心優化：建立安全的全域通道函數，100% 打通細項輸入框資料與 editOptionGroups 資料庫的雙向綁定
 window.updateEditChoiceValue = (gIdx, cIdx, val) => {
   if (editOptionGroups[gIdx] && editOptionGroups[gIdx].choices) {
     editOptionGroups[gIdx].choices[cIdx] = val;
+  }
+};
+
+// 🚀 核心優化：建立安全的全域通道，100% 綁定群組標題輸入框，防止為空而被過濾代碼剔除
+window.updateEditGroupTitle = (gIdx, val) => {
+  if (editOptionGroups[gIdx]) {
+    editOptionGroups[gIdx].title = val;
   }
 };
 
@@ -1028,7 +1034,6 @@ window.renderEditOptionGroups = () => {
     const div=document.createElement("div"); div.className="option-group-box";
     let choicesHtml = (group.choices || []).map((c, cIndex) => `
       <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-        <!-- 🚀 核心除錯點：將 oninput 綁定對齊 window 全域通道更新函數，徹底打通細項值寫入儲存 -->
         <input placeholder="細項值" value="${c}" oninput="window.updateEditChoiceValue(${gIndex}, ${cIndex}, this.value)" style="padding:8px 12px; font-size:14px;">
         <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; font-size:16px; cursor:pointer;" onclick="window.deleteEditChoice(${gIndex},${cIndex})">✕</button>
       </div>
@@ -1036,7 +1041,8 @@ window.renderEditOptionGroups = () => {
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <input placeholder="群組名稱" value="${group.title}" oninput="editOptionGroups[${gIndex}].title=this.value">
+        <!-- 🚀 核心除錯點：將群組名稱的輸入事件完整接回全域 window 安全更新通道中 -->
+        <input placeholder="群組名稱" value="${group.title}" oninput="window.updateEditGroupTitle(${gIndex}, this.value)">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
       <div style="padding-left:14px; margin-top:6px; border-left:2px solid #eaddd3;">
