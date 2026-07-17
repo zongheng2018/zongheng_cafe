@@ -357,7 +357,7 @@ let menuSearchKeyword = "";
 
 const staticSeats = [
   "A1", "A2", "A3", "A4", 
-  "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", 
+  "B1", "B2", "B3", "B4", "B5", "B6", "7", "B8", 
   "C1", "C2", "C3", "C4", "C5", "C6"
 ];
 
@@ -1090,7 +1090,6 @@ window.saveEditMenu=async()=>{
     image:document.getElementById("editImage").value.trim(), 
     sort_order:Number(document.getElementById("editSortOrder").value||999), 
     is_after_meal:(document.getElementById("editAfterMeal").value==="true"), 
-    /* 🚀 終極除錯點：將原本錯打的變數名稱精準修正為對應的 isTimeRestricted，完美打通修改儲存線路 */
     is_time_restricted:isTimeRestricted, 
     start_time:isTimeRestricted?document.getElementById("editStartTime").value:"", 
     end_time:isTimeRestricted?document.getElementById("editEndTime").value:"", 
@@ -1158,6 +1157,7 @@ window.renderEditOptionGroups = () => {
     const div=document.createElement("div"); div.className="option-group-box";
     let choicesHtml = (group.choices || []).map((c, cIndex) => `
       <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+        <!-- 🚀 終極除錯核心點：在這裡，不管是原本就存在的細項、還是新點出來的細項，通通精密銲接上 data-gidx 與 data-cidx 屬性，防堵控制台盲區失聯！ -->
         <input placeholder="細項值" value="${c}" data-gidx="${gIndex}" data-cidx="${cIndex}" oninput="window.updateEditChoiceValue(this)" style="padding:8px 12px; font-size:14px;">
         <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; font-size:16px; cursor:pointer;" onclick="window.deleteEditChoice(${gIndex},${cIndex})">✕</button>
       </div>
