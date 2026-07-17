@@ -732,7 +732,7 @@ document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
 
 document.getElementById("submitEditedOrderBtn").onclick = async () => {
   if(activeEditingItems.length === 0) {
-    alert("訂單內不能沒有 any 品項！");
+    alert("訂單內不能沒有任何品項！");
     return;
   }
   
@@ -797,10 +797,10 @@ function listenSettings() {
   onSnapshot(doc(db, "settings", "cafe"), s => {
     if (!s.exists()) return; 
     const data = s.data(); 
-    let modeText = "智慧自動控管中";
+    let modeText = "自動模式";
     if (data.manual_mode === "force_open") modeText = "強制手動開放中";
     if (data.manual_mode === "force_closed") modeText = "強制手動關閉中";
-    if (data.manual_mode === "auto") modeText = "智慧自動控管中";
+    if (data.manual_mode === "auto") modeText = "自動模式開啟";
     
     const systemStatusBox = document.getElementById("systemStatus");
     if(systemStatusBox) {
@@ -906,11 +906,11 @@ window.toggleCategoryPanel = () => {
   const btn = document.getElementById("categoryPanelToggleBtn");
   if(panel.style.display === "none") {
     panel.style.display = "block";
-    btn.innerText = "[點擊收合 ⬆️]";
+    btn.innerText = "[收合]";
     window.renderCategorySortList();
   } else {
     panel.style.display = "none";
-    btn.innerText = "[點擊展開 ⬇️]";
+    btn.innerText = "[展開]";
   }
 };
 
@@ -924,8 +924,8 @@ window.renderCategorySortList = () => {
     item.innerHTML = `
       <span>${cat}</span>
       <div style="display:flex; gap:6px;">
-        <button class="btn light" style="padding:4px 10px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, -1)">⬆️ 上移</button>
-        <button class="btn light" style="padding:4px 8px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, 1)">⬇️ 下移</button>
+        <button class="btn light" style="padding:4px 10px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, -1)">上移</button>
+        <button class="btn light" style="padding:4px 8px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, 1)">下移</button>
       </div>
     `;
     container.appendChild(item);
@@ -946,7 +946,7 @@ window.saveCategoryCustomOrder = async () => {
     order_list: categoryCache,
     updated_at: new Date().toISOString()
   });
-  alert("分類自訂順序儲存成功！住戶點餐導覽列已完美同步排序。");
+  alert("設定儲存成功！");
   await loadMenu();
 };
 
@@ -1006,7 +1006,7 @@ async function loadMenu(){
 }
 
 window.deleteMenuCategoryItem = async (id) => {
-  if(!confirm("確定要將此品項從系統中永久刪除嗎？刪除後將無法復原。")) return;
+  if(!confirm("確定要將此品項從系統中永久刪除嗎？刪除後將無法復原！")) return;
   await deleteDoc(doc(db, "menu", id));
   alert("品項已成功刪除！");
   await loadMenu();
@@ -1210,7 +1210,7 @@ window.calculateMonthlyRevenue = async () => {
 };
 
 window.logoutSystem = async () => {
-  if(!confirm("確定要登出點餐後台嗎？")) return;
+  if(!confirm("確認登出咖啡廳後台？")) return;
   await signOut(auth);
   localStorage.removeItem("zh_user");
   location.href = "index.html";
