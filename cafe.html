@@ -79,6 +79,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 .edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
 
+/* 🚀 核心新增：分類管理單元專屬樣式 */
+.category-sort-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee5dd; font-weight: bold; }
+
 @media print {
   body * { visibility: hidden; }
   #printKitchenReceiptContainer, #printKitchenReceiptContainer * { visibility: visible; }
@@ -145,7 +148,27 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
       <div class="btn-row"><button class="btn primary" onclick="window.addMenu()">新增品項</button></div>
     </div>
-    <div class="card"><div class="section-title">菜單列表</div><div id="menuList"></div></div>
+
+    <!-- 🚀 核心新增：可收合式「品項分類順序調整」區域 -->
+    <div class="card">
+      <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="window.toggleCategoryPanel()">
+        <span>分類顯示順序調整</span>
+        <span id="categoryPanelToggleBtn" style="font-size: 16px; color: #9c8e81;">[點擊展開 ⬇️]</span>
+      </div>
+      <div id="categorySortPanelContainer" style="display: none; margin-top: 14px;">
+        <div id="categorySortListArea"></div>
+        <div class="btn-row" style="margin-top: 12px;">
+          <button class="btn done" onclick="window.saveCategoryCustomOrder()">儲存分類順序</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">菜單列表</div>
+      <!-- 🚀 核心新增：菜單即時關鍵字搜尋列 -->
+      <input id="menuSearchInput" placeholder="🔍 輸入關鍵字即時搜尋品項..." oninput="window.handleMenuSearchFilter(this.value)" style="margin-bottom: 16px; background: #fff; border: 1px solid #ddd5cc;">
+      <div id="menuList"></div>
+    </div>
   </section>
 
   <section id="counterTab" class="hidden">
@@ -319,7 +342,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
@@ -333,6 +356,7 @@ let activeEditingOrder = null;
 let activeEditingItems = [];
 let globalOrdersCache = []; 
 let globalReceiptCopyCount = 2; 
+let menuSearchKeyword = ""; 
 
 const staticSeats = [
   "A1", "A2", "A3", "A4", 
@@ -845,28 +869,136 @@ function getCleanOptions(groups) {
   return groups.map(g => ({ title: g.title.trim(), choices: g.choices.map(c => c.trim()).filter(c => c !== "") })).filter(g => g.title !== "");
 }
 
+// 🚀 核心優化：修正新增菜單，打通 sort_order 與 image 的直接儲存線路，免去二次編輯！
 window.addMenu=async()=>{
   const nElement = document.getElementById("mName");
   const pElement = document.getElementById("mPrice");
   const cElement = document.getElementById("mCategory");
   const sElement = document.getElementById("mCategorySelect");
+  const iElement = document.getElementById("mImage");
+  const oElement = document.getElementById("mSortOrder");
   
   const name = nElement.value.trim(); 
   const price = Number(pElement.value); 
   const category = (cElement.value || sElement.value).trim(); 
+  const image = iElement.value.trim();
+  const sort_order = Number(oElement.value || 999);
   const isTimeRestricted = document.getElementById("mTimeRestricted").checked;
   
-  await addDoc(collection(db,"menu"),{ name, price, category, enabled:true, custom_options:getCleanOptions(newOptionGroups), is_time_restricted: isTimeRestricted, start_time: isTimeRestricted ? document.getElementById("mStartTime").value : "09:00", end_time: isTimeRestricted ? document.getElementById("mEndTime").value : "17:00", created_at:new Date().toISOString() });
+  await addDoc(collection(db,"menu"),{ 
+    name, 
+    price, 
+    category, 
+    image,
+    sort_order,
+    enabled:true, 
+    custom_options:getCleanOptions(newOptionGroups), 
+    is_time_restricted: isTimeRestricted, 
+    start_time: isTimeRestricted ? document.getElementById("mStartTime").value : "09:00", 
+    end_time: isTimeRestricted ? document.getElementById("mEndTime").value : "17:00", 
+    created_at:new Date().toISOString() 
+  });
   
-  nElement.value=""; pElement.value=""; cElement.value=""; document.getElementById("mImage").value=""; document.getElementById("mSortOrder").value=""; newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
+  nElement.value=""; pElement.value=""; cElement.value=""; iElement.value=""; oElement.value="";
+  document.getElementById("mTimeRestricted").checked = false;
+  window.toggleTimeInputs('m');
+  newOptionGroups=[]; renderNewOptionGroups(); alert("新增成功"); await loadMenu();
+};
+
+// 🚀 核心新增：分類收合與上移下移調整邏輯
+window.toggleCategoryPanel = () => {
+  const panel = document.getElementById("categorySortPanelContainer");
+  const btn = document.getElementById("categoryPanelToggleBtn");
+  if(panel.style.display === "none") {
+    panel.style.display = "block";
+    btn.innerText = "[點擊收合 ⬆️]";
+    window.renderCategorySortList();
+  } else {
+    panel.style.display = "none";
+    btn.innerText = "[點擊展開 ⬇️]";
+  }
+};
+
+window.renderCategorySortList = () => {
+  const container = document.getElementById("categorySortListArea");
+  if(!container) return;
+  container.innerHTML = "";
+  categoryCache.forEach((cat, idx) => {
+    const item = document.createElement("div");
+    item.className = "category-sort-item";
+    item.innerHTML = `
+      <span>${cat}</span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn light" style="padding:4px 10px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, -1)">⬆️ 上移</button>
+        <button class="btn light" style="padding:4px 10px; min-width:auto;" onclick="window.moveCategoryItem(${idx}, 1)">⬇️ 下移</button>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+};
+
+window.moveCategoryItem = (index, direction) => {
+  const targetIndex = index + direction;
+  if(targetIndex < 0 || targetIndex >= categoryCache.length) return;
+  const temp = categoryCache[index];
+  categoryCache[index] = categoryCache[targetIndex];
+  categoryCache[targetIndex] = temp;
+  window.renderCategorySortList();
+};
+
+window.saveCategoryCustomOrder = async () => {
+  await setDoc(doc(db, "settings", "categories_order"), {
+    order_list: categoryCache,
+    updated_at: new Date().toISOString()
+  });
+  alert("分類自訂順序儲存成功！住戶點餐導覽列已完美同步排序。");
+  await loadMenu();
+};
+
+window.handleMenuSearchFilter = (keyword) => {
+  menuSearchKeyword = keyword.trim().toLowerCase();
+  window.renderFilteredMenuList();
+};
+
+window.renderFilteredMenuList = () => {
+  const menuListBox = document.getElementById("menuList");
+  if(!menuListBox) return;
+  menuListBox.innerHTML = "";
+  
+  let filtered = menuCache;
+  if(menuSearchKeyword) {
+    filtered = menuCache.filter(m => (m.name || "").toLowerCase().includes(menuSearchKeyword) || (m.category || "").toLowerCase().includes(menuSearchKeyword));
+  }
+  
+  filtered.forEach(m => {
+    const row = document.createElement("div"); row.className = "menu-row";
+    row.innerHTML = `<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.category||"未分類"}｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button><button class="btn danger" style="background:#c86b62;" onclick="window.deleteMenuCategoryItem('${m.id}')">刪除</button></div>`;
+    menuListBox.appendChild(row);
+  });
 };
 
 async function loadMenu(){
-  const snap=await getDocs(collection(db,"menu")); menuCache=[]; categoryCache=[]; 
-  const menuListBox = document.getElementById("menuList");
-  if(menuListBox) menuListBox.innerHTML="";
+  const snap=await getDocs(collection(db,"menu")); 
+  menuCache=[]; 
+  let rawCategories = [];
   
-  snap.forEach(d => { const m = {id:d.id,...d.data()}; menuCache.push(m); if(m.category && !categoryCache.includes(m.category)) categoryCache.push(m.category); });
+  snap.forEach(d => { 
+    const m = {id:d.id,...d.data()}; 
+    menuCache.push(m); 
+    if(m.category && !rawCategories.includes(m.category)) rawCategories.push(m.category); 
+  });
+  
+  menuCache.sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));
+  
+  // 讀取分類排序設定
+  const orderDoc = await getDoc(doc(db, "settings", "categories_order"));
+  if(orderDoc.exists() && orderDoc.data().order_list) {
+    const savedOrder = orderDoc.data().order_list;
+    categoryCache = savedOrder.filter(c => rawCategories.includes(c));
+    rawCategories.forEach(c => { if(!categoryCache.includes(c)) categoryCache.push(c); });
+  } else {
+    categoryCache = rawCategories;
+  }
   
   const mSelect = document.getElementById("mCategorySelect");
   if(mSelect) {
@@ -874,11 +1006,7 @@ async function loadMenu(){
     categoryCache.forEach(c => { mSelect.innerHTML += `<option value="${c}">${c}</option>`; });
   }
 
-  menuCache.forEach(m=>{
-    const row=document.createElement("div"); row.className="menu-row";
-    row.innerHTML=`<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button><button class="btn danger" style="background:#c86b62;" onclick="window.deleteMenuCategoryItem('${m.id}')">刪除</button></div>`;
-    if(menuListBox) menuListBox.appendChild(row);
-  });
+  window.renderFilteredMenuList();
   window.renderCategorySelects();
   window.renderCounterMenu();
 }
@@ -968,7 +1096,7 @@ window.saveEditMenu=async()=>{
     image:document.getElementById("editImage").value.trim(), 
     sort_order:Number(document.getElementById("editSortOrder").value||999), 
     is_after_meal:(document.getElementById("editAfterMeal").value==="true"), 
-    is_time_restricted:isTimeRestricted, 
+    is_time_restricted:isRestricted, 
     start_time:isTimeRestricted?document.getElementById("editStartTime").value:"", 
     end_time:isTimeRestricted?document.getElementById("editEndTime").value:"", 
     custom_options:updatedOptions
@@ -1020,7 +1148,6 @@ window.updateEditChoiceValue = (gIdx, cIdx, val) => {
   }
 };
 
-// 🚀 核心優化：建立安全的全域通道，100% 綁定群組標題輸入框，防止為空而被過濾代碼剔除
 window.updateEditGroupTitle = (gIdx, val) => {
   if (editOptionGroups[gIdx]) {
     editOptionGroups[gIdx].title = val;
@@ -1041,7 +1168,6 @@ window.renderEditOptionGroups = () => {
 
     div.innerHTML=`
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <!-- 🚀 核心除錯點：將群組名稱的輸入事件完整接回全域 window 安全更新通道中 -->
         <input placeholder="群組名稱" value="${group.title}" oninput="window.updateEditGroupTitle(${gIndex}, this.value)">
         <button class="beautiful-del-group-btn" type="button" onclick="window.deleteEditOptionGroup(${gIndex})">刪除群組</button>
       </div>
@@ -1057,7 +1183,7 @@ window.renderEditOptionGroups = () => {
 window.loadCounterResident=async () => {
   const inputVal = document.getElementById("counterResidentInput").value.trim();
   const snap = await getDocs(query(collection(db,"balances"),where("uid","==",inputVal)));
-  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=`住戶：${counterResident.username} ｜ 剩餘：${counterGranted+counterStored}點`; }
+  if(!snap.empty){ const b=snap.docs[0]; counterBalanceDocId=b.id; counterGranted=b.data().granted_amount; counterStored=b.data().stored_amount; counterResident={username:inputVal}; document.getElementById("counterResidentInfo").innerHTML=\"住戶：\"+counterResident.username+\" ｜ 剩餘：\"+(counterGranted+counterStored)+\"點\"; }
 };
 window.renderCategorySelects = () => { const f = document.getElementById("counterCategoryFilter"); if(f) { f.innerHTML = '<option value="全部">全部分類</option>'; categoryCache.forEach(c=>{ f.innerHTML += `<option value="${c}">${c}</option>`; }); } };
 window.changeCounterCategory=(c)=>{ currentCounterCategory=c; window.renderCounterMenu(); };
