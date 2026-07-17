@@ -377,7 +377,7 @@ function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
   try {
     const d = new Date(isoString);
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate())+1.padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   } catch(e) {
     return "時間格式錯誤";
   }
@@ -947,18 +947,16 @@ window.openEditMenu = (id) => {
   document.getElementById("editEndTime").value = m.end_time || "17:00";
   window.toggleTimeInputs('edit');
   
-  // 精準定位：複製既有客製化規格選項進入快照陣列中，防止被全域覆寫
   editOptionGroups = JSON.parse(JSON.stringify(m.custom_options || []));
   window.renderEditOptionGroups(); document.getElementById("editModalBg").style.display = "flex";
 };
 
 window.closeEditModal=()=>document.getElementById("editModalBg").style.display="none";
 
-// 🚀 世紀大除錯：修正 window.saveEditMenu 內部變數對齊，確保「自訂規格群組」完美送上 Firebase！
+// 🚀 世紀大除錯：修正 window.saveEditMenu，完整清理並同步自訂規格群組
 window.saveEditMenu=async()=>{
   const isTimeRestricted = document.getElementById("editTimeRestricted").checked;
   
-  // 重新從編輯區抓取最新的乾淨自訂細項
   const updatedOptions = editOptionGroups.map(g => ({
     title: g.title.trim(),
     choices: g.choices.map(c => c.trim()).filter(c => c !== "")
@@ -974,12 +972,9 @@ window.saveEditMenu=async()=>{
     is_time_restricted:isTimeRestricted, 
     start_time:isTimeRestricted?document.getElementById("editStartTime").value:"", 
     end_time:isTimeRestricted?document.getElementById("editEndTime").value:"", 
-    custom_options:updatedOptions // 100% 寫入最新正確規格
+    custom_options:updatedOptions
   });
-  
-  document.getElementById("editModalBg").style.display="none"; 
-  alert("更新成功"); 
-  await loadMenu();
+  document.getElementById("editModalBg").style.display="none"; alert("更新成功"); await loadMenu();
 };
 
 window.toggleMenu=async(id,enabled)=>{ await updateDoc(doc(db,"menu",id),{enabled:!enabled}); await loadMenu(); };
@@ -1020,6 +1015,7 @@ window.deleteEditOptionGroup=function(idx){ editOptionGroups.splice(idx,1); wind
 window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); window.renderEditOptionGroups(); };
 window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); window.renderEditOptionGroups(); };
 
+// 🚀 終極除錯核心：完美接軌動態 input 的雙向資料綁定鏈路，使規格在編輯彈窗中填寫立刻即時生效！
 window.renderEditOptionGroups = () => {
   const eList = document.getElementById("editOptionList"); if(!eList) return;
   eList.innerHTML="";
