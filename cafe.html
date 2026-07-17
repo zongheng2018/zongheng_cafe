@@ -373,7 +373,6 @@ function formatItems(items){
   }).join("");
 }
 
-// 🚀 世紀重大除錯：將上一動不小心打錯、多串了 +1 的錯位語法徹底還原為百分之百正確的乾淨寫法，拒絕瀏覽器編譯拋錯！
 function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
   try {
@@ -634,7 +633,7 @@ window.openModifyOrderModal = (order) => {
   activeEditingItems = JSON.parse(JSON.stringify(order.items || []));
   
   document.getElementById("editOrderDetailsSummary").innerHTML = `
-    訂館編號：${order.order_id} ｜ 住戶：${order.uid}<br>
+    訂單編號：${order.order_id} ｜ 住戶：${order.uid}<br>
     原本金額：<b>${order.total} 點</b>
   `;
   
@@ -754,6 +753,7 @@ document.getElementById("submitEditedOrderBtn").onclick = async () => {
   let oldItemsHtml = (order.items || []).map(i => `<div>- ${i.name} × ${i.qty}</div>`).join("");
   let newItemsHtml = activeEditingItems.map(i => `<div>+ ${i.name} × ${i.qty}</div>`).join("");
   
+  // 🚀 世紀修復大魔王：將原本字串模板中不小心多打的下底線變數全面剔除，換成標準合法的 CSS 十六進位色號，一秒起死回生！
   let customEditHtml = `
     <div style="font-weight:bold; font-size:13px; color:#6d6258;">原訂單品項：</div>
     <div style="font-size:12px; color:#777; padding-left:6px;">${oldItemsHtml}</div>
@@ -761,7 +761,7 @@ document.getElementById("submitEditedOrderBtn").onclick = async () => {
     <div style="font-weight:bold; font-size:13px; color:#6b8b61;">更動後新餐點明細：</div>
     <div style="font-size:12px; color:#333; padding-left:6px;">${newItemsHtml}</div>
     <div style="margin:4px 0; border-top:1px dashed #ccc;"></div>
-    <div style="font-size:13px; font-weight:bold; color:${diff > 0 ? '_c86b62' : '_3f7f47'}">
+    <div style="font-size:13px; font-weight:bold; color:${diff > 0 ? '#c86b62' : '#3f7f47'}">
       異動差額結算：${diff > 0 ? '補扣 ' + diff + ' 點' : diff < 0 ? '退還 ' + Math.abs(diff) + ' 點' : '金額無變動'}
     </div>
   `;
@@ -872,7 +872,7 @@ async function loadMenu(){
   const mSelect = document.getElementById("mCategorySelect");
   if(mSelect) {
     mSelect.innerHTML = '<option value="">選擇既有分類</option>';
-    categoryCache.forEach(c => { mSelect.innerHTML += `<option value="${c}">${c}</option>'; });
+    categoryCache.forEach(c => { mSelect.innerHTML += `<option value="${c}">${c}</option>`; });
   }
 
   menuCache.forEach(m=>{
