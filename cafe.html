@@ -294,7 +294,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="option-editor">
       <div class="option-title">自訂選項</div>
       <div id="editOptionList"></div>
-      <!-- 🚀 修正點：按鈕點擊對齊 window 全域通道 -->
       <button class="btn light" type="button" onclick="window.addEditOptionGroup()">新增選項群組</button>
     </div>
     <div class="btn-row"><button class="btn primary" onclick="window.saveEditMenu()">儲存修改</button><button class="btn light" onclick="window.closeEditModal()">取消</button></div>
@@ -784,7 +783,7 @@ function listenSettings() {
     
     const systemStatusBox = document.getElementById("systemStatus");
     if(systemStatusBox) {
-      systemStatusBox.innerHTML = `<b>目系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
+      systemStatusBox.innerHTML = `<b>目前系統模式：</b>${modeText}<br><b>自動供應時間：</b>${data.open_time || "08:30"} – ${data.close_time || "19:00"}<br><b>公休日期清單：</b>${data.closed_days || "未設定"}`;
     }
     document.getElementById("openTime").value = data.open_time || "08:30"; 
     document.getElementById("closeTime").value = data.close_time || "19:00"; 
@@ -1010,11 +1009,17 @@ function renderNewOptionGroups(){
   });
 }
 
-// 🚀 核心優化：打通編輯彈窗內自訂選項群組與細項的即時互動控制鏈路
 window.addEditOptionGroup=function(){ editOptionGroups.push({title:"",choices:[""]}); window.renderEditOptionGroups(); };
 window.deleteEditOptionGroup=function(idx){ editOptionGroups.splice(idx,1); window.renderEditOptionGroups(); };
 window.addEditChoice=function(idx){ editOptionGroups[idx].choices.push(''); window.renderEditOptionGroups(); };
 window.deleteEditChoice=function(gIdx, cIdx){ editOptionGroups[gIdx].choices.splice(cIdx,1); window.renderEditOptionGroups(); };
+
+// 🚀 核心優化：建立安全的全域通道函數，100% 打通細項輸入框資料與 editOptionGroups 資料庫的雙向綁定
+window.updateEditChoiceValue = (gIdx, cIdx, val) => {
+  if (editOptionGroups[gIdx] && editOptionGroups[gIdx].choices) {
+    editOptionGroups[gIdx].choices[cIdx] = val;
+  }
+};
 
 window.renderEditOptionGroups = () => {
   const eList = document.getElementById("editOptionList"); if(!eList) return;
@@ -1023,7 +1028,8 @@ window.renderEditOptionGroups = () => {
     const div=document.createElement("div"); div.className="option-group-box";
     let choicesHtml = (group.choices || []).map((c, cIndex) => `
       <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-        <input placeholder="細項值" value="${c}" oninput="editOptionGroups[${gIndex}].choices[${cIndex}]=this.value" style="padding:8px 12px; font-size:14px;">
+        <!-- 🚀 核心除錯點：將 oninput 綁定對齊 window 全域通道更新函數，徹底打通細項值寫入儲存 -->
+        <input placeholder="細項值" value="${c}" oninput="window.updateEditChoiceValue(${gIndex}, ${cIndex}, this.value)" style="padding:8px 12px; font-size:14px;">
         <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; font-size:16px; cursor:pointer;" onclick="window.deleteEditChoice(${gIndex},${cIndex})">✕</button>
       </div>
     `).join("");
