@@ -304,7 +304,6 @@ function renderMenu() {
     section.appendChild(grid); container.appendChild(section);
   });
 
-  // 🚀 核心新增：滾動自動追蹤高亮（ScrollSpy）
   initScrollSpy();
 }
 
@@ -404,7 +403,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (全能模糊音字典 + 規格過濾 + 備註防洩漏)
+// 🚀 多品項自然語言點餐引擎 (含內用/外帶 + 座位號碼智慧分析)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -434,7 +433,7 @@ function initSpeechRecognition() {
 
 window.startVoiceOrder = () => {
   recordedTranscript = "";
-  document.getElementById("voiceResultText").innerText = "請說出餐點（例如：三個蘋果、一瓶多纖果汁、一杯拿鐵去冰不要糖 幫我備註外帶紙袋）...";
+  document.getElementById("voiceResultText").innerText = "請說出餐點（例如：內用坐在A1、一杯熱拿鐵無糖、一瓶多纖果汁）...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
   document.getElementById("voiceWaveIcon").classList.add("listening");
   document.getElementById("voiceModalOverlay").style.display = "flex";
@@ -459,28 +458,45 @@ window.stopAndProcessVoice = () => {
     return;
   }
 
-  document.getElementById("voiceStatusTitle").innerText = "正在智慧解析餐點與規格...";
+  document.getElementById("voiceStatusTitle").innerText = "正在智慧解析餐點、取餐方式與規格...";
   
   setTimeout(() => {
-    const parsedItems = parseVoiceOrderLocally(text, menuList);
-    if (!parsedItems || parsedItems.length === 0) {
+    const parseResult = parseVoiceOrderLocally(text, menuList);
+    
+    if (!parseResult.items || parseResult.items.length === 0) {
       alert("抱歉，系統未在菜單中找到您說的品項，請確認品項名稱或手動點餐！");
     } else {
-      parsedItems.forEach(item => cart.push(item));
+      // 1. 推入購物車
+      parseResult.items.forEach(item => cart.push(item));
       updateCartSummary();
-      alert(`已成功加入 ${parsedItems.length} 項商品！`);
+
+      // 2. 🚀 自動設定取餐方式與座位
+      if (parseResult.diningType) {
+        const diningSelect = document.getElementById("diningType");
+        diningSelect.value = parseResult.diningType;
+        window.toggleSeatSelect();
+      }
+
+      if (parseResult.seat) {
+        const seatSelect = document.getElementById("seatSelect");
+        if (seatSelect) {
+          seatSelect.value = parseResult.seat;
+        }
+      }
+
+      alert(`已成功加入 ${parseResult.items.length} 項商品！${parseResult.diningType ? `【${parseResult.diningType}${parseResult.seat ? ` ${parseResult.seat}桌` : ''}】` : ''}`);
       window.openCart();
     }
     document.getElementById("voiceModalOverlay").style.display = "none";
   }, 200);
 };
 
-// 🚀 核心自然語言解析模組
+// 🚀 核心自然語言解析模組 (取餐方式 + 座位號碼 + 菜單品項)
 function parseVoiceOrderLocally(rawUserText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
 
-  // 1. 全能同音錯字字典（大幅擴充）
+  // 1. 同音錯字字典前置校正
   let userText = rawUserText
     .replace(/(多鮮|多先|多仙|多掀|多萱)/g, "多纖")
     .replace(/(負湯|負糖|副糖|付糖|服糖|父糖|附唐)/g, "附糖")
@@ -496,7 +512,28 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     .replace(/(抹茶|末茶|磨茶)/g, "抹茶")
     .replace(/(乳香|乳香世家|魯香)/g, "乳香世家");
 
-  // 2. 菜單名稱去除括號與輔助標籤
+  // 2. 🚀 分析「內用 / 外帶」與「座位號碼」
+  let detectedDiningType = null;
+  let detectedSeat = null;
+
+  // 判斷內用或外帶
+  if (/(內用|在裡面吃|店內吃|內吃|現場吃|坐在|桌號|座位)/.test(userText)) {
+    detectedDiningType = "內用";
+  } else if (/(外帶|帶走|包回去|拿走|帶回家)/.test(userText)) {
+    detectedDiningType = "外帶";
+  }
+
+  // 判斷座位號碼 (比對 staticSeats，如 A1~A4, B1~B8, C1~C6, 7)
+  for (let s of staticSeats) {
+    const regex = new RegExp(`(?:坐在|座位(?:是)?|桌號(?:是)?|桌|號)?\\s*(${s})\\b`, "i");
+    if (regex.test(userText)) {
+      detectedSeat = s;
+      detectedDiningType = "內用"; // 既然說了桌號，必定是內用
+      break;
+    }
+  }
+
+  // 3. 菜單名稱去除括號與輔助標籤
   const cleanedMenu = availableItems.map(item => {
     const cleanName = item.name.replace(/[\(（\[【].*?[\)）\]】]/g, "").trim();
     return {
@@ -506,14 +543,13 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     };
   }).sort((a, b) => b.length - a.length);
 
-  // 3. 全句定位搜尋命中的品項 (支援模糊相似度比對)
+  // 4. 全句定位搜尋命中的品項 (支援 75% 模糊容錯匹配)
   let occurrences = [];
   let matchedRanges = [];
   
   cleanedMenu.forEach(entry => {
     let pos = userText.indexOf(entry.cleanName);
     
-    // 若完全比對沒有，嘗試 75% 模糊容錯匹配
     if (pos === -1 && entry.cleanName.length >= 3) {
       for (let i = 0; i <= userText.length - entry.cleanName.length; i++) {
         let sub = userText.substr(i, entry.cleanName.length);
@@ -538,11 +574,13 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     }
   });
 
-  if (occurrences.length === 0) return [];
+  if (occurrences.length === 0) {
+    return { items: [], diningType: detectedDiningType, seat: detectedSeat };
+  }
 
   occurrences.sort((a, b) => a.index - b.index);
 
-  return occurrences.map((occ, idx) => {
+  const finalItems = occurrences.map((occ, idx) => {
     const prevEnd = idx === 0 ? 0 : occurrences[idx - 1].index + occurrences[idx - 1].length;
     const nextStart = idx === occurrences.length - 1 ? userText.length : occurrences[idx + 1].index;
     
@@ -567,7 +605,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
       let matchedChoice = null;
       const choices = (group.choices || []).map(c => c.trim());
 
-      // 1. 精確匹配
       for (let c of choices) {
         if (c && fullSegment.includes(c)) {
           matchedChoice = c;
@@ -576,7 +613,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
         }
       }
 
-      // 2. 語意映射
       if (!matchedChoice) {
         const groupTitle = group.title || "";
         const isSugarOption = groupTitle.includes("糖") || choices.some(c => c.includes("糖"));
@@ -608,7 +644,7 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
       selectedOptions[group.title] = matchedChoice || (choices[0] || "");
     });
 
-    // C. 智慧純淨備註提取
+    // C. 智慧純淨備註提取（過濾掉內用、外帶、座位、規格等字詞）
     let note = "";
     const noteMatch = suffixSegment.match(/(?:幫我備註|請幫我備註|幫我註明|備註|註明)[:：\s]*(.*?)(?=\s*(然後|還有|再|下一個|一份|一個|兩杯|一杯|$))/);
     
@@ -617,7 +653,8 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
       usedOptionWords.forEach(w => {
         if (w) rawNote = rawNote.replaceAll(w, "");
       });
-      rawNote = rawNote.replace(/(去冰|微冰|少冰|正常冰|熱|溫|半糖|微糖|無糖|全糖|不要糖|附糖|湯匙)/g, "").trim();
+      // 額外剔除內用、外帶、桌號詞彙
+      rawNote = rawNote.replace(/(內用|外帶|坐在[A-Z0-9]+|桌號[A-Z0-9]+|座位[A-Z0-9]+|去冰|微冰|少冰|正常冰|熱|溫|半糖|微糖|無糖|全糖|不要糖|附糖|湯匙)/gi, "").trim();
       note = rawNote;
     }
 
@@ -630,6 +667,12 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
       note: note
     };
   });
+
+  return {
+    items: finalItems,
+    diningType: detectedDiningType,
+    seat: detectedSeat
+  };
 }
 </script>
 </body>
