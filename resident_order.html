@@ -355,7 +355,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (去重 + 智能映射 + 備註防洩漏)
+// 🚀 多品項自然語言點餐引擎 (同音錯字校正 + 規格過濾 + 備註防洩漏)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -371,7 +371,7 @@ function initSpeechRecognition() {
   rec.onresult = (event) => {
     let interim = "";
     recordedTranscript = "";
-    for (let i = 0; i < event.results.length; ++i) {
+    for (let i = event.results.length - 1; i >= 0; --i) {
       if (event.results[i].isFinal) {
         recordedTranscript += event.results[i][0].transcript;
       } else {
@@ -385,7 +385,7 @@ function initSpeechRecognition() {
 
 window.startVoiceOrder = () => {
   recordedTranscript = "";
-  document.getElementById("voiceResultText").innerText = "請說出餐點（例如：三個蘋果、一杯拿鐵不要糖、幫我備註拿個湯匙）...";
+  document.getElementById("voiceResultText").innerText = "請說出餐點（例如：三個蘋果、一杯拿鐵去冰不要附糖、幫我備註外帶紙袋）...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
   document.getElementById("voiceWaveIcon").classList.add("listening");
   document.getElementById("voiceModalOverlay").style.display = "flex";
@@ -404,14 +404,18 @@ window.stopAndProcessVoice = () => {
   document.getElementById("voiceWaveIcon").classList.remove("listening");
   
   const text = document.getElementById("voiceResultText").innerText.trim();
-  if (!text || text.length < 2) { alert("尚未聽到您的點餐內容！"); window.cancelVoiceOrder(); return; }
+  if (!text || text.length < 2 || text.startsWith("請說出餐點")) {
+    alert("尚未聽到您的點餐內容！");
+    window.cancelVoiceOrder();
+    return;
+  }
 
-  document.getElementById("voiceStatusTitle").innerText = "正在解析餐點...";
+  document.getElementById("voiceStatusTitle").innerText = "正在智慧解析餐點與規格...";
   
   setTimeout(() => {
     const parsedItems = parseVoiceOrderLocally(text, menuList);
     if (!parsedItems || parsedItems.length === 0) {
-      alert("抱歉，系統未在菜單中找到您說的品項。");
+      alert("抱歉，系統未在菜單中找到您說的品項，請確認品項名稱或手動點餐！");
     } else {
       parsedItems.forEach(item => cart.push(item));
       updateCartSummary();
@@ -419,20 +423,36 @@ window.stopAndProcessVoice = () => {
       window.openCart();
     }
     document.getElementById("voiceModalOverlay").style.display = "none";
-  }, 300);
+  }, 200);
 };
 
-// 🚀 核心解析演算法
-function parseVoiceOrderLocally(userText, currentMenu) {
+// 🚀 核心自然語言解析模組 (含語音同音校正)
+function parseVoiceOrderLocally(rawUserText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
 
-  const cleanedMenu = availableItems.map(item => ({
-    rawItem: item,
-    cleanName: item.name.replace(/[\(（\[【].*?[\)）\]】]/g, "").trim(),
-    length: item.name.length
-  })).sort((a, b) => b.length - a.length);
+  // 1. 語音常見同音錯字字典（前置標準化校正）
+  let userText = rawUserText
+    .replace(/(負湯|負糖|副糖|付糖|服糖|父糖|附唐)/g, "附糖")
+    .replace(/(冰淇淋|冰其林|冰奇淋|冰奇林)/g, "冰淇淋")
+    .replace(/(那鐵|拿帖|拿田)/g, "拿鐵")
+    .replace(/(乃茶|奶察)/g, "奶茶")
+    .replace(/(鬆餅|宋餅)/g, "鬆餅")
+    .replace(/(三明治|三明智)/g, "三明治")
+    .replace(/(美式|每式)/g, "美式")
+    .replace(/(湯匙|湯匙兒|唐池|唐匙)/g, "湯匙");
 
+  // 2. 菜單名稱去除括號與輔助標籤
+  const cleanedMenu = availableItems.map(item => {
+    const cleanName = item.name.replace(/[\(（\[【].*?[\)）\]】]/g, "").trim();
+    return {
+      rawItem: item,
+      cleanName: cleanName || item.name.trim(),
+      length: (cleanName || item.name.trim()).length
+    };
+  }).sort((a, b) => b.length - a.length);
+
+  // 3. 全句定位搜尋命中的品項
   let occurrences = [];
   let matchedRanges = [];
   
@@ -441,46 +461,114 @@ function parseVoiceOrderLocally(userText, currentMenu) {
     while (pos !== -1) {
       const endPos = pos + entry.cleanName.length;
       if (!matchedRanges.some(r => (pos >= r.start && pos < r.end) || (endPos > r.start && endPos <= r.end))) {
-        occurrences.push({ item: entry.rawItem, index: pos, length: entry.cleanName.length });
+        occurrences.push({ item: entry.rawItem, index: pos, length: entry.cleanName.length, name: entry.cleanName });
         matchedRanges.push({ start: pos, end: endPos });
       }
       pos = userText.indexOf(entry.cleanName, pos + 1);
     }
   });
 
+  if (occurrences.length === 0) return [];
+
+  // 按出現位置依序排序
   occurrences.sort((a, b) => a.index - b.index);
 
   return occurrences.map((occ, idx) => {
+    const prevEnd = idx === 0 ? 0 : occurrences[idx - 1].index + occurrences[idx - 1].length;
     const nextStart = idx === occurrences.length - 1 ? userText.length : occurrences[idx + 1].index;
-    const contextSegment = userText.substring(occ.index + occ.length, nextStart);
+    
+    // 取出此品項前後專屬的子句
+    const prefixSegment = userText.substring(prevEnd, occ.index);
+    const suffixSegment = userText.substring(occ.index + occ.length, nextStart);
+    const fullSegment = prefixSegment + " " + suffixSegment;
 
+    // A. 解析數量
     let qty = 1;
-    const qtyMatch = userText.substring(Math.max(0, occ.index - 5), occ.index).match(/(\d+|[一二兩三四五六七八九十]+)\s*(杯|個|份|碗|盤|瓶|隻|顆|罐|支)?/);
+    const qtyMatch = (prefixSegment + suffixSegment).match(/(\d+|[一二兩三四五六七八九十]+)\s*(杯|個|份|碗|盤|瓶|隻|顆|罐|支)?/);
     if (qtyMatch) {
       const qStr = qtyMatch[1];
       if (numMap[qStr]) qty = numMap[qStr];
       else if (!isNaN(parseInt(qStr))) qty = parseInt(qStr);
     }
 
+    // B. 解析規格選項 (custom_options) —— 支援「是/否/附糖/溫度/甜度」智能映射
     const selectedOptions = {};
+    const usedOptionWords = []; // 記錄已被選為規格的字詞，後續備註過濾用
+
     (occ.item.custom_options || []).forEach(group => {
       let matchedChoice = null;
-      (group.choices || []).forEach(c => {
-        if (contextSegment.includes(c.trim())) matchedChoice = c.trim();
-      });
-      if (!matchedChoice) {
-        if (/(不要|不用|別|免|不加|無)/.test(contextSegment)) matchedChoice = group.choices.find(c => /(否|不要|不加|無|不需要|免)/.test(c));
-        else if (/(要|需要|加|帶)/.test(contextSegment)) matchedChoice = group.choices.find(c => /(是|要|加|有|需要)/.test(c));
+      const choices = (group.choices || []).map(c => c.trim());
+
+      // 1. 精確文字匹配
+      for (let c of choices) {
+        if (c && fullSegment.includes(c)) {
+          matchedChoice = c;
+          usedOptionWords.push(c);
+          break;
+        }
       }
-      selectedOptions[group.title] = matchedChoice || (group.choices[0] || "");
+
+      // 2. 「附糖/加糖/餐具/是否」等二元語意判斷
+      if (!matchedChoice) {
+        const groupTitle = group.title || "";
+        const isSugarOption = groupTitle.includes("糖") || choices.some(c => c.includes("糖"));
+        const isSpoonOption = groupTitle.includes("匙") || groupTitle.includes("餐具") || choices.some(c => c.includes("匙"));
+
+        // 附糖語意
+        if (isSugarOption) {
+          if (/(不要附糖|不附糖|免附糖|不用附糖|無糖|不要糖|不加糖|否)/.test(fullSegment)) {
+            matchedChoice = choices.find(c => /(否|不要|不附|無|不加)/.test(c)) || choices[choices.length - 1];
+            usedOptionWords.push("不要附糖", "不附糖", "無糖", "不要糖", "不加糖", "附糖");
+          } else if (/(要附糖|附糖|加糖|有附糖|是)/.test(fullSegment)) {
+            matchedChoice = choices.find(c => /(是|要|附糖|加)/.test(c)) || choices[0];
+            usedOptionWords.push("要附糖", "附糖", "加糖");
+          }
+        }
+        // 湯匙/餐具語意
+        else if (isSpoonOption) {
+          if (/(不要湯匙|不用湯匙|免湯匙|不附湯匙|否)/.test(fullSegment)) {
+            matchedChoice = choices.find(c => /(否|不要|不附|無|不需要)/.test(c)) || choices[choices.length - 1];
+            usedOptionWords.push("不要湯匙", "不用湯匙", "免湯匙", "湯匙");
+          } else if (/(要湯匙|附湯匙|加湯匙|需要湯匙|是)/.test(fullSegment)) {
+            matchedChoice = choices.find(c => /(是|要|附|需要)/.test(c)) || choices[0];
+            usedOptionWords.push("要湯匙", "附湯匙", "湯匙");
+          }
+        }
+        // 一般是否選項
+        else if (/(不要|不用|別|免|不加|無)/.test(fullSegment)) {
+          matchedChoice = choices.find(c => /(否|不要|不加|無|不需要|免)/.test(c));
+        } else if (/(要|需要|加|帶)/.test(fullSegment)) {
+          matchedChoice = choices.find(c => /(是|要|加|有|需要)/.test(c));
+        }
+      }
+
+      // 3. 若均未提到，帶入該規格第一個預設值
+      selectedOptions[group.title] = matchedChoice || (choices[0] || "");
     });
 
-    // 嚴格截斷的備註提取 (停止於下一項的連接詞)
+    // C. 智慧純淨備註提取（過濾掉已被選為規格的字詞與連接詞）
     let note = "";
-    const noteMatch = contextSegment.match(/(?:幫我備註|請幫我備註|幫我註明|備註|註明|要|請加)[:：\s]*(.*?)(?=\s*(然後|還有|再|下一個|一份|一個|兩杯|一杯|$))/);
-    if (noteMatch && noteMatch[1]) note = noteMatch[1].trim();
+    const noteMatch = suffixSegment.match(/(?:幫我備註|請幫我備註|幫我註明|備註|註明)[:：\s]*(.*?)(?=\s*(然後|還有|再|下一個|一份|一個|兩杯|一杯|$))/);
+    
+    if (noteMatch && noteMatch[1]) {
+      let rawNote = noteMatch[1].trim();
+      // 移除已出現在選項中的字詞
+      usedOptionWords.forEach(w => {
+        if (w) rawNote = rawNote.replaceAll(w, "");
+      });
+      // 移除溫度甜度常用詞
+      rawNote = rawNote.replace(/(去冰|微冰|少冰|正常冰|熱|溫|半糖|微糖|無糖|全糖|不要糖|附糖|湯匙)/g, "").trim();
+      note = rawNote;
+    }
 
-    return { id: occ.item.id, name: occ.item.name, price: occ.item.price, qty, options: selectedOptions, note };
+    return {
+      id: occ.item.id,
+      name: occ.item.name,
+      price: Number(occ.item.price || 0),
+      qty,
+      options: selectedOptions,
+      note: note
+    };
   });
 }
 </script>
