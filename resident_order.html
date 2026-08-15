@@ -84,8 +84,9 @@ textarea{height:60px;resize:none}
 .voice-box{background:white;width:100%;max-width:360px;border-radius:20px;padding:24px 20px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
 .voice-wave{width:60px;height:60px;margin:0 auto 16px;border-radius:50%;background:#f0e8df;display:flex;align-items:center;justify-content:center;color:#6d6258}
 .voice-wave.listening{animation:pulse-wave 1.2s infinite;background:#eaddd3}
+.voice-wave.paused{background:#eee;color:#aaa;animation:none}
 @keyframes pulse-wave{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(109,98,88,0.4)}70%{transform:scale(1.08);box-shadow:0 0 0 16px rgba(109,98,88,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(109,98,88,0)}}
-.voice-text-preview{font-size:15px;color:#777;min-height:48px;margin:12px 0;line-height:1.5;background:#f8f5f1;border-radius:12px;padding:10px}
+.voice-text-preview{font-size:15px;color:#554d46;min-height:56px;max-height:120px;overflow-y:auto;margin:12px 0;line-height:1.5;background:#f8f5f1;border-radius:12px;padding:10px;text-align:left;word-break:break-all}
 </style>
 </head>
 
@@ -122,10 +123,12 @@ textarea{height:60px;resize:none}
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
     </div>
     <div style="font-weight:900; font-size:18px; color:#554d46;" id="voiceStatusTitle">正在聆聽中...</div>
-    <div class="voice-text-preview" id="voiceResultText">請直接說出您想點的餐點與規格...</div>
-    <div style="display:flex; gap:10px; margin-top:14px;">
-      <button class="btn light" style="flex:1; border:1px solid #c9c0b7; background:white; color:#6d6258; border-radius:12px; padding:10px; font-weight:800;" onclick="window.cancelVoiceOrder()">取消</button>
-      <button class="btn primary" style="flex:1; border:none; background:#6d6258; color:white; border-radius:12px; padding:10px; font-weight:800;" id="voiceConfirmBtn" onclick="window.stopAndProcessVoice()">完成點餐並送出</button>
+    <div class="voice-text-preview" id="voiceResultText">請直接說出餐點（支援連講多句，語速快也能辨識）...</div>
+    
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="btn light" style="flex:1; border:1px solid #c9c0b7; background:white; color:#6d6258; border-radius:12px; padding:10px; font-weight:800; font-size:14px;" onclick="window.cancelVoiceOrder()">取消</button>
+      <button class="btn light" style="flex:1.2; border:1px solid #bcaea1; background:#f5f1eb; color:#6d6258; border-radius:12px; padding:10px; font-weight:800; font-size:14px;" id="voicePauseBtn" onclick="window.togglePauseVoice()">⏸ 暫停聆聽</button>
+      <button class="btn primary" style="flex:1.4; border:none; background:#6d6258; color:white; border-radius:12px; padding:10px; font-weight:800; font-size:14px;" id="voiceConfirmBtn" onclick="window.stopAndProcessVoice()">完成送出</button>
     </div>
   </div>
 </div>
@@ -188,7 +191,9 @@ let sectionObserver=null;
 let isManualScrolling=false;
 
 let recognition=null;
-let recordedTranscript="";
+let finalAccumulatedText="";
+let isUserPaused=false;
+let isExplicitStopped=false;
 
 const staticSeats = [
   "A1", "A2", "A3", "A4",
@@ -403,7 +408,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (含內用/外帶 + 座位號碼智慧分析)
+// 🚀 多品項自然語言點餐引擎 (持續不中斷聆聽 + 一鍵暫停/繼續 + 快速語速即時捕獲)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -413,52 +418,107 @@ function initSpeechRecognition() {
   }
   const rec = new SpeechRecognition();
   rec.lang = "zh-TW";
-  rec.continuous = false;
+  rec.continuous = true;
   rec.interimResults = true;
 
   rec.onresult = (event) => {
-    let interim = "";
-    recordedTranscript = "";
-    for (let i = event.results.length - 1; i >= 0; --i) {
+    let interimText = "";
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      const transcript = event.results[i][0].transcript;
       if (event.results[i].isFinal) {
-        recordedTranscript += event.results[i][0].transcript;
+        finalAccumulatedText += transcript + " ";
       } else {
-        interim += event.results[i][0].transcript;
+        interimText += transcript;
       }
     }
-    document.getElementById("voiceResultText").innerText = recordedTranscript + interim || "正在聆聽...";
+    const displayText = (finalAccumulatedText + interimText).trim();
+    if (displayText) {
+      document.getElementById("voiceResultText").innerText = displayText;
+    }
   };
+
+  rec.onend = () => {
+    if (!isExplicitStopped && !isUserPaused) {
+      try {
+        rec.start();
+      } catch (e) {}
+    }
+  };
+
+  rec.onerror = (event) => {
+    console.warn("語音辨識提示:", event.error);
+    if (event.error === "no-speech" && !isExplicitStopped && !isUserPaused) {
+      try { rec.start(); } catch (e) {}
+    }
+  };
+
   return rec;
 }
 
 window.startVoiceOrder = () => {
-  recordedTranscript = "";
-  document.getElementById("voiceResultText").innerText = "請說出餐點（例如：內用坐在A1、一杯熱拿鐵無糖、一瓶多纖果汁）...";
+  finalAccumulatedText = "";
+  isUserPaused = false;
+  isExplicitStopped = false;
+
+  document.getElementById("voiceResultText").innerText = "正在聆聽中，請直接說出想點的餐點與規格...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
-  document.getElementById("voiceWaveIcon").classList.add("listening");
+  document.getElementById("voiceWaveIcon").className = "voice-wave listening";
+  document.getElementById("voicePauseBtn").innerHTML = "⏸ 暫停聆聽";
   document.getElementById("voiceModalOverlay").style.display = "flex";
+
   if (!recognition) recognition = initSpeechRecognition();
-  if (recognition) { try { recognition.start(); } catch(e) {} }
+  if (recognition) {
+    try { recognition.start(); } catch(e) {}
+  }
+};
+
+window.togglePauseVoice = () => {
+  if (!recognition) return;
+  const pauseBtn = document.getElementById("voicePauseBtn");
+  const waveIcon = document.getElementById("voiceWaveIcon");
+  const statusTitle = document.getElementById("voiceStatusTitle");
+
+  if (!isUserPaused) {
+    isUserPaused = true;
+    try { recognition.stop(); } catch(e) {}
+    waveIcon.className = "voice-wave paused";
+    statusTitle.innerText = "已暫停聆聽";
+    pauseBtn.innerHTML = "▶ 繼續聆聽";
+  } else {
+    isUserPaused = false;
+    waveIcon.className = "voice-wave listening";
+    statusTitle.innerText = "正在聆聽中...";
+    pauseBtn.innerHTML = "⏸ 暫停聆聽";
+    try { recognition.start(); } catch(e) {}
+  }
 };
 
 window.cancelVoiceOrder = () => {
-  if (recognition) { try { recognition.stop(); } catch(e) {} }
-  document.getElementById("voiceWaveIcon").classList.remove("listening");
+  isExplicitStopped = true;
+  isUserPaused = false;
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  document.getElementById("voiceWaveIcon").className = "voice-wave";
   document.getElementById("voiceModalOverlay").style.display = "none";
 };
 
 window.stopAndProcessVoice = () => {
-  if (recognition) { try { recognition.stop(); } catch(e) {} }
-  document.getElementById("voiceWaveIcon").classList.remove("listening");
+  isExplicitStopped = true;
+  isUserPaused = false;
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  document.getElementById("voiceWaveIcon").className = "voice-wave";
   
   const text = document.getElementById("voiceResultText").innerText.trim();
-  if (!text || text.length < 2 || text.startsWith("請說出餐點")) {
-    alert("尚未聽到您的點餐內容！");
+  if (!text || text.length < 2 || text.startsWith("正在聆聽中") || text.startsWith("請直接說出")) {
+    alert("尚未聽到您的點餐內容，請再試一次！");
     window.cancelVoiceOrder();
     return;
   }
 
-  document.getElementById("voiceStatusTitle").innerText = "正在智慧解析餐點、取餐方式與規格...";
+  document.getElementById("voiceStatusTitle").innerText = "正在解析餐點、取餐方式與規格...";
   
   setTimeout(() => {
     const parseResult = parseVoiceOrderLocally(text, menuList);
@@ -466,11 +526,9 @@ window.stopAndProcessVoice = () => {
     if (!parseResult.items || parseResult.items.length === 0) {
       alert("抱歉，系統未在菜單中找到您說的品項，請確認品項名稱或手動點餐！");
     } else {
-      // 1. 推入購物車
       parseResult.items.forEach(item => cart.push(item));
       updateCartSummary();
 
-      // 2. 🚀 自動設定取餐方式與座位
       if (parseResult.diningType) {
         const diningSelect = document.getElementById("diningType");
         diningSelect.value = parseResult.diningType;
@@ -488,15 +546,14 @@ window.stopAndProcessVoice = () => {
       window.openCart();
     }
     document.getElementById("voiceModalOverlay").style.display = "none";
-  }, 200);
+  }, 150);
 };
 
-// 🚀 核心自然語言解析模組 (取餐方式 + 座位號碼 + 菜單品項)
+// 🚀 核心自然語言解析模組
 function parseVoiceOrderLocally(rawUserText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
 
-  // 1. 同音錯字字典前置校正
   let userText = rawUserText
     .replace(/(多鮮|多先|多仙|多掀|多萱)/g, "多纖")
     .replace(/(負湯|負糖|副糖|付糖|服糖|父糖|附唐)/g, "附糖")
@@ -512,28 +569,24 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     .replace(/(抹茶|末茶|磨茶)/g, "抹茶")
     .replace(/(乳香|乳香世家|魯香)/g, "乳香世家");
 
-  // 2. 🚀 分析「內用 / 外帶」與「座位號碼」
   let detectedDiningType = null;
   let detectedSeat = null;
 
-  // 判斷內用或外帶
   if (/(內用|在裡面吃|店內吃|內吃|現場吃|坐在|桌號|座位)/.test(userText)) {
     detectedDiningType = "內用";
   } else if (/(外帶|帶走|包回去|拿走|帶回家)/.test(userText)) {
     detectedDiningType = "外帶";
   }
 
-  // 判斷座位號碼 (比對 staticSeats，如 A1~A4, B1~B8, C1~C6, 7)
   for (let s of staticSeats) {
     const regex = new RegExp(`(?:坐在|座位(?:是)?|桌號(?:是)?|桌|號)?\\s*(${s})\\b`, "i");
     if (regex.test(userText)) {
       detectedSeat = s;
-      detectedDiningType = "內用"; // 既然說了桌號，必定是內用
+      detectedDiningType = "內用";
       break;
     }
   }
 
-  // 3. 菜單名稱去除括號與輔助標籤
   const cleanedMenu = availableItems.map(item => {
     const cleanName = item.name.replace(/[\(（\[【].*?[\)）\]】]/g, "").trim();
     return {
@@ -543,7 +596,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     };
   }).sort((a, b) => b.length - a.length);
 
-  // 4. 全句定位搜尋命中的品項 (支援 75% 模糊容錯匹配)
   let occurrences = [];
   let matchedRanges = [];
   
@@ -588,7 +640,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     const suffixSegment = userText.substring(occ.index + occ.length, nextStart);
     const fullSegment = prefixSegment + " " + suffixSegment;
 
-    // A. 解析數量
     let qty = 1;
     const qtyMatch = (prefixSegment + suffixSegment).match(/(\d+|[一二兩三四五六七八九十]+)\s*(杯|個|份|碗|盤|瓶|隻|顆|罐|支)?/);
     if (qtyMatch) {
@@ -597,7 +648,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
       else if (!isNaN(parseInt(qStr))) qty = parseInt(qStr);
     }
 
-    // B. 解析規格選項 (custom_options)
     const selectedOptions = {};
     const usedOptionWords = [];
 
@@ -644,7 +694,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
       selectedOptions[group.title] = matchedChoice || (choices[0] || "");
     });
 
-    // C. 智慧純淨備註提取（過濾掉內用、外帶、座位、規格等字詞）
     let note = "";
     const noteMatch = suffixSegment.match(/(?:幫我備註|請幫我備註|幫我註明|備註|註明)[:：\s]*(.*?)(?=\s*(然後|還有|再|下一個|一份|一個|兩杯|一杯|$))/);
     
@@ -653,7 +702,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
       usedOptionWords.forEach(w => {
         if (w) rawNote = rawNote.replaceAll(w, "");
       });
-      // 額外剔除內用、外帶、桌號詞彙
       rawNote = rawNote.replace(/(內用|外帶|坐在[A-Z0-9]+|桌號[A-Z0-9]+|座位[A-Z0-9]+|去冰|微冰|少冰|正常冰|熱|溫|半糖|微糖|無糖|全糖|不要糖|附糖|湯匙)/gi, "").trim();
       note = rawNote;
     }
