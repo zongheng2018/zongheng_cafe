@@ -116,7 +116,6 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
     <div class="section-title" style="font-size:20px; margin-bottom:12px; border-bottom:2px solid #6d6258; padding-bottom:6px;">系統公告</div>
     
     <div class="eng-author-row">
-      <!-- 🚀 修正點：將頭像文字精密修正為「謝」 -->
       <div class="eng-avatar">謝</div>
       <div class="eng-meta-info">
         <div class="eng-name">系統工程師 - 謝秉諺</div>
@@ -217,11 +216,15 @@ async function loadAccountInfo(){
   const q=query(collection(db,"accounts"),where("username","==",profile.username));
   const snap=await getDocs(q);
   if(!snap.empty){
+    const data = snap.docs[0].data();
     accountDocId=snap.docs[0].id;
-    if (snap.docs[0].data().is_notification_enabled !== undefined) {
-      profile.is_notification_enabled = snap.docs[0].data().is_notification_enabled;
-      localStorage.setItem("zh_user", JSON.stringify(profile));
+    if (data.is_notification_enabled !== undefined) {
+      profile.is_notification_enabled = data.is_notification_enabled;
     }
+    if (data.low_balance_threshold !== undefined) {
+      profile.low_balance_threshold = data.low_balance_threshold;
+    }
+    localStorage.setItem("zh_user", JSON.stringify(profile));
   }
 }
 
@@ -376,7 +379,7 @@ window.showNotice=async function(){
         noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
       }
     } else {
-      announcementBox.innerText = "開目前尚無公告";
+      announcementBox.innerText = "目前尚無公告";
       noticeList.innerHTML = '<div class="notice-item">目前尚無重要通知</div>';
     }
   }, error => {
@@ -568,6 +571,7 @@ window.showProfile=async function(){
   }
 
   const currentNotifyStatus = profile.is_notification_enabled !== false ? "true" : "false";
+  const currentThreshold = profile.low_balance_threshold !== undefined ? String(profile.low_balance_threshold) : "200";
 
   profileBox.innerHTML=`
     <div class="point-grid">
@@ -582,6 +586,17 @@ window.showProfile=async function(){
       <select id="notificationToggleSelect" onchange="window.updateNotificationPreference(this.value)" style="width:100%; border:none; background:transparent; font-size:15px; outline:none; color:#5f574f; padding:0; cursor:pointer;">
         <option value="true" ${currentNotifyStatus==="true"?"selected":""}>是 (接收餐點完成推播)</option>
         <option value="false" ${currentNotifyStatus==="false"?"selected":""}>否 (關閉通知)</option>
+      </select>
+    </div>
+
+    <div class="notice-item">
+      <div style="font-weight:700; color:#6d6258; font-size:16px; margin-bottom:4px;">低點數餘額提醒門檻</div>
+      <select id="thresholdSelect" onchange="window.updateThresholdPreference(this.value)" style="width:100%; border:none; background:transparent; font-size:15px; outline:none; color:#5f574f; padding:0; cursor:pointer;">
+        <option value="100" ${currentThreshold==="100"?"selected":""}>100 點以下提示</option>
+        <option value="200" ${currentThreshold==="200"?"selected":""}>200 點以下提示 (預設)</option>
+        <option value="300" ${currentThreshold==="300"?"selected":""}>300 點以下提示</option>
+        <option value="500" ${currentThreshold==="500"?"selected":""}>500 點以下提示</option>
+        <option value="0" ${currentThreshold==="0"?"selected":""}>關閉低點數提醒</option>
       </select>
     </div>
 
@@ -611,6 +626,20 @@ window.updateNotificationPreference = async function(val) {
     Notification.requestPermission();
   }
   alert("通知設定更新成功");
+};
+
+window.updateThresholdPreference = async function(val) {
+  const thresholdVal = Number(val);
+  profile.low_balance_threshold = thresholdVal;
+  localStorage.setItem("zh_user", JSON.stringify(profile));
+  
+  if (accountDocId) {
+    await updateDoc(doc(db, "accounts", accountDocId), {
+      low_balance_threshold: thresholdVal,
+      updated_at: new Date().toISOString()
+    });
+  }
+  alert("低點數提醒門檻已更新為：" + (thresholdVal === 0 ? "關閉" : thresholdVal + " 點"));
 };
 
 window.togglePasswordBox=function(){
