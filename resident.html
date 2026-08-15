@@ -47,6 +47,8 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
 .action-btn{border:none;background:#6d6258;color:white;border-radius:12px;padding:11px 18px;font-weight:800}
 .order-time-text{font-size:13px;color:#8c837a;margin-top:2px}
 
+.low-balance-alert{background:#fcf4ec;border:1px solid #eedecf;border-radius:12px;padding:14px 18px;margin-bottom:18px;color:#8e6040;font-size:15px;font-weight:700;display:none;line-height:1.6}
+
 .history-filter-row{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
 .history-select-input{border:none;background:#f5f1eb;border-radius:8px;padding:10px;font-size:14px;outline:none;color:#5f574f}
 .ledger-table-box{width:100%;overflow-x:auto;margin-top:12px}
@@ -305,6 +307,7 @@ window.showNotice=async function(){
   setActive("tabNotice");
 
   content.innerHTML=`
+    <div class="low-balance-alert" id="lowBalanceAlertBox">點數即將用罄（目前剩餘 <span id="lowBalanceText">0</span> 點），請留意餘額。</div>
     <div class="card">
       <div class="section-title">最新訂單狀態</div>
       <div id="latestOrderBox">讀取中...</div>
@@ -317,6 +320,8 @@ window.showNotice=async function(){
       <div class="section-title">重要通知</div>
       <div id="noticeList">讀取中...</div>
     </div>`;
+
+  checkHomeLowBalanceAlert();
 
   const latestOrderBox = document.getElementById("latestOrderBox");
   const announcementBox = document.getElementById("announcementBox");
@@ -388,6 +393,23 @@ window.showNotice=async function(){
     noticeList.innerHTML = '<div class="notice-item">讀取重要通知失敗</div>';
   });
 };
+
+async function checkHomeLowBalanceAlert() {
+  const threshold = profile.low_balance_threshold !== undefined ? profile.low_balance_threshold : 200;
+  if (threshold <= 0) return;
+
+  const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", profile.username)));
+  if (!snap.empty) {
+    const b = snap.docs[0].data();
+    const total = Number(b.granted_amount || 0) + Number(b.stored_amount || 0);
+    const box = document.getElementById("lowBalanceAlertBox");
+    const num = document.getElementById("lowBalanceText");
+    if (box && num && total <= threshold) {
+      num.innerText = total;
+      box.style.display = "block";
+    }
+  }
+}
 
 window.showOrders=async function(){
   stopAllSnapshots();
