@@ -81,12 +81,19 @@ textarea{height:60px;resize:none}
 .voice-float-btn{position:fixed;right:18px;bottom:85px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;box-shadow:0 6px 20px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:85;transition:transform 0.2s ease,box-shadow 0.2s ease}
 .voice-float-btn:active{transform:scale(0.92)}
 .voice-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
-.voice-box{background:white;width:100%;max-width:360px;border-radius:20px;padding:24px 20px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
-.voice-wave{width:60px;height:60px;margin:0 auto 16px;border-radius:50%;background:#f0e8df;display:flex;align-items:center;justify-content:center;color:#6d6258}
+.voice-box{background:white;width:100%;max-width:360px;border-radius:20px;padding:22px 18px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+.voice-wave{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#f0e8df;display:flex;align-items:center;justify-content:center;color:#6d6258;transition:background 0.25s ease}
 .voice-wave.listening{animation:pulse-wave 1.2s infinite;background:#eaddd3}
-.voice-wave.paused{background:#eee;color:#aaa;animation:none}
+.voice-wave.paused{background:#f0ede8;color:#9b9288;animation:none}
 @keyframes pulse-wave{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(109,98,88,0.4)}70%{transform:scale(1.08);box-shadow:0 0 0 16px rgba(109,98,88,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(109,98,88,0)}}
-.voice-text-preview{font-size:15px;color:#554d46;min-height:56px;max-height:120px;overflow-y:auto;margin:12px 0;line-height:1.5;background:#f8f5f1;border-radius:12px;padding:10px;text-align:left;word-break:break-all}
+.voice-text-preview{font-size:14.5px;color:#554d46;min-height:56px;max-height:120px;overflow-y:auto;margin:12px 0;line-height:1.5;background:#f8f5f1;border-radius:12px;padding:10px 12px;text-align:left;word-break:break-all}
+
+/* 語音按鈕列排版 */
+.voice-btn-group{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:8px;margin-top:14px}
+.voice-action-btn{border-radius:12px;padding:9px 0;font-weight:800;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center}
+.voice-btn-cancel{background:white;border:1px solid #c9c0b7;color:#6d6258}
+.voice-btn-pause{background:#f5f1eb;border:1px solid #d8cfc4;color:#6d6258}
+.voice-btn-submit{background:#6d6258;color:white}
 </style>
 </head>
 
@@ -120,15 +127,15 @@ textarea{height:60px;resize:none}
 <div class="voice-modal-overlay" id="voiceModalOverlay">
   <div class="voice-box">
     <div class="voice-wave" id="voiceWaveIcon">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
     </div>
-    <div style="font-weight:900; font-size:18px; color:#554d46;" id="voiceStatusTitle">正在聆聽中...</div>
-    <div class="voice-text-preview" id="voiceResultText">請直接說出餐點（支援連講多句，語速快也能辨識）...</div>
+    <div style="font-weight:900; font-size:17px; color:#554d46;" id="voiceStatusTitle">正在聆聽中...</div>
+    <div class="voice-text-preview" id="voiceResultText">請說出餐點與規格（支援連講多句，語速快也能辨識）...</div>
     
-    <div style="display:flex; gap:8px; margin-top:14px;">
-      <button class="btn light" style="flex:1; border:1px solid #c9c0b7; background:white; color:#6d6258; border-radius:12px; padding:10px; font-weight:800; font-size:14px;" onclick="window.cancelVoiceOrder()">取消</button>
-      <button class="btn light" style="flex:1.2; border:1px solid #bcaea1; background:#f5f1eb; color:#6d6258; border-radius:12px; padding:10px; font-weight:800; font-size:14px;" id="voicePauseBtn" onclick="window.togglePauseVoice()">⏸ 暫停聆聽</button>
-      <button class="btn primary" style="flex:1.4; border:none; background:#6d6258; color:white; border-radius:12px; padding:10px; font-weight:800; font-size:14px;" id="voiceConfirmBtn" onclick="window.stopAndProcessVoice()">完成送出</button>
+    <div class="voice-btn-group">
+      <button class="voice-action-btn voice-btn-cancel" onclick="window.cancelVoiceOrder()">取消</button>
+      <button class="voice-action-btn voice-btn-pause" id="voicePauseBtn" onclick="window.togglePauseVoice()">暫停</button>
+      <button class="voice-action-btn voice-btn-submit" id="voiceConfirmBtn" onclick="window.stopAndProcessVoice()">完成送出</button>
     </div>
   </div>
 </div>
@@ -408,7 +415,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (持續不中斷聆聽 + 一鍵暫停/繼續 + 快速語速即時捕獲)
+// 🚀 多品項自然語言點餐引擎 (持續不中斷聆聽 + 一鍵暫停/繼續)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -460,10 +467,10 @@ window.startVoiceOrder = () => {
   isUserPaused = false;
   isExplicitStopped = false;
 
-  document.getElementById("voiceResultText").innerText = "正在聆聽中，請直接說出想點的餐點與規格...";
+  document.getElementById("voiceResultText").innerText = "請說出餐點與規格（支援連講多句，語速快也能辨識）...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
   document.getElementById("voiceWaveIcon").className = "voice-wave listening";
-  document.getElementById("voicePauseBtn").innerHTML = "⏸ 暫停聆聽";
+  document.getElementById("voicePauseBtn").innerText = "暫停";
   document.getElementById("voiceModalOverlay").style.display = "flex";
 
   if (!recognition) recognition = initSpeechRecognition();
@@ -483,12 +490,12 @@ window.togglePauseVoice = () => {
     try { recognition.stop(); } catch(e) {}
     waveIcon.className = "voice-wave paused";
     statusTitle.innerText = "已暫停聆聽";
-    pauseBtn.innerHTML = "▶ 繼續聆聽";
+    pauseBtn.innerText = "繼續";
   } else {
     isUserPaused = false;
     waveIcon.className = "voice-wave listening";
     statusTitle.innerText = "正在聆聽中...";
-    pauseBtn.innerHTML = "⏸ 暫停聆聽";
+    pauseBtn.innerText = "暫停";
     try { recognition.start(); } catch(e) {}
   }
 };
@@ -512,7 +519,7 @@ window.stopAndProcessVoice = () => {
   document.getElementById("voiceWaveIcon").className = "voice-wave";
   
   const text = document.getElementById("voiceResultText").innerText.trim();
-  if (!text || text.length < 2 || text.startsWith("正在聆聽中") || text.startsWith("請直接說出")) {
+  if (!text || text.length < 2 || text.startsWith("請說出餐點")) {
     alert("尚未聽到您的點餐內容，請再試一次！");
     window.cancelVoiceOrder();
     return;
