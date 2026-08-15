@@ -76,6 +76,16 @@ textarea{height:60px;resize:none}
 .cart-item-price{font-weight:700;color:#7a594c;font-size:15px}
 .cart-del{position:absolute;right:12px;top:12px;border:none;background:none;color:#c86b62;font-weight:bold;font-size:14px}
 .status-banner{background:rgba(109,98,88,.95);color:white;border-radius:12px;padding:14px;text-align:center;font-size:15px;font-weight:bold}
+
+/* 語音點餐懸浮按鈕與彈窗樣式 */
+.voice-float-btn{position:fixed;right:18px;bottom:85px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;box-shadow:0 6px 20px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:85;transition:transform 0.2s ease,box-shadow 0.2s ease}
+.voice-float-btn:active{transform:scale(0.92)}
+.voice-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.voice-box{background:white;width:100%;max-width:360px;border-radius:20px;padding:24px 20px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+.voice-wave{width:60px;height:60px;margin:0 auto 16px;border-radius:50%;background:#f0e8df;display:flex;align-items:center;justify-content:center;color:#6d6258}
+.voice-wave.listening{animation:pulse-wave 1.2s infinite;background:#eaddd3}
+@keyframes pulse-wave{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(109,98,88,0.4)}70%{transform:scale(1.08);box-shadow:0 0 0 16px rgba(109,98,88,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(109,98,88,0)}}
+.voice-text-preview{font-size:15px;color:#777;min-height:48px;margin:12px 0;line-height:1.5;background:#f8f5f1;border-radius:12px;padding:10px}
 </style>
 </head>
 
@@ -93,6 +103,31 @@ textarea{height:60px;resize:none}
 
 <div class="container">
   <div id="menuContainer">正在加載菜單...</div>
+</div>
+
+<!-- 懸浮語音點餐按鈕 -->
+<button class="voice-float-btn" id="voiceTriggerBtn" onclick="window.startVoiceOrder()">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+    <line x1="12" y1="19" x2="12" y2="23"></line>
+    <line x1="8" y1="23" x2="16" y2="23"></line>
+  </svg>
+</button>
+
+<!-- 語音辨識互動視窗 -->
+<div class="voice-modal-overlay" id="voiceModalOverlay">
+  <div class="voice-box">
+    <div class="voice-wave" id="voiceWaveIcon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+    </div>
+    <div style="font-weight:900; font-size:18px; color:#554d46;" id="voiceStatusTitle">正在聆聽中...</div>
+    <div class="voice-text-preview" id="voiceResultText">請直接說出您想點的餐點與規格...</div>
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="btn light" style="flex:1; border:1px solid #c9c0b7; background:white; color:#6d6258; border-radius:12px; padding:10px; font-weight:800;" onclick="window.cancelVoiceOrder()">取消</button>
+      <button class="btn primary" style="flex:1; border:none; background:#6d6258; color:white; border-radius:12px; padding:10px; font-weight:800;" id="voiceConfirmBtn" onclick="window.stopAndProcessVoice()">說完了，送出</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="optionModalOverlay" onclick="if(event.target===this)closeItemModal()">
@@ -146,14 +181,19 @@ import { getFirestore, collection, getDocs, addDoc, query, where, doc, onSnapsho
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
+// 🔑 請將你的 Gemini API Key 填入此處
+const GEMINI_API_KEY = "AQ.Ab8RN6L1tGDqW3f9mQ21Tn2WgwQ52x8TdJBmvIMcl6HyBdFqUw";
+
 let profile=null; let menuList=[]; let cart=[]; let currentSelectItem=null; let balanceDocId=null;
 let currentGranted=0, currentStored=0; let sysConfig={manual_mode:"auto"};
-/* 🚀 核心新增：住戶端同步使用的分類排序緩存庫 */
 let categoryCache=[];
+
+let recognition=null;
+let recordedTranscript="";
 
 const staticSeats = [
   "A1", "A2", "A3", "A4",
-  "B1", "B2", "B3", "B4", "B5", "B6", "7", "B8",
+  "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8",
   "C1", "C2", "C3", "C4", "C5", "C6"
 ];
 
@@ -173,7 +213,6 @@ async function loadBalance() {
   if (!snap.empty) { balanceDocId = snap.docs[0].id; currentGranted = Number(snap.docs[0].data().granted_amount||0); currentStored = Number(snap.docs[0].data().stored_amount||0); }
 }
 
-// 🚀 核心改裝：導入 categories_order 聯動線路，使分類順序與管理員後台 100% 同步
 async function loadMenuData() {
   const snap = await getDocs(collection(db, "menu")); 
   menuList = []; 
@@ -208,7 +247,6 @@ async function loadMenuData() {
 
 function renderCategoryNav() {
   const nav = document.getElementById("categoryNav"); nav.innerHTML = "";
-  // 🚀 修正點：改用對齊後台排序的 categoryCache 進行導覽標籤循環
   categoryCache.forEach((cat, idx) => {
     const btn = document.createElement("button"); btn.className = `nav-item ${idx === 0 ? 'active' : ''}`; btn.innerText = cat;
     btn.onclick = () => {
@@ -232,7 +270,6 @@ function renderMenu() {
   }
   if (!systemOpen) { container.innerHTML = `<div class="status-banner">咖啡廳系統關閉中<br>【原因：${closeReason}】</div>`; return; }
 
-  // 🚀 修正點：改用對齊後台排序的 categoryCache 進行商品分區區塊循環
   categoryCache.forEach((cat, idx) => {
     const section = document.createElement("div"); section.className = "category-section"; section.id = `cat_sec_${idx}`;
     section.innerHTML = `<div class="category-title">${cat}</div>`;
@@ -319,6 +356,147 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
   await updateDoc(doc(db, "balances", balanceDocId), { granted_amount: currentGranted>=total?currentGranted-total:0, stored_amount: currentGranted>=total?currentStored:currentStored-(total-currentGranted), updated_by: "resident_auto" });
   alert("訂單送出成功！"); cart = []; location.href = "resident.html";
 });
+
+// ==========================================
+// 🚀 AI 語音點餐核心控制模組
+// ==========================================
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("您的裝置不支援語音辨識，請使用最新版 Safari 或 Chrome 開啟！");
+    return null;
+  }
+  const rec = new SpeechRecognition();
+  rec.lang = "zh-TW";
+  rec.continuous = true;
+  rec.interimResults = true;
+
+  rec.onresult = (event) => {
+    let interim = "";
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        recordedTranscript += event.results[i][0].transcript;
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    document.getElementById("voiceResultText").innerText = recordedTranscript + interim || "正在聆聽...";
+  };
+
+  rec.onerror = (event) => {
+    console.error("語音辨識錯誤:", event.error);
+  };
+
+  return rec;
+}
+
+window.startVoiceOrder = () => {
+  recordedTranscript = "";
+  document.getElementById("voiceResultText").innerText = "請直接說出您想點的餐點與規格（例如：一杯熱拿鐵無糖、一個總匯三明治）...";
+  document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
+  document.getElementById("voiceWaveIcon").classList.add("listening");
+  document.getElementById("voiceModalOverlay").style.display = "flex";
+
+  if (!recognition) recognition = initSpeechRecognition();
+  if (recognition) {
+    try { recognition.start(); } catch(e) { console.log(e); }
+  }
+};
+
+window.cancelVoiceOrder = () => {
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  document.getElementById("voiceWaveIcon").classList.remove("listening");
+  document.getElementById("voiceModalOverlay").style.display = "none";
+};
+
+window.stopAndProcessVoice = async () => {
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  document.getElementById("voiceWaveIcon").classList.remove("listening");
+  
+  const text = document.getElementById("voiceResultText").innerText.trim();
+  if (!text || text.startsWith("請直接說出")) {
+    alert("尚未聽到您的點餐內容，請再試一次！");
+    window.cancelVoiceOrder();
+    return;
+  }
+
+  if (GEMINI_API_KEY === "請在此處貼上你的_GEMINI_API_KEY" || !GEMINI_API_KEY) {
+    alert("尚未設定 Gemini API Key，請先於腳本中設定金鑰！");
+    window.cancelVoiceOrder();
+    return;
+  }
+
+  document.getElementById("voiceStatusTitle").innerText = "AI 正在理解並選取規格...";
+  document.getElementById("voiceConfirmBtn").disabled = true;
+
+  try {
+    const parsedItems = await parseOrderWithGemini(text, menuList);
+    if (!parsedItems || parsedItems.length === 0) {
+      alert("抱歉，AI 未能在菜單中找到您說的品項，請確認品項名稱或手動點餐！");
+    } else {
+      parsedItems.forEach(item => {
+        cart.push(item);
+      });
+      updateCartSummary();
+      alert(`已成功將 ${parsedItems.length} 個品項加入購物車！`);
+      window.openCart();
+    }
+  } catch (err) {
+    console.error(err);
+    alert("AI 解析失敗，請稍後再試或手動點選！");
+  } finally {
+    document.getElementById("voiceConfirmBtn").disabled = false;
+    document.getElementById("voiceModalOverlay").style.display = "none";
+  }
+};
+
+async function parseOrderWithGemini(userVoiceText, currentMenu) {
+  const simplifiedMenu = currentMenu.filter(m => m.enabled !== false).map(m => ({
+    id: m.id,
+    name: m.name,
+    price: Number(m.price || 0),
+    custom_options: m.custom_options || []
+  }));
+
+  const systemPrompt = `
+你是一個專業的咖啡廳點餐助手。請根據使用者的語音點餐文字，比對提供的菜單資料，將其轉換為標準購物車 JSON。
+
+【菜單清單】：
+${JSON.stringify(simplifiedMenu, null, 2)}
+
+【規則】：
+1. 輸出格式必須是純 JSON Array，不要包含任何 markdown 標記（不要寫 \`\`\`json 或 \`\`\`）。
+2. JSON Array 內每個物件結構必須為：
+   - "id": 菜單中對應品項的 id
+   - "name": 菜單中對應品項的 exact name
+   - "price": 數字型態價格
+   - "qty": 數量 (整數，預設 1)
+   - "options": 根據品項的 custom_options 與使用者的語意進行對應（例如使用者說「熱的」對應「溫度: 熱」，若沒說則選該選項的第一個 choices 預設值）
+   - "note": 額外口語備註（若無則留空字串 ""）
+3. 若使用者說的品項不在菜單中，請忽略該品項。若完全沒有符合的品項，請回傳 []。
+
+【使用者語音內容】：
+"${userVoiceText}"
+`;
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: systemPrompt }] }],
+      generationConfig: { temperature: 0.1 }
+    })
+  });
+
+  const data = await response.json();
+  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "[]";
+  const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+  return JSON.parse(cleanJson);
+}
 </script>
 </body>
 </html>
