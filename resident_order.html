@@ -181,9 +181,6 @@ import { getFirestore, collection, getDocs, addDoc, query, where, doc, onSnapsho
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
-// 🔑 請在此處填入在 Google AI Studio 選擇「+ Create project」產生的 Gemini API Key
-const GEMINI_API_KEY = "AQ.Ab8RN6LYZMRQUOmNuSg6gKU_B8oSMHBvhjzfEVMP8U0OjJsIaA";
-
 let profile=null; let menuList=[]; let cart=[]; let currentSelectItem=null; let balanceDocId=null;
 let currentGranted=0, currentStored=0; let sysConfig={manual_mode:"auto"};
 let categoryCache=[];
@@ -358,7 +355,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 AI 語音點餐核心控制模組
+// 🚀 純前端智慧自然語言語音點餐引擎 (無需任何 API Key，100% 穩定)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -392,7 +389,7 @@ function initSpeechRecognition() {
 
 window.startVoiceOrder = () => {
   recordedTranscript = "";
-  document.getElementById("voiceResultText").innerText = "請直接說出您想點的餐點與規格（例如：我要一個香草冰淇淋）...";
+  document.getElementById("voiceResultText").innerText = "請直接說出您想點的餐點（例如：我要一個香草冰淇淋、兩杯熱拿鐵）...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
   document.getElementById("voiceWaveIcon").classList.add("listening");
   document.getElementById("voiceModalOverlay").style.display = "flex";
@@ -411,7 +408,7 @@ window.cancelVoiceOrder = () => {
   document.getElementById("voiceModalOverlay").style.display = "none";
 };
 
-window.stopAndProcessVoice = async () => {
+window.stopAndProcessVoice = () => {
   if (recognition) {
     try { recognition.stop(); } catch(e) {}
   }
@@ -424,96 +421,107 @@ window.stopAndProcessVoice = async () => {
     return;
   }
 
-  if (GEMINI_API_KEY === "請在此處貼上你的_GEMINI_API_KEY" || !GEMINI_API_KEY) {
-    alert("尚未設定 Gemini API Key，請先填入有效金鑰！");
-    window.cancelVoiceOrder();
-    return;
-  }
-
-  document.getElementById("voiceStatusTitle").innerText = "AI 正在理解並選取規格...";
+  document.getElementById("voiceStatusTitle").innerText = "正在解析餐點與規格...";
   document.getElementById("voiceConfirmBtn").disabled = true;
 
-  try {
-    const parsedItems = await parseOrderWithGemini(text, menuList);
-    if (!parsedItems || parsedItems.length === 0) {
-      alert("抱歉，AI 未能在菜單中找到符合的品項，請確認品項名稱或手動點餐！");
-    } else {
-      parsedItems.forEach(item => {
-        cart.push(item);
-      });
-      updateCartSummary();
-      window.openCart();
+  setTimeout(() => {
+    try {
+      const parsedItems = parseVoiceOrderLocally(text, menuList);
+      if (!parsedItems || parsedItems.length === 0) {
+        alert("抱歉，系統未在菜單中找到您說的品項，請確認品項名稱或手動點餐！");
+      } else {
+        parsedItems.forEach(item => {
+          cart.push(item);
+        });
+        updateCartSummary();
+        alert(`已成功將 ${parsedItems.length} 個品項加入購物車！`);
+        window.openCart();
+      }
+    } catch (err) {
+      console.error("語音解析錯誤:", err);
+      alert("解析發生問題，請稍後再試！");
+    } finally {
+      document.getElementById("voiceConfirmBtn").disabled = false;
+      document.getElementById("voiceModalOverlay").style.display = "none";
     }
-  } catch (err) {
-    console.error("語音解析錯誤:", err);
-    alert("AI 解析發生問題：" + (err.message || "未知錯誤") + "，請稍後再試！");
-  } finally {
-    document.getElementById("voiceConfirmBtn").disabled = false;
-    document.getElementById("voiceModalOverlay").style.display = "none";
-  }
+  }, 100);
 };
 
-async function parseOrderWithGemini(userVoiceText, currentMenu) {
-  const simplifiedMenu = currentMenu.filter(m => m.enabled !== false).map(m => ({
-    id: m.id,
-    name: m.name,
-    price: Number(m.price || 0),
-    custom_options: m.custom_options || []
-  }));
+// 🚀 本地自然語言模糊語意解析引擎
+function parseVoiceOrderLocally(userText, currentMenu) {
+  const availableItems = currentMenu.filter(m => m.enabled !== false);
+  if (!availableItems.length) return [];
 
-  const promptText = `
-你是一個專業的咖啡廳點餐助理。請根據使用者說的點餐句子，在提供的【菜單清單】中找出最匹配的品項，並輸出為 JSON Array。
+  // 中文數量詞轉換表
+  const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
+  
+  // 切割多品項語音（例如：「我要一杯熱拿鐵，然後一個三明治」）
+  const sentences = userText.split(/[,，.。!！以及還有然後再]+/g).filter(s => s.trim().length > 0);
+  const matchedOrders = [];
 
-【菜單清單】：
-${JSON.stringify(simplifiedMenu, null, 2)}
+  sentences.forEach(sentence => {
+    let bestMatch = null;
+    let maxScore = 0;
 
-【規則】：
-1. 具備模糊匹配能力（例如使用者說「香草冰淇淋」，菜單若有「香草冰淇淋」或「手工香草冰淇淋」，請自動對應）。
-2. 只回傳純 JSON 陣列，絕對不要包含任何 markdown 語法（不要包含 \`\`\`json 或 \`\`\` 符號）。
-3. 輸出格式範例：
-[
-  {
-    "id": "品項id",
-    "name": "菜單上的確切名稱",
-    "price": 價格數字,
-    "qty": 數量數字,
-    "options": {
-      "規格群組名": "選中的選項值"
-    },
-    "note": ""
-  }
-]
-4. 若使用者完全沒有提到該品項的規格，options 請自動填入該品項 choices 的第一個預設值。
-5. 若真的沒有任何相符的品項，請直接回傳 []。
+    // 1. 模糊匹配菜單品項
+    availableItems.forEach(item => {
+      let score = 0;
+      const itemName = item.name.trim();
 
-【使用者語音內容】：
-"${userVoiceText}"
-`;
-
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "x-goog-api-key": GEMINI_API_KEY
-    },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{ text: promptText }]
-      }],
-      generationConfig: {
-        temperature: 0.1
+      if (sentence.includes(itemName)) {
+        score = itemName.length * 10; // 完全包含名稱，最高優先
+      } else {
+        // 拆字模糊比對（如說「冰淇淋」命中「香草冰淇淋」）
+        let matchCount = 0;
+        for (let char of itemName) {
+          if (sentence.includes(char)) matchCount++;
+        }
+        if (matchCount >= 2 && matchCount / itemName.length >= 0.5) {
+          score = matchCount;
+        }
       }
-    })
+
+      if (score > maxScore) {
+        maxScore = score;
+        bestMatch = item;
+      }
+    });
+
+    if (bestMatch && maxScore >= 2) {
+      // 2. 解析數量
+      let qty = 1;
+      const qtyMatch = sentence.match(/(\d+|[一二兩三四五六七八九十]+)\s*(杯|個|份|碗|盤|瓶|隻|顆|罐)/);
+      if (qtyMatch) {
+        const qStr = qtyMatch[1];
+        if (numMap[qStr]) qty = numMap[qStr];
+        else if (!isNaN(parseInt(qStr))) qty = parseInt(qStr);
+      }
+
+      // 3. 智慧對應規格選項 (custom_options)
+      const selectedOptions = {};
+      (bestMatch.custom_options || []).forEach(group => {
+        let matchedChoice = null;
+        (group.choices || []).forEach(choice => {
+          if (choice && sentence.includes(choice.trim())) {
+            matchedChoice = choice.trim();
+          }
+        });
+        // 若語音中沒提到，自動帶入該選項的第一個預設值
+        selectedOptions[group.title] = matchedChoice || (group.choices && group.choices[0] ? group.choices[0].trim() : "");
+      });
+
+      matchedOrders.push({
+        id: bestMatch.id,
+        name: bestMatch.name,
+        price: Number(bestMatch.price || 0),
+        qty: qty,
+        options: selectedOptions,
+        note: "語音點餐"
+      });
+    }
   });
 
-  const data = await response.json();
-  if (data.error) {
-    throw new Error(data.error.message || "API 錯誤");
-  }
-
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "[]";
-  const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-  return JSON.parse(cleanJson);
+  return matchedOrders;
 }
 </script>
 </body>
