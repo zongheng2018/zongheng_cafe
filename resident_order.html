@@ -355,7 +355,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (精準全句定位版)
+// 🚀 多品項自然語言點餐引擎 (含括號時價清洗 + 自動規格與備註解析)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -389,7 +389,7 @@ function initSpeechRecognition() {
 
 window.startVoiceOrder = () => {
   recordedTranscript = "";
-  document.getElementById("voiceResultText").innerText = "請直接說出您想點的餐點（例如：三個香草冰淇淋、兩瓶乳香世家）...";
+  document.getElementById("voiceResultText").innerText = "請說出餐點（例如：三個蘋果、一杯熱拿鐵無糖 幫我備註外帶紙袋）...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
   document.getElementById("voiceWaveIcon").classList.add("listening");
   document.getElementById("voiceModalOverlay").style.display = "flex";
@@ -415,13 +415,13 @@ window.stopAndProcessVoice = () => {
   document.getElementById("voiceWaveIcon").classList.remove("listening");
   
   const text = document.getElementById("voiceResultText").innerText.trim();
-  if (!text || text.startsWith("請直接說出")) {
+  if (!text || text.startsWith("請說出餐點") || text.startsWith("請直接說出")) {
     alert("尚未聽到您的點餐內容，請再試一次！");
     window.cancelVoiceOrder();
     return;
   }
 
-  document.getElementById("voiceStatusTitle").innerText = "正在解析多項餐點...";
+  document.getElementById("voiceStatusTitle").innerText = "正在解析餐點、規格與備註...";
   document.getElementById("voiceConfirmBtn").disabled = true;
 
   setTimeout(() => {
@@ -447,37 +447,46 @@ window.stopAndProcessVoice = () => {
   }, 50);
 };
 
-// 🚀 多品項全句定位解析核心
+// 🚀 多品項全句定位解析核心 (升級版)
 function parseVoiceOrderLocally(userText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   if (!availableItems.length) return [];
 
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
 
-  // 1. 找出語音全句中所有命中的品項與其文字索引位置
+  // 1. 清理菜單名稱括號（如「蘋果（時價）」提取出「蘋果」）建立精準對照清單
+  const cleanedMenu = availableItems.map(item => {
+    const rawName = item.name.trim();
+    // 移除括號及其內容（包含全形與半形括號）
+    const cleanName = rawName.replace(/[\(（\[【].*?[\)）\]】]/g, "").trim();
+    return {
+      rawItem: item,
+      cleanName: cleanName || rawName,
+      fullName: rawName
+    };
+  });
+
+  // 2. 搜尋語音全句中所有命中的品項
   let occurrences = [];
-  availableItems.forEach(item => {
-    const name = item.name.trim();
-    let pos = userText.indexOf(name);
+  cleanedMenu.forEach(entry => {
+    const target = entry.cleanName;
+    if (!target) return;
+
+    let pos = userText.indexOf(target);
     while (pos !== -1) {
-      occurrences.push({ item, index: pos, length: name.length, exact: true });
-      pos = userText.indexOf(name, pos + 1);
+      occurrences.push({ 
+        item: entry.rawItem, 
+        matchedName: target,
+        index: pos, 
+        length: target.length 
+      });
+      pos = userText.indexOf(target, pos + 1);
     }
   });
 
-  // 若完全比對沒有結果，嘗試模糊簡稱比對（例如：說「拿鐵」命中「拿鐵咖啡」）
-  if (occurrences.length === 0) {
-    availableItems.forEach(item => {
-      const name = item.name.trim();
-      const shortName = name.replace(/(風味|特調|手工|經典|拿鐵|咖啡|冰淇淋)/g, "");
-      if (shortName.length >= 2 && userText.includes(shortName)) {
-        let pos = userText.indexOf(shortName);
-        occurrences.push({ item, index: pos, length: shortName.length, exact: false });
-      }
-    });
-  }
+  if (occurrences.length === 0) return [];
 
-  // 依據在句子中出現的順序排序
+  // 依照在句子中出現的順序排序
   occurrences.sort((a, b) => a.index - b.index);
 
   // 去除重疊的命中範圍
@@ -494,16 +503,16 @@ function parseVoiceOrderLocally(userText, currentMenu) {
 
   const finalOrders = [];
 
-  // 2. 針對每個命中的品項，提取前後修飾範圍進行數量與規格比對
+  // 3. 逐一提取前後子句，解析數量、規格與備註
   filteredOccurrences.forEach((occ, idx) => {
     const item = occ.item;
     const startBound = idx === 0 ? 0 : filteredOccurrences[idx - 1].index + filteredOccurrences[idx - 1].length;
     const endBound = idx === filteredOccurrences.length - 1 ? userText.length : filteredOccurrences[idx + 1].index;
     
-    // 該品項專屬的語境子句
+    // 該品項專屬的語境範圍
     const contextSegment = userText.substring(startBound, endBound);
 
-    // 解析數量
+    // 解析數量（如：三個、兩瓶、1杯）
     let qty = 1;
     const qtyMatch = contextSegment.match(/(\d+|[一二兩三四五六七八九十]+)\s*(杯|個|份|碗|盤|瓶|隻|顆|罐|支)?/);
     if (qtyMatch) {
@@ -517,12 +526,21 @@ function parseVoiceOrderLocally(userText, currentMenu) {
     (item.custom_options || []).forEach(group => {
       let matchedChoice = null;
       (group.choices || []).forEach(choice => {
-        if (choice && contextSegment.includes(choice.trim())) {
-          matchedChoice = choice.trim();
+        const cText = choice.trim();
+        if (cText && contextSegment.includes(cText)) {
+          matchedChoice = cText;
         }
       });
+      // 若語音中沒提到，自動帶入該選項的第一個預設值
       selectedOptions[group.title] = matchedChoice || (group.choices && group.choices[0] ? group.choices[0].trim() : "");
     });
+
+    // 🚀 解析「幫我備註... / 備註...」
+    let customNote = "";
+    const noteMatch = contextSegment.match(/(?:幫我備註|請幫我備註|幫我註明|備註|註明)[:：\s]*(.*?)(?:，|$)/);
+    if (noteMatch && noteMatch[1]) {
+      customNote = noteMatch[1].trim();
+    }
 
     finalOrders.push({
       id: item.id,
@@ -530,7 +548,7 @@ function parseVoiceOrderLocally(userText, currentMenu) {
       price: Number(item.price || 0),
       qty: qty,
       options: selectedOptions,
-      note: "語音點餐"
+      note: customNote
     });
   });
 
