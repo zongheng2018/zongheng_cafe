@@ -22,13 +22,13 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);
 .brand img{width:72px;opacity:.85}
 .back-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:12px;padding:8px 14px;font-weight:800;text-decoration:none;font-size:15px}
 
-.category-nav{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.95);border-bottom:1px solid #eee5dd;scrollbar-width:none}
+.category-nav{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.95);border-bottom:1px solid #eee5dd;scrollbar-width:none;scroll-behavior:smooth}
 .category-nav::-webkit-scrollbar{display:none}
-.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 18px;border-radius:12px;font-weight:800;font-size:15px;white-space:nowrap}
+.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 18px;border-radius:12px;font-weight:800;font-size:15px;white-space:nowrap;transition:background 0.25s ease, color 0.25s ease}
 .nav-item.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 
 .container{max-width:760px;margin:16px auto;padding:0 14px}
-.category-section{scroll-margin-top:140px}
+.category-section{scroll-margin-top:140px;margin-bottom:28px}
 .category-title{font-size:21px;color:#6d6258;font-weight:900;margin:24px 0 12px 4px;letter-spacing:1px}
 
 .menu-grid{display:grid;grid-template-columns:1fr;gap:14px}
@@ -184,6 +184,8 @@ const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFi
 let profile=null; let menuList=[]; let cart=[]; let currentSelectItem=null; let balanceDocId=null;
 let currentGranted=0, currentStored=0; let sysConfig={manual_mode:"auto"};
 let categoryCache=[];
+let sectionObserver=null;
+let isManualScrolling=false;
 
 let recognition=null;
 let recordedTranscript="";
@@ -245,10 +247,21 @@ async function loadMenuData() {
 function renderCategoryNav() {
   const nav = document.getElementById("categoryNav"); nav.innerHTML = "";
   categoryCache.forEach((cat, idx) => {
-    const btn = document.createElement("button"); btn.className = `nav-item ${idx === 0 ? 'active' : ''}`; btn.innerText = cat;
+    const btn = document.createElement("button"); 
+    btn.className = `nav-item ${idx === 0 ? 'active' : ''}`; 
+    btn.id = `cat_nav_${idx}`;
+    btn.innerText = cat;
     btn.onclick = () => {
-      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active")); btn.classList.add("active");
-      const target = document.getElementById(`cat_sec_${idx}`); if(target) target.scrollIntoView({ behavior: 'smooth' });
+      isManualScrolling = true;
+      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active")); 
+      btn.classList.add("active");
+      btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      
+      const target = document.getElementById(`cat_sec_${idx}`); 
+      if(target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => { isManualScrolling = false; }, 800);
+      }
     };
     nav.appendChild(btn);
   });
@@ -267,8 +280,13 @@ function renderMenu() {
   }
   if (!systemOpen) { container.innerHTML = `<div class="status-banner">咖啡廳系統關閉中<br>【原因：${closeReason}】</div>`; return; }
 
+  if (sectionObserver) sectionObserver.disconnect();
+
   categoryCache.forEach((cat, idx) => {
-    const section = document.createElement("div"); section.className = "category-section"; section.id = `cat_sec_${idx}`;
+    const section = document.createElement("div"); 
+    section.className = "category-section"; 
+    section.id = `cat_sec_${idx}`;
+    section.setAttribute("data-index", idx);
     section.innerHTML = `<div class="category-title">${cat}</div>`;
     const grid = document.createElement("div"); grid.className = "menu-grid";
 
@@ -285,6 +303,37 @@ function renderMenu() {
     });
     section.appendChild(grid); container.appendChild(section);
   });
+
+  // 🚀 核心新增：滾動自動追蹤高亮（ScrollSpy）
+  initScrollSpy();
+}
+
+function initScrollSpy() {
+  const sections = document.querySelectorAll(".category-section");
+  if (!sections.length) return;
+
+  const observerOptions = {
+    root: null,
+    rootMargin: "-20% 0px -70% 0px",
+    threshold: 0
+  };
+
+  sectionObserver = new IntersectionObserver((entries) => {
+    if (isManualScrolling) return;
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = entry.target.getAttribute("data-index");
+        const activeNavBtn = document.getElementById(`cat_nav_${idx}`);
+        if (activeNavBtn) {
+          document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+          activeNavBtn.classList.add("active");
+          activeNavBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }
+    });
+  }, observerOptions);
+
+  sections.forEach(sec => sectionObserver.observe(sec));
 }
 
 window.openItemModal = (id) => {
@@ -355,7 +404,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (同音錯字校正 + 規格過濾 + 備註防洩漏)
+// 🚀 多品項自然語言點餐引擎 (全能模糊音字典 + 規格過濾 + 備註防洩漏)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -385,7 +434,7 @@ function initSpeechRecognition() {
 
 window.startVoiceOrder = () => {
   recordedTranscript = "";
-  document.getElementById("voiceResultText").innerText = "請說出餐點（例如：三個蘋果、一杯拿鐵去冰不要附糖、幫我備註外帶紙袋）...";
+  document.getElementById("voiceResultText").innerText = "請說出餐點（例如：三個蘋果、一瓶多纖果汁、一杯拿鐵去冰不要糖 幫我備註外帶紙袋）...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
   document.getElementById("voiceWaveIcon").classList.add("listening");
   document.getElementById("voiceModalOverlay").style.display = "flex";
@@ -426,21 +475,26 @@ window.stopAndProcessVoice = () => {
   }, 200);
 };
 
-// 🚀 核心自然語言解析模組 (含語音同音校正)
+// 🚀 核心自然語言解析模組
 function parseVoiceOrderLocally(rawUserText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
 
-  // 1. 語音常見同音錯字字典（前置標準化校正）
+  // 1. 全能同音錯字字典（大幅擴充）
   let userText = rawUserText
+    .replace(/(多鮮|多先|多仙|多掀|多萱)/g, "多纖")
     .replace(/(負湯|負糖|副糖|付糖|服糖|父糖|附唐)/g, "附糖")
     .replace(/(冰淇淋|冰其林|冰奇淋|冰奇林)/g, "冰淇淋")
-    .replace(/(那鐵|拿帖|拿田)/g, "拿鐵")
-    .replace(/(乃茶|奶察)/g, "奶茶")
-    .replace(/(鬆餅|宋餅)/g, "鬆餅")
+    .replace(/(那鐵|拿帖|拿田|那提)/g, "拿鐵")
+    .replace(/(乃茶|奶察|奈茶)/g, "奶茶")
+    .replace(/(鬆餅|宋餅|送餅)/g, "鬆餅")
     .replace(/(三明治|三明智)/g, "三明治")
-    .replace(/(美式|每式)/g, "美式")
-    .replace(/(湯匙|湯匙兒|唐池|唐匙)/g, "湯匙");
+    .replace(/(美式|每式|美士)/g, "美式")
+    .replace(/(湯匙|湯匙兒|唐池|唐匙)/g, "湯匙")
+    .replace(/(可可|顆顆|科科)/g, "可可")
+    .replace(/(歐蕾|歐雷|歐累)/g, "歐蕾")
+    .replace(/(抹茶|末茶|磨茶)/g, "抹茶")
+    .replace(/(乳香|乳香世家|魯香)/g, "乳香世家");
 
   // 2. 菜單名稱去除括號與輔助標籤
   const cleanedMenu = availableItems.map(item => {
@@ -452,12 +506,28 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     };
   }).sort((a, b) => b.length - a.length);
 
-  // 3. 全句定位搜尋命中的品項
+  // 3. 全句定位搜尋命中的品項 (支援模糊相似度比對)
   let occurrences = [];
   let matchedRanges = [];
   
   cleanedMenu.forEach(entry => {
     let pos = userText.indexOf(entry.cleanName);
+    
+    // 若完全比對沒有，嘗試 75% 模糊容錯匹配
+    if (pos === -1 && entry.cleanName.length >= 3) {
+      for (let i = 0; i <= userText.length - entry.cleanName.length; i++) {
+        let sub = userText.substr(i, entry.cleanName.length);
+        let matchCharCount = 0;
+        for (let c of entry.cleanName) {
+          if (sub.includes(c)) matchCharCount++;
+        }
+        if (matchCharCount / entry.cleanName.length >= 0.75) {
+          pos = i;
+          break;
+        }
+      }
+    }
+
     while (pos !== -1) {
       const endPos = pos + entry.cleanName.length;
       if (!matchedRanges.some(r => (pos >= r.start && pos < r.end) || (endPos > r.start && endPos <= r.end))) {
@@ -470,14 +540,12 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
 
   if (occurrences.length === 0) return [];
 
-  // 按出現位置依序排序
   occurrences.sort((a, b) => a.index - b.index);
 
   return occurrences.map((occ, idx) => {
     const prevEnd = idx === 0 ? 0 : occurrences[idx - 1].index + occurrences[idx - 1].length;
     const nextStart = idx === occurrences.length - 1 ? userText.length : occurrences[idx + 1].index;
     
-    // 取出此品項前後專屬的子句
     const prefixSegment = userText.substring(prevEnd, occ.index);
     const suffixSegment = userText.substring(occ.index + occ.length, nextStart);
     const fullSegment = prefixSegment + " " + suffixSegment;
@@ -491,15 +559,15 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
       else if (!isNaN(parseInt(qStr))) qty = parseInt(qStr);
     }
 
-    // B. 解析規格選項 (custom_options) —— 支援「是/否/附糖/溫度/甜度」智能映射
+    // B. 解析規格選項 (custom_options)
     const selectedOptions = {};
-    const usedOptionWords = []; // 記錄已被選為規格的字詞，後續備註過濾用
+    const usedOptionWords = [];
 
     (occ.item.custom_options || []).forEach(group => {
       let matchedChoice = null;
       const choices = (group.choices || []).map(c => c.trim());
 
-      // 1. 精確文字匹配
+      // 1. 精確匹配
       for (let c of choices) {
         if (c && fullSegment.includes(c)) {
           matchedChoice = c;
@@ -508,13 +576,12 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
         }
       }
 
-      // 2. 「附糖/加糖/餐具/是否」等二元語意判斷
+      // 2. 語意映射
       if (!matchedChoice) {
         const groupTitle = group.title || "";
         const isSugarOption = groupTitle.includes("糖") || choices.some(c => c.includes("糖"));
         const isSpoonOption = groupTitle.includes("匙") || groupTitle.includes("餐具") || choices.some(c => c.includes("匙"));
 
-        // 附糖語意
         if (isSugarOption) {
           if (/(不要附糖|不附糖|免附糖|不用附糖|無糖|不要糖|不加糖|否)/.test(fullSegment)) {
             matchedChoice = choices.find(c => /(否|不要|不附|無|不加)/.test(c)) || choices[choices.length - 1];
@@ -523,9 +590,7 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
             matchedChoice = choices.find(c => /(是|要|附糖|加)/.test(c)) || choices[0];
             usedOptionWords.push("要附糖", "附糖", "加糖");
           }
-        }
-        // 湯匙/餐具語意
-        else if (isSpoonOption) {
+        } else if (isSpoonOption) {
           if (/(不要湯匙|不用湯匙|免湯匙|不附湯匙|否)/.test(fullSegment)) {
             matchedChoice = choices.find(c => /(否|不要|不附|無|不需要)/.test(c)) || choices[choices.length - 1];
             usedOptionWords.push("不要湯匙", "不用湯匙", "免湯匙", "湯匙");
@@ -533,30 +598,25 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
             matchedChoice = choices.find(c => /(是|要|附|需要)/.test(c)) || choices[0];
             usedOptionWords.push("要湯匙", "附湯匙", "湯匙");
           }
-        }
-        // 一般是否選項
-        else if (/(不要|不用|別|免|不加|無)/.test(fullSegment)) {
+        } else if (/(不要|不用|別|免|不加|無)/.test(fullSegment)) {
           matchedChoice = choices.find(c => /(否|不要|不加|無|不需要|免)/.test(c));
         } else if (/(要|需要|加|帶)/.test(fullSegment)) {
           matchedChoice = choices.find(c => /(是|要|加|有|需要)/.test(c));
         }
       }
 
-      // 3. 若均未提到，帶入該規格第一個預設值
       selectedOptions[group.title] = matchedChoice || (choices[0] || "");
     });
 
-    // C. 智慧純淨備註提取（過濾掉已被選為規格的字詞與連接詞）
+    // C. 智慧純淨備註提取
     let note = "";
     const noteMatch = suffixSegment.match(/(?:幫我備註|請幫我備註|幫我註明|備註|註明)[:：\s]*(.*?)(?=\s*(然後|還有|再|下一個|一份|一個|兩杯|一杯|$))/);
     
     if (noteMatch && noteMatch[1]) {
       let rawNote = noteMatch[1].trim();
-      // 移除已出現在選項中的字詞
       usedOptionWords.forEach(w => {
         if (w) rawNote = rawNote.replaceAll(w, "");
       });
-      // 移除溫度甜度常用詞
       rawNote = rawNote.replace(/(去冰|微冰|少冰|正常冰|熱|溫|半糖|微糖|無糖|全糖|不要糖|附糖|湯匙)/g, "").trim();
       note = rawNote;
     }
