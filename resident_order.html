@@ -358,7 +358,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 AI 語音點餐核心控制模組 (強化版)
+// 🚀 AI 語音點餐核心控制模組 (完全修復版)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -392,7 +392,7 @@ function initSpeechRecognition() {
 
 window.startVoiceOrder = () => {
   recordedTranscript = "";
-  document.getElementById("voiceResultText").innerText = "請直接說出您想點的餐點與規格（例如：一杯熱拿鐵無糖、一個總匯三明治）...";
+  document.getElementById("voiceResultText").innerText = "請直接說出您想點的餐點與規格（例如：我要一個香草冰淇淋）...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
   document.getElementById("voiceWaveIcon").classList.add("listening");
   document.getElementById("voiceModalOverlay").style.display = "flex";
@@ -425,7 +425,7 @@ window.stopAndProcessVoice = async () => {
   }
 
   if (GEMINI_API_KEY === "請在此處貼上你的_GEMINI_API_KEY" || !GEMINI_API_KEY) {
-    alert("尚未設定 Gemini API Key，請先於腳本中設定金鑰！");
+    alert("尚未設定 Gemini API Key，請先填入有效金鑰！");
     window.cancelVoiceOrder();
     return;
   }
@@ -436,18 +436,17 @@ window.stopAndProcessVoice = async () => {
   try {
     const parsedItems = await parseOrderWithGemini(text, menuList);
     if (!parsedItems || parsedItems.length === 0) {
-      alert("抱歉，AI 未能在菜單中找到您說的品項，請確認品項名稱或手動點餐！");
+      alert("抱歉，AI 未能在菜單中找到符合的品項，請確認品項名稱或手動點餐！");
     } else {
       parsedItems.forEach(item => {
         cart.push(item);
       });
       updateCartSummary();
-      alert(`已成功將 ${parsedItems.length} 個品項加入購物車！`);
       window.openCart();
     }
   } catch (err) {
-    console.error(err);
-    alert("AI 解析失敗，請稍後再試或手動點選！");
+    console.error("語音解析錯誤:", err);
+    alert("AI 解析發生問題：" + (err.message || "未知錯誤") + "，請稍後再試！");
   } finally {
     document.getElementById("voiceConfirmBtn").disabled = false;
     document.getElementById("voiceModalOverlay").style.display = "none";
@@ -462,29 +461,30 @@ async function parseOrderWithGemini(userVoiceText, currentMenu) {
     custom_options: m.custom_options || []
   }));
 
-  const systemPrompt = `
-你是一個專業的咖啡廳點餐助手。請根據使用者的語音點餐文字，比對提供的菜單資料，將其轉換為標準購物車 JSON。
+  const promptText = `
+你是一個專業的咖啡廳點餐助理。請根據使用者說的點餐句子，在提供的【菜單清單】中找出最匹配的品項，並輸出為 JSON Array。
 
 【菜單清單】：
 ${JSON.stringify(simplifiedMenu, null, 2)}
 
 【規則】：
-1. 請具備語意理解與模糊匹配能力（例如使用者說「拿鐵」若菜單有「原味拿鐵」或「拿鐵咖啡」，請對應最接近的品項）。
-2. 輸出格式必須是標準 JSON Array，格式為：
+1. 具備模糊匹配能力（例如使用者說「香草冰淇淋」，菜單若有「香草冰淇淋」或「手工香草冰淇淋」，請自動對應）。
+2. 只回傳純 JSON 陣列，絕對不要包含任何 markdown 語法（不要包含 \`\`\`json 或 \`\`\` 符號）。
+3. 輸出格式範例：
 [
   {
-    "id": "菜單中對應品項的 id",
-    "name": "菜單中對應品項的 exact name",
-    "price": 數字型態價格,
-    "qty": 數量 (整數，預設 1),
+    "id": "品項id",
+    "name": "菜單上的確切名稱",
+    "price": 價格數字,
+    "qty": 數量數字,
     "options": {
-      "群組名稱": "對應 choices 中的選項值"
+      "規格群組名": "選中的選項值"
     },
-    "note": "額外口語備註（若無則留空字串 \"\"）"
+    "note": ""
   }
 ]
-3. 關於 options：請根據品項的 custom_options 與使用者的語意進行對應（例如使用者說「熱的」對應「溫度: 熱」，若沒說則選該選項的第一個 choices 預設值）。
-4. 若使用者說的品項完全不在菜單中，請回傳 []。
+4. 若使用者完全沒有提到該品項的規格，options 請自動填入該品項 choices 的第一個預設值。
+5. 若真的沒有任何相符的品項，請直接回傳 []。
 
 【使用者語音內容】：
 "${userVoiceText}"
@@ -494,22 +494,23 @@ ${JSON.stringify(simplifiedMenu, null, 2)}
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: systemPrompt }] }],
-      generationConfig: { 
-        response_mime_type: "application/json",
-        temperature: 0.1 
+      contents: [{
+        parts: [{ text: promptText }]
+      }],
+      generationConfig: {
+        temperature: 0.1
       }
     })
   });
 
   const data = await response.json();
   if (data.error) {
-    console.error("Gemini API Error:", data.error);
-    throw new Error(data.error.message);
+    throw new Error(data.error.message || "API 錯誤");
   }
 
   const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "[]";
-  return JSON.parse(rawText);
+  const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+  return JSON.parse(cleanJson);
 }
 </script>
 </body>
