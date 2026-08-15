@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>住戶點餐｜昭揚縱橫 咖啡廳點餐系統</title>
+<title>住戶點餐｜咖啡廳點餐系統</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#9c8e81">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="縱橫cafe">
+<meta name="apple-mobile-web-app-title" content="社區cafe">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="logo.png">
 
@@ -115,19 +115,21 @@ textarea{height:60px;resize:none}
 .voice-btn-submit{background:#6d6258;color:white}
 .voice-action-btn:active{transform:scale(0.94)}
 
-/* 每日專屬生活箴言 Fortune Coffee 彈窗 */
-.fortune-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:300;display:none;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)}
+/* ☕ 極簡精品咖啡手寫卡片風格 (去 AI 味) */
+.fortune-modal-overlay{position:fixed;inset:0;background:rgba(35,30,26,0.58);backdrop-filter:blur(8px);z-index:300;display:none;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1)}
 .fortune-modal-overlay.show{opacity:1}
-.fortune-card{background:rgba(255,255,255,0.96);border-radius:24px;padding:28px 24px;width:100%;max-width:380px;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,0.22);transform:scale(0.85) translateY(20px);transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);border:1px solid rgba(255,255,255,0.8)}
+.fortune-card{background:#faf8f5;border-radius:20px;padding:26px 22px 22px;width:100%;max-width:340px;box-shadow:0 18px 45px rgba(0,0,0,0.2);transform:scale(0.92) translateY(10px);transition:transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);border:1px solid #eae3db;display:flex;flex-direction:column}
 .fortune-modal-overlay.show .fortune-card{transform:scale(1) translateY(0)}
-.fortune-icon{width:64px;height:64px;background:linear-gradient(135deg,#eaddd3,#c5a059);border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 6px 18px rgba(197,160,89,0.3)}
-.fortune-header-title{font-size:21px;font-weight:900;color:#4a433d;margin-bottom:6px}
-.fortune-order-info{font-size:14px;color:#8c837a;margin-bottom:18px}
-.fortune-quote-box{background:#f9f6f2;border-left:3px solid #bcaea1;border-radius:12px;padding:16px 14px;margin-bottom:22px;text-align:left}
-.fortune-quote-tag{font-size:11px;font-weight:900;color:#9c8e81;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-.fortune-quote-text{font-size:15px;line-height:1.6;color:#554d46;font-style:italic;font-weight:600}
-.fortune-btn{background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;border-radius:14px;padding:13px;width:100%;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(85,77,70,0.2);transition:all 0.2s ease}
-.fortune-btn:active{transform:scale(0.96)}
+.fortune-badge-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.fortune-status-text{font-size:13px;font-weight:800;color:#6d6258;display:flex;align-items:center;gap:6px}
+.fortune-status-dot{width:7px;height:7px;border-radius:50%;background:#7ba382;display:inline-block}
+.fortune-time-tag{font-size:12px;color:#a89d92;font-weight:600}
+.fortune-main-msg{font-size:19px;font-weight:900;color:#3f3833;margin-bottom:4px;letter-spacing:0.5px}
+.fortune-order-info{font-size:13px;color:#8c8278;margin-bottom:18px;line-height:1.4}
+.fortune-note-paper{background:#ffffff;border:1px solid #eee7df;border-radius:14px;padding:16px 14px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,0.02)}
+.fortune-quote-text{font-size:15px;line-height:1.6;color:#4a433d;font-weight:600;letter-spacing:0.2px}
+.fortune-btn{background:#554d46;color:#fff;border:none;border-radius:12px;padding:12px;width:100%;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.2s ease}
+.fortune-btn:active{transform:scale(0.97);background:#423b35}
 </style>
 </head>
 
@@ -223,24 +225,21 @@ textarea{height:60px;resize:none}
   </div>
 </div>
 
-<!-- 每日專屬生活箴言 (Fortune Coffee) 彈窗 -->
+<!-- ☕ 精品手寫小卡風格彈窗 -->
 <div class="fortune-modal-overlay" id="fortuneModalOverlay">
   <div class="fortune-card">
-    <div class="fortune-icon">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+    <div class="fortune-badge-row">
+      <div class="fortune-status-text"><span class="fortune-status-dot"></span> 吧台製作中</div>
+      <div class="fortune-time-tag" id="fortuneTimeLabel">晨間隨筆</div>
     </div>
-    <div class="fortune-header-title">點餐已送出</div>
-    <div class="fortune-order-info" id="fortuneOrderInfo">吧台已收到您的餐點，正在用心製作中</div>
+    <div class="fortune-main-msg">點餐已收到</div>
+    <div class="fortune-order-info" id="fortuneOrderInfo">外帶 · 請留意吧台叫號</div>
     
-    <div class="fortune-quote-box">
-      <div class="fortune-quote-tag">
-        <span>✦ Fortune Coffee ✦</span>
-        <span id="fortuneTimeLabel" style="font-size:10px; opacity:0.8;">時光絮語</span>
-      </div>
-      <div class="fortune-quote-text" id="fortuneQuoteText">“建築是凝固的音樂，而咖啡是晨光中最溫柔的序曲。”</div>
+    <div class="fortune-note-paper">
+      <div class="fortune-quote-text" id="fortuneQuoteText">今天也辛苦了，先喝口咖啡喘口氣吧。</div>
     </div>
     
-    <button class="fortune-btn" onclick="window.location.href='resident.html'">回到住戶首頁</button>
+    <button class="fortune-btn" onclick="window.location.href='resident.html'">好的，回首頁</button>
   </div>
 </div>
 
@@ -265,75 +264,55 @@ let isUserPaused=false;
 let isExplicitStopped=false;
 let isSubmittingVoice=false;
 
-// ☕ 昭揚縱橫 時段自適應海量生活美學箴言資料庫 (60+ 句)
+// ☕ 真實、自然、像咖啡師寫的小紙條 (無 AI 感、無特定案名)
 const timeAdaptiveQuotes = {
   morning: [
-    "晨光穿透幾何窗櫺，一杯溫熱的美式，正是開啟從容一日的序章。",
-    "早晨的第一縷咖啡香，是生活給予奮鬥者最溫柔的禮物。",
-    "光影在縱橫線條中流轉，帶著清醒與從容，迎向嶄新的挑戰。",
-    "建築是凝固的詩篇，而晨曦與熱咖啡，是生活的流動之美。",
-    "為自己留一杯咖啡的時間，讓清晨的步伐沉穩且堅定。",
-    "晨光熹微，生活的美好往往藏在第一口濃郁的香醇裡。",
-    "在日出與晨霧之間，用一杯手沖喚醒心中的無限可能。",
-    "安靜的清晨，一杯咖啡，一段與自己誠實對話的時光。",
-    "陽光灑進大廳的瞬間，生活的故事正在優雅展開。",
-    "以一杯咖啡的儀式感，告別昨夜的疲憊，擁抱今日的明朗。",
-    "晨風微涼，杯中微暖，每一天都值得被細心對待。",
-    "讓咖啡的香氣化為動力，在城市的節奏中踏出自己的步伐。",
-    "生活不在遠方，就在這口恰到好處的甘醇與晨光之中。",
-    "每一個清晨都是新的起點，願您的心情如咖啡般純粹明亮。",
-    "清爽的晨光與溫熱的咖啡，是獻給自律靈魂的最佳獎賞。"
+    "早安，今天也請加油，記得先把早餐吃好。",
+    "早晨的第一口熱咖啡，留給剛醒來的自己。",
+    "出門前別太匆忙，喝杯咖啡再出發吧。",
+    "今天的天氣不錯，願你有個順心明朗的一天。",
+    "先喝口熱的暖暖胃，今天的事慢慢一件件來。",
+    "早晨的安靜很珍貴，好好享受這杯咖啡的時間。",
+    "祝你今天一切順利，遇到的人都溫柔親切。",
+    "新的一天，從這杯剛剛好的溫度開始。",
+    "早起的你辛苦了，待會喝咖啡時稍微放空一下吧。",
+    "今天也是值得期待的一天，深呼吸，準備出發。"
   ],
   noon: [
-    "午後的留白，是為了讓靈魂在忙碌的節奏中好好深呼吸。",
-    "陽光正盛，不妨給自己半小時的微憩，品味生活悠閒。",
-    "簡單的午後輕食與咖啡，讓緊繃的心情悄悄融化在香氣裡。",
-    "空間的寬闊讓心境澄澈，短暫的停歇帶來更長遠的遠見。",
-    "於縱橫的靜謐角落，享受一段不被打擾的午間靜心時刻。",
-    "讓咖啡的微苦沉澱思緒，讓生活的甘甜在此刻悄然綻放。",
-    "繁忙日常裡，這一杯咖啡，就是專屬於您的心靈綠洲。",
-    "午間微風輕拂，放慢步調，重新找回生活的優雅節奏。",
-    "留白不是空虛，而是讓美好的事物有空間住進心裡。",
-    "在日光的轉移間，細品咖啡豆中蘊藏的四季風土。",
-    "一口冰涼、一口沉靜，為下半日的精彩注入飽滿能量。",
-    "好的設計讓人安心，一杯好的咖啡讓靈魂安定放鬆。",
-    "午憩的短暫寧靜，是獻給熱愛生活者的私密犒賞。",
-    "給思緒放個短假，在咖啡香中品味片刻的自在從容。",
-    "陽光剛好，溫度適中，生活在此刻展現出最迷人的模樣。"
+    "忙了一上午辛苦了，先好好坐下來吃點東西。",
+    "中午給自己半小時，把工作訊息先放一邊吧。",
+    "吃飽喝足才有力氣，下午的事下午再說。",
+    "陽光正好，慢慢吃，不用趕時間。",
+    "午休時間，讓緊繃的神經好好休息一下。",
+    "喝口冰咖啡降降溫，下午繼續加油。",
+    "適時停下來喘口氣，效率才會更好喔。",
+    "中午好好對待自己的胃，吃點喜歡的吧。",
+    "偷得浮生半日閒，享受這片刻的安靜。",
+    "下午的元氣，就交給這杯咖啡來補滿。"
   ],
   afternoon: [
-    "午後的陽光斜斜灑落，莫凡彼的甜美與咖啡的醇厚交織成詩。",
-    "慢下來，微風正吹拂著樹梢，生活的美好需要細細品嚐。",
-    "下午三點的儀式感，是犒賞努力生活的自己最好的方式。",
-    "咖啡因是午後的靈感催化劑，讓每一個好點子自由飛翔。",
-    "手作的溫度在杯中升騰，這是一份屬於社區的溫暖心意。",
-    "在咖啡的醇苦中品出層次，正如生活在淬鍊中遇見深刻。",
-    "午後斜陽拉長了影子，一杯拿鐵將時光沉澱得無比溫柔。",
-    "生活不在於追求繁複，而是在極簡中品味最真切的質感。",
-    "一杯單品手沖，一段悠長時光，讀懂風土與時光的密碼。",
-    "午後微甜，咖啡正暖，每一刻的當下都是不可複製的經典。",
-    "把繁雜的世界關在門外，沉浸在這一杯濃醇的午後靜謐中。",
-    "讓冰滴的清冽洗去煩憂，在午後的咖啡廳重獲寧靜與專注。",
-    "咖啡香是空間的隱形裝飾，讓整個午後都顯得格調非凡。",
-    "細細品味微酸與回甘，生活也是如此，層次豐富而優雅。",
-    "午後的悠閒不是奢侈，而是我們懂得熱愛生活的證明。"
+    "下午三點，正是吃點甜的、喝杯咖啡的好時機。",
+    "今天已經完成很多事了，給自己一個小小的犒賞吧。",
+    "外頭風吹得很舒服，放慢步調享受這個午後。",
+    "伸個懶腰，喝口茶，下午的時光慢慢過。",
+    "再忙，也別忘了留一點時間給自己。",
+    "這杯特調味道很棒，希望也能為你帶來好心情。",
+    "午後的陽光很溫暖，深呼吸，放鬆一下肩膀。",
+    "今天辛苦了，剩下的時間順其自然就好。",
+    "咖啡很香，甜點剛好，生活本來就很簡單。",
+    "讓思緒放空五分鐘，聽聽窗外的聲音。"
   ],
   night: [
-    "暮色降臨，華燈初上，讓咖啡廳的微光溫暖歸家的路。",
-    "卸下一日的奔波與防備，回到屬於自己的寧靜港灣。",
-    "家是心靈最後的棲居地，縱橫的燈火永遠為您保留一處溫暖。",
-    "夜幕低垂，溫熱的香氣在靜謐中輕輕撫慰一整天的辛勞。",
-    "在夜色的寧靜裡，與家人分享一杯暖心的手作飲品。",
-    "星光璀璨，生活回歸純粹，今晚願您擁有甜美的好夢。",
-    "結束充實的一天，在熟悉的空間裡找回內心的平靜安詳。",
-    "夜色溫柔如水，讓這份香醇為今天畫下完美的句點。",
-    "晚風輕輕吹過窗櫺，心中的雜音隨之消散在夜幕之中。",
-    "在安靜的夜晚，品味一杯無負擔的溫熱，感受身心的放鬆。",
-    "縱橫的生活美學，就是讓每一個歸家的夜晚都倍感安心。",
-    "夜深人靜，月光如水，祝您今晚心懷美好，安然入睡。",
-    "讓溫暖的香氣包包裹住疲憊，明天依舊充滿希望與光芒。",
-    "家的溫暖，就在這盞明亮的燈火與隨手可得的貼心之中。",
-    "今夜星光正好，微風不燥，願您的夢境與生活一樣美好。"
+    "歡迎回家，今天在外面辛苦奔波了一整天。",
+    "天黑了，把一整天的疲憊都留在門外吧。",
+    "晚上的時光是屬於自己的，好好放鬆休息。",
+    "今天做得很棒了，晚上別再想煩心的事情。",
+    "洗個舒服的熱水澡，喝杯溫熱的飲品暖暖心。",
+    "夜深了，外頭很安靜，祝你有個好夢。",
+    "回到家就安心了，今晚早點休息吧。",
+    "晚風很涼爽，讓心情跟著夜色一起沉靜下來。",
+    "明天又是新的一天，今晚好好睡一覺。",
+    "平安歸來就是最好的事，晚安。"
   ]
 };
 
@@ -745,7 +724,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
   triggerHaptic();
 
   await addDoc(collection(db, "orders"), { 
-    order_id: "ZH"+Date.now(), 
+    order_id: "ORD"+Date.now(), 
     uid: profile.username, 
     items: cart, 
     total, 
@@ -766,24 +745,25 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
   showFortuneModal(diningType.value, seatSelect.value);
 });
 
+// ☕ 真實自然的時段小語抽籤
 function getSmartFortuneQuote() {
   const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
   const hour = now.getHours();
   let timeKey = "morning";
-  let timeLabel = "晨曦序曲 05:00-11:30";
+  let timeLabel = "晨間隨筆";
 
   if (hour >= 5 && hour < 11.5) {
     timeKey = "morning";
-    timeLabel = "晨曦序曲 · 晨光篇";
+    timeLabel = "晨間隨筆";
   } else if (hour >= 11.5 && hour < 14) {
     timeKey = "noon";
-    timeLabel = "日光微憩 · 午間篇";
+    timeLabel = "午間時光";
   } else if (hour >= 14 && hour < 18) {
     timeKey = "afternoon";
-    timeLabel = "午後漫步 · 悠閒篇";
+    timeLabel = "午後微憩";
   } else {
     timeKey = "night";
-    timeLabel = "夜幕歸心 · 溫馨篇";
+    timeLabel = "晚間溫馨";
   }
 
   const pool = timeAdaptiveQuotes[timeKey];
@@ -802,7 +782,7 @@ function getSmartFortuneQuote() {
   const selectedQuote = availablePool[Math.floor(Math.random() * availablePool.length)];
 
   history.push(selectedQuote);
-  if (history.length > 25) history.shift();
+  if (history.length > 20) history.shift();
   try {
     localStorage.setItem("zh_fortune_history", JSON.stringify(history));
   } catch(e) {}
@@ -817,17 +797,17 @@ function showFortuneModal(diningType, seat) {
   const infoElem = document.getElementById("fortuneOrderInfo");
 
   const fortune = getSmartFortuneQuote();
-  quoteElem.innerText = `“${fortune.quote}”`;
+  quoteElem.innerText = fortune.quote;
   timeLabelElem.innerText = fortune.timeLabel;
   
-  infoElem.innerText = `取餐方式：${diningType}${diningType === '內用' && seat ? ` (${seat}桌)` : ''} · 吧台已收到您的餐點`;
+  infoElem.innerText = `${diningType}${diningType === '內用' && seat ? ` (${seat}桌)` : ''} · 請留意吧台叫號取餐`;
 
   overlay.style.display = "flex";
   setTimeout(() => overlay.classList.add("show"), 20);
 }
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (核心修復：語音串流絕對去重)
+// 🚀 多品項自然語言點餐引擎 (語音串流絕對去重)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -845,7 +825,6 @@ function initSpeechRecognition() {
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       const transcript = event.results[i][0].transcript.trim();
       if (event.results[i].isFinal) {
-        // 🚀 核心修復 1：即時比對最後一句，完全杜絕重疊寫入
         if (transcript && (finalSentencesArray.length === 0 || finalSentencesArray[finalSentencesArray.length - 1] !== transcript)) {
           finalSentencesArray.push(transcript);
         }
@@ -995,12 +974,10 @@ window.stopAndProcessVoice = () => {
   }, 150);
 };
 
-// 🚀 核心自然語言解析模組 (重複詞句清洗 + 絕對區間鎖定)
 function parseVoiceOrderLocally(rawUserText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
 
-  // 1. 同音詞校正
   let userText = rawUserText
     .replace(/(多鮮|多先|多仙|多掀|多萱)/g, "多纖")
     .replace(/(負湯|負糖|副糖|付糖|服糖|父糖|附唐)/g, "附糖")
@@ -1016,7 +993,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     .replace(/(抹茶|末茶|磨茶)/g, "抹茶")
     .replace(/(乳香|乳香世家|魯香)/g, "乳香世家");
 
-  // 🚀 核心修復 2：過濾緊鄰且完全重複的字詞 (例如 "香草冰淇淋 香草冰淇淋" -> "香草冰淇淋")
   userText = userText.replace(/(\b.+?\b)(?:\s+\1)+/gi, "$1");
 
   let detectedDiningType = null;
@@ -1068,7 +1044,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
 
     while (pos !== -1) {
       const endPos = pos + entry.cleanName.length;
-      // 🚀 核心修復 3：嚴格防重疊與同品項過近判定
       const isOverlap = matchedRanges.some(r => {
         return (pos >= r.start && pos < r.end) || 
                (endPos > r.start && endPos <= r.end) || 
@@ -1089,13 +1064,12 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
 
   occurrences.sort((a, b) => a.index - b.index);
 
-  // 🚀 核心修復 4：如果相鄰兩個命中品項相同且文字距離小於 4 個字（語音回音/重複吐字），自動合併為一筆
   let sanitizedOccurrences = [];
   for (let i = 0; i < occurrences.length; i++) {
     if (i > 0 && occurrences[i].item.id === occurrences[i-1].item.id) {
       const distance = occurrences[i].index - (occurrences[i-1].index + occurrences[i-1].length);
       if (distance <= 4) {
-        continue; // 跳過重複的同品項
+        continue;
       }
     }
     sanitizedOccurrences.push(occurrences[i]);
