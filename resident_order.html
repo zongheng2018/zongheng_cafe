@@ -13,7 +13,6 @@
 <link rel="apple-touch-icon" href="logo.png">
 
 <style>
-/* 保持你原本的高質感 CSS 結構 */
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
 body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:140px}
 body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);backdrop-filter:blur(5px);z-index:-1}
@@ -23,13 +22,13 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);
 .brand img{width:72px;opacity:.85}
 .back-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:12px;padding:8px 14px;font-weight:800;text-decoration:none;font-size:15px}
 
-.category-nav{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.95);border-bottom:1px solid #eee5dd;scrollbar-width:none}
+.category-nav{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.95);border-bottom:1px solid #eee5dd;scrollbar-width:none;scroll-behavior:smooth}
 .category-nav::-webkit-scrollbar{display:none}
-.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 18px;border-radius:12px;font-weight:800;font-size:15px;white-space:nowrap}
+.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 18px;border-radius:12px;font-weight:800;font-size:15px;white-space:nowrap;transition:background 0.25s ease, color 0.25s ease}
 .nav-item.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 
 .container{max-width:760px;margin:16px auto;padding:0 14px}
-.category-section{scroll-margin-top:140px}
+.category-section{scroll-margin-top:140px;margin-bottom:28px}
 .category-title{font-size:21px;color:#6d6258;font-weight:900;margin:24px 0 12px 4px;letter-spacing:1px}
 
 .menu-grid{display:grid;grid-template-columns:1fr;gap:14px}
@@ -41,8 +40,13 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);
 .menu-note{font-size:14px;color:#8c837a;line-height:1.4;margin:4px 0}
 .menu-price{font-size:20px;font-weight:900;color:#7a594c;margin-top:6px}
 
+.status-badge{font-size:13px;padding:4px 12px;border-radius:12px;font-weight:700;white-space:nowrap}
+.status-badge.soldout{background:#fde8e6;color:#b3514a;border:1px solid #f9cbd7}
+.status-badge.notime{background:#fff1d9;color:#9b681f;border:1px solid #ffe3be}
+
 .bottom-cart-panel{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,0.98);border-top:1px solid #ddd5cc;box-shadow:0 -6px 25px rgba(0,0,0,0.1);z-index:90}
 .cart-summary-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:white}
+.cart-item-name{font-weight:800;font-size:16px}
 .cart-info-text{font-size:17px;font-weight:800;color:#5f574f}
 .cart-info-text span{color:#7a594c;font-size:21px}
 .open-cart-btn{border:none;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;border-radius:12px;padding:10px 20px;font-weight:800;font-size:15px;cursor:pointer}
@@ -54,6 +58,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);
 .checkout-title-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:10px}
 .checkout-main-title{font-size:19px;font-weight:900;color:#554d46}
 .beautiful-close-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:12px;padding:6px 14px;font-weight:800;font-size:14px;cursor:pointer}
+
 .option-title{font-size:15px;font-weight:800;color:#6d6258;margin-top:4px}
 select,textarea{width:100%;border:none;background:#f5f1eb;border-radius:12px;padding:12px;font-size:15px;outline:none;color:#5f574f}
 textarea{height:60px;resize:none}
@@ -72,13 +77,33 @@ textarea{height:60px;resize:none}
 .cart-del{position:absolute;right:12px;top:12px;border:none;background:none;color:#c86b62;font-weight:bold;font-size:14px}
 .status-banner{background:rgba(109,98,88,.95);color:white;border-radius:12px;padding:14px;text-align:center;font-size:15px;font-weight:bold}
 
-.voice-float-btn{position:fixed;right:18px;bottom:85px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;box-shadow:0 6px 20px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:85;transition:transform 0.2s ease,box-shadow 0.2s ease}
+/* 語音按鈕容器與引導氣泡 */
+.voice-float-wrapper{position:fixed;right:18px;bottom:85px;z-index:85;display:flex;flex-direction:column;align-items:flex-end}
+.voice-tooltip{position:absolute;bottom:68px;right:0;background:rgba(85,77,70,0.95);backdrop-filter:blur(4px);color:#fff;font-size:13px;font-weight:800;padding:8px 14px;border-radius:16px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,0.18);opacity:0;transform:translateY(8px) scale(0.92);transition:opacity 0.4s cubic-bezier(0.25,0.8,0.25,1), transform 0.4s cubic-bezier(0.25,0.8,0.25,1);pointer-events:none}
+.voice-tooltip::after{content:"";position:absolute;bottom:-6px;right:22px;border-width:6px 6px 0;border-style:solid;border-color:rgba(85,77,70,0.95) transparent transparent}
+.voice-tooltip.show{opacity:1;transform:translateY(0) scale(1)}
+
+.voice-float-btn{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;box-shadow:0 6px 20px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s ease,box-shadow 0.2s ease}
 .voice-float-btn:active{transform:scale(0.92)}
-.voice-text-preview{font-size:15px;color:#777;min-height:48px;margin:12px 0;line-height:1.5;background:#f8f5f1;border-radius:12px;padding:10px}
+.voice-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.voice-box{background:white;width:100%;max-width:360px;border-radius:20px;padding:22px 18px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+.voice-wave{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#f0e8df;display:flex;align-items:center;justify-content:center;color:#6d6258;transition:background 0.25s ease}
+.voice-wave.listening{animation:pulse-wave 1.2s infinite;background:#eaddd3}
+.voice-wave.paused{background:#f0ede8;color:#9b9288;animation:none}
+@keyframes pulse-wave{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(109,98,88,0.4)}70%{transform:scale(1.08);box-shadow:0 0 0 16px rgba(109,98,88,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(109,98,88,0)}}
+.voice-text-preview{font-size:14.5px;color:#554d46;min-height:56px;max-height:120px;overflow-y:auto;margin:12px 0;line-height:1.5;background:#f8f5f1;border-radius:12px;padding:10px 12px;text-align:left;word-break:break-all}
+
+.voice-btn-group{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:8px;margin-top:14px}
+.voice-action-btn{border-radius:12px;padding:9px 0;font-weight:800;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center}
+.voice-btn-cancel{background:white;border:1px solid #c9c0b7;color:#6d6258}
+.voice-btn-pause{background:#f5f1eb;border:1px solid #d8cfc4;color:#6d6258}
+.voice-btn-submit{background:#6d6258;color:white}
 </style>
 </head>
 
 <body>
+
+<div id="printKitchenReceiptContainer" style="display: none;"></div>
 
 <div class="sticky-top-group">
   <div class="header">
@@ -88,29 +113,82 @@ textarea{height:60px;resize:none}
   <div class="category-nav" id="categoryNav">正在加載...</div>
 </div>
 
-<div class="container"><div id="menuContainer">正在加載菜單...</div></div>
+<div class="container">
+  <div id="menuContainer">正在加載菜單...</div>
+</div>
 
-<!-- 語音點餐按鈕 -->
-<button class="voice-float-btn" onclick="window.startVoiceOrder()">
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-</button>
+<!-- 懸浮語音點餐按鈕區 -->
+<div class="voice-float-wrapper">
+  <div class="voice-tooltip" id="voiceTooltip">歡迎使用語音點餐功能</div>
+  <button class="voice-float-btn" id="voiceTriggerBtn" onclick="window.startVoiceOrder()">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+      <line x1="12" y1="19" x2="12" y2="23"></line>
+      <line x1="8" y1="23" x2="16" y2="23"></line>
+    </svg>
+  </button>
+</div>
 
-<!-- 統一使用滑入視窗 -->
-<div class="modal-overlay" id="voiceModalOverlay" onclick="closeVoiceModal(event)">
-  <div class="bottom-option-slide" id="voiceBox" onclick="event.stopPropagation()">
-    <div class="checkout-title-row"><div class="checkout-main-title" id="voiceStatusTitle">語音點餐</div><button class="beautiful-close-btn" onclick="window.cancelVoiceOrder()">關閉</button></div>
-    <div class="voice-text-preview" id="voiceResultText">請點擊麥克風說話...</div>
-    <button class="btn-primary-action" id="voiceConfirmBtn" onclick="window.stopAndProcessVoice()">確認送出</button>
+<!-- 語音辨識互動視窗 -->
+<div class="voice-modal-overlay" id="voiceModalOverlay">
+  <div class="voice-box">
+    <div class="voice-wave" id="voiceWaveIcon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+    </div>
+    <div style="font-weight:900; font-size:17px; color:#554d46;" id="voiceStatusTitle">正在聆聽中...</div>
+    <div class="voice-text-preview" id="voiceResultText">請說出餐點與規格（支援連講多句，語速快也能辨識）...</div>
+    
+    <div class="voice-btn-group">
+      <button class="voice-action-btn voice-btn-cancel" onclick="window.cancelVoiceOrder()">取消</button>
+      <button class="voice-action-btn voice-btn-pause" id="voicePauseBtn" onclick="window.togglePauseVoice()">暫停</button>
+      <button class="voice-action-btn voice-btn-submit" id="voiceConfirmBtn" onclick="window.stopAndProcessVoice()">完成送出</button>
+    </div>
   </div>
 </div>
 
-<!-- 商品規格彈窗 -->
-<div class="modal-overlay" id="optionModalOverlay" onclick="closeItemModal(event)"><div class="bottom-option-slide" onclick="event.stopPropagation()"><div class="checkout-title-row"><div class="checkout-main-title" id="modalItemName">餐點規格</div><button class="beautiful-close-btn" onclick="closeItemModal()">取消 ✕</button></div><div id="optionArea"></div><div class="option-title">備註說明</div><textarea id="itemNote" placeholder="去冰/半糖，可空白"></textarea><div class="qty-row"><button class="qty-btn" onclick="changeQty(-1)">−</button><div class="qty-val" id="qtyVal">1</div><button class="qty-btn" onclick="changeQty(1)">＋</button></div><button class="btn-primary-action" onclick="addItemToCart()">確認加入購物車</button></div></div>
+<div class="modal-overlay" id="optionModalOverlay" onclick="if(event.target===this)closeItemModal()">
+  <div class="bottom-option-slide">
+    <div class="checkout-title-row">
+      <div class="checkout-main-title" id="modalItemName">餐點規格</div>
+      <button class="beautiful-close-btn" onclick="closeItemModal()">取消 ✕</button>
+    </div>
+    <div id="optionArea"></div>
+    <div class="option-title">備註說明</div>
+    <textarea id="itemNote" placeholder="去冰/半糖，可空白"></textarea>
+    <div class="qty-row">
+      <button class="qty-btn" onclick="changeQty(-1)">−</button>
+      <div class="qty-val" id="qtyVal">1</div>
+      <button class="qty-btn" onclick="changeQty(1)">＋</button>
+    </div>
+    <button class="btn-primary-action" onclick="addItemToCart()">確認加入購物車</button>
+  </div>
+</div>
 
-<!-- 購物車彈窗 -->
-<div class="bottom-checkout-slide" id="bottomCheckoutSlide"><div class="checkout-title-row"><div class="checkout-main-title">確認購物車</div><button class="beautiful-close-btn" onclick="closeCart()">返回點餐</button></div><div id="cartListArea"></div><div class="option-title">取餐方式</div><select id="diningType" onchange="window.toggleSeatSelect()"><option value="外帶">外帶</option><option value="內用">內用</option></select><div id="seatArea" style="display:none;"><div class="option-title">選擇座位號碼</div><select id="seatSelect"></select></div><button class="btn-primary-action" id="submitOrderBtn" style="margin-top:6px;">送出訂單</button></div>
+<div class="bottom-checkout-slide" id="bottomCheckoutSlide">
+  <div class="checkout-title-row">
+    <div class="checkout-main-title">確認購物車餐點</div>
+    <button class="beautiful-close-btn" onclick="closeCart()">返回點餐</button>
+  </div>
+  <div id="cartListArea"></div>
+  <div class="option-title">取餐方式</div>
+  <select id="diningType" onchange="window.toggleSeatSelect()">
+    <option value="外帶">外帶</option>
+    <option value="內用">內用</option>
+  </select>
+  <div id="seatArea" style="display:none;">
+    <div class="option-title">選擇座位號碼</div>
+    <select id="seatSelect"></select>
+  </div>
+  <button class="btn-primary-action" id="submitOrderBtn" style="margin-top:6px;">送出訂單</button>
+</div>
 
-<div class="bottom-cart-panel"><div class="cart-summary-row"><div class="cart-info-text">已選擇 <span id="cartCount">0</span> 項，共 <span id="cartTotalText">0</span> 點</div><button class="open-cart-btn" onclick="openCart()">查看購物車 ></button></div></div>
+<div class="bottom-cart-panel">
+  <div class="cart-summary-row">
+    <div class="cart-info-text">已選擇 <span id="cartCount">0</span> 項商品，共 <span id="cartTotalText">0</span> 點</div>
+    <button class="open-cart-btn" onclick="openCart()">查看購物車 ></button>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -120,93 +198,574 @@ import { getFirestore, collection, getDocs, addDoc, query, where, doc, onSnapsho
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
-let profile=null, menuList=[], cart=[], currentSelectItem=null, balanceDocId=null, currentGranted=0, currentStored=0, categoryCache=[];
-let recognition=null, recordedTranscript="";
+let profile=null; let menuList=[]; let cart=[]; let currentSelectItem=null; let balanceDocId=null;
+let currentGranted=0, currentStored=0; let sysConfig={manual_mode:"auto"};
+let categoryCache=[];
+let sectionObserver=null;
+let isManualScrolling=false;
+
+let recognition=null;
+let finalAccumulatedText="";
+let currentInterimText="";
+let isUserPaused=false;
+let isExplicitStopped=false;
+let isSubmittingVoice=false;
+
+const staticSeats = [
+  "A1", "A2", "A3", "A4",
+  "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8",
+  "C1", "C2", "C3", "C4", "C5", "C6"
+];
+
+function getTaipeiTimeInMinutes() { const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"})); return now.getHours() * 60 + now.getMinutes(); }
+function getTaipeiDateString() { const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"})); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; }
+function timeStringToMinutes(t) { if(!t)return 0; const p=t.split(":"); return Number(p[0]||0)*60+Number(p[1]||0); }
 
 onAuthStateChanged(auth, async user => {
   if (!user) { location.href = "index.html"; return; }
   profile = JSON.parse(localStorage.getItem("zh_user"));
-  const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", profile.username)));
-  if (!snap.empty) { balanceDocId = snap.docs[0].id; currentGranted = Number(snap.docs[0].data().granted_amount||0); currentStored = Number(snap.docs[0].data().stored_amount||0); }
-  onSnapshot(doc(db, "settings", "cafe"), () => loadMenuData());
+  await loadBalance(); loadStaticSeats();
+  onSnapshot(doc(db, "settings", "cafe"), s => { if(s.exists()) sysConfig=s.data(); loadMenuData(); });
+  showVoiceTooltipGuide();
 });
 
+function showVoiceTooltipGuide() {
+  const tip = document.getElementById("voiceTooltip");
+  if (!tip) return;
+  setTimeout(() => {
+    tip.classList.add("show");
+    setTimeout(() => {
+      tip.classList.remove("show");
+    }, 4000);
+  }, 600);
+}
+
+async function loadBalance() {
+  const snap = await getDocs(query(collection(db, "balances"), where("uid", "==", profile.username)));
+  if (!snap.empty) { balanceDocId = snap.docs[0].id; currentGranted = Number(snap.docs[0].data().granted_amount||0); currentStored = Number(snap.docs[0].data().stored_amount||0); }
+}
+
 async function loadMenuData() {
-  const snap = await getDocs(collection(db, "menu"));
-  let newMenuList = []; snap.forEach(d => newMenuList.push({id:d.id, ...d.data()}));
-  menuList = newMenuList.sort((a,b) => Number(a.sort_order||999) - Number(b.sort_order||999) || a.name.localeCompare(b.name));
-  renderMenu();
+  const snap = await getDocs(collection(db, "menu")); 
+  menuList = []; 
+  let rawCategories = [];
+  
+  snap.forEach(d => { 
+    const m = {id:d.id,...d.data()}; 
+    menuList.push(m); 
+    if (m.category && !rawCategories.includes(m.category)) {
+      rawCategories.push(m.category);
+    }
+  });
+  
+  menuList.sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));
+  
+  try {
+    const orderDoc = await getDoc(doc(db, "settings", "categories_order"));
+    if (orderDoc.exists() && orderDoc.data().order_list) {
+      const savedOrder = orderDoc.data().order_list;
+      categoryCache = savedOrder.filter(c => rawCategories.includes(c));
+      rawCategories.forEach(c => { if (!categoryCache.includes(c)) categoryCache.push(c); });
+    } else {
+      categoryCache = rawCategories;
+    }
+  } catch (e) {
+    console.error("讀取分類自訂順序失敗:", e);
+    categoryCache = rawCategories;
+  }
+  
+  renderCategoryNav(); renderMenu();
+}
+
+function renderCategoryNav() {
+  const nav = document.getElementById("categoryNav"); nav.innerHTML = "";
+  categoryCache.forEach((cat, idx) => {
+    const btn = document.createElement("button"); 
+    btn.className = `nav-item ${idx === 0 ? 'active' : ''}`; 
+    btn.id = `cat_nav_${idx}`;
+    btn.innerText = cat;
+    btn.onclick = () => {
+      isManualScrolling = true;
+      document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active")); 
+      btn.classList.add("active");
+      btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      
+      const target = document.getElementById(`cat_sec_${idx}`); 
+      if(target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => { isManualScrolling = false; }, 800);
+      }
+    };
+    nav.appendChild(btn);
+  });
 }
 
 function renderMenu() {
   const container = document.getElementById("menuContainer"); container.innerHTML = "";
-  let categories = [...new Set(menuList.map(m => m.category || "其他"))];
-  categories.forEach((cat, idx) => {
-    const section = document.createElement("div"); section.className = "category-section"; section.id = `cat_sec_${idx}`;
+  const nowMin = getTaipeiTimeInMinutes(); const todayStr = getTaipeiDateString();
+  let systemOpen = true; let closeReason = ""; const offDays = (sysConfig.closed_days || "").split(",").map(x=>x.trim());
+
+  if (sysConfig.manual_mode === "force_closed") { systemOpen = false; closeReason = sysConfig.closed_reason || "暫停服務"; }
+  else if (offDays.includes(todayStr)) { systemOpen = false; closeReason = "今日公休"; }
+  else if (sysConfig.manual_mode !== "force_open") {
+    const start = timeStringToMinutes(sysConfig.open_time || "08:30"); const end = timeStringToMinutes(sysConfig.close_time || "19:00");
+    if (nowMin < start || nowMin > end) { systemOpen = false; closeReason = `不在營業時間（${sysConfig.open_time}-${sysConfig.close_time}）`; }
+  }
+  if (!systemOpen) { container.innerHTML = `<div class="status-banner">咖啡廳系統關閉中<br>【原因：${closeReason}】</div>`; return; }
+
+  if (sectionObserver) sectionObserver.disconnect();
+
+  categoryCache.forEach((cat, idx) => {
+    const section = document.createElement("div"); 
+    section.className = "category-section"; 
+    section.id = `cat_sec_${idx}`;
+    section.setAttribute("data-index", idx);
     section.innerHTML = `<div class="category-title">${cat}</div>`;
     const grid = document.createElement("div"); grid.className = "menu-grid";
+
     menuList.filter(x => (x.category || "其他") === cat).forEach(m => {
+      let avail = m.enabled !== false;
+      let badgeHtml = "";
+      if (m.enabled === false) { avail = false; badgeHtml = `<span class="status-badge soldout">今日售完</span>`; }
+      else if (m.is_time_restricted) { const s=timeStringToMinutes(m.start_time), e=timeStringToMinutes(m.end_time); if(nowMin<s||nowMin>e) { avail=false; badgeHtml = `<span class="status-badge notime">限時供應</span>`; } }
+      
       const card = document.createElement("div"); card.className = "menu-card";
-      card.onclick = () => window.openItemModal(m.id);
-      card.innerHTML = `<img class="menu-img" src="${m.image || 'logo.png'}"><div class="menu-info"><div><div class="menu-name"><span>${m.name}</span></div><div class="menu-note">${m.note||""}</div></div><div class="menu-price">${m.price} 點</div></div>`;
+      if(avail) card.onclick = () => window.openItemModal(m.id); else card.classList.add("disabled");
+      card.innerHTML = `<img class="menu-img" src="${m.image || 'logo.png'}"><div class="menu-info"><div><div class="menu-name"><span>${m.name}</span>${badgeHtml}</div><div class="menu-note">${m.note||""}</div></div><div class="menu-price">${m.price} 點</div></div>`;
       grid.appendChild(card);
     });
     section.appendChild(grid); container.appendChild(section);
   });
+
+  initScrollSpy();
 }
 
-// 訂單成功彈窗 (移除emoji，更專業)
-function showSuccessModal() {
-  const overlay = document.getElementById("voiceModalOverlay");
-  document.getElementById("voiceStatusTitle").innerText = "訂單已送出";
-  document.getElementById("voiceResultText").innerText = "感謝您的訂單，已為您送出。";
-  document.getElementById("voiceActionBtns").innerHTML = `<button class="btn-primary-action" onclick="location.reload()">回到首頁</button>`;
+function initScrollSpy() {
+  const sections = document.querySelectorAll(".category-section");
+  if (!sections.length) return;
+
+  const observerOptions = {
+    root: null,
+    rootMargin: "-20% 0px -70% 0px",
+    threshold: 0
+  };
+
+  sectionObserver = new IntersectionObserver((entries) => {
+    if (isManualScrolling) return;
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = entry.target.getAttribute("data-index");
+        const activeNavBtn = document.getElementById(`cat_nav_${idx}`);
+        if (activeNavBtn) {
+          document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+          activeNavBtn.classList.add("active");
+          activeNavBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }
+    });
+  }, observerOptions);
+
+  sections.forEach(sec => sectionObserver.observe(sec));
+}
+
+window.openItemModal = (id) => {
+  window.closeCart(); currentSelectItem = menuList.find(x => x.id === id);
+  const modalItemName = document.getElementById("modalItemName");
+  const qtyVal = document.getElementById("qtyVal");
+  const itemNote = document.getElementById("itemNote");
+  modalItemName.innerText = currentSelectItem.name; qtyVal.innerText = "1"; itemNote.value = "";
+  const area = document.getElementById("optionArea"); area.innerHTML = "";
+  (currentSelectItem.custom_options || []).forEach((g, idx) => {
+    area.innerHTML += `<div class="option-title">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
+  });
+  const overlay = document.getElementById("optionModalOverlay");
   overlay.style.display = "flex";
   setTimeout(() => overlay.classList.add("show"), 10);
+};
+
+window.closeItemModal = () => { 
+  const overlay = document.getElementById("optionModalOverlay");
+  overlay.classList.remove("show");
+  setTimeout(() => overlay.style.display = "none", 300);
+};
+window.changeQty = (n) => { const qtyVal = document.getElementById("qtyVal"); qtyVal.innerText = Math.max(1, Number(qtyVal.innerText) + n); };
+
+window.addItemToCart = () => {
+  const itemNote = document.getElementById("itemNote");
+  const qtyVal = document.getElementById("qtyVal");
+  const options = {}; (currentSelectItem.custom_options || []).forEach((g, idx) => { options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
+  cart.push({ id: currentSelectItem.id, name: currentSelectItem.name, price: currentSelectItem.price, qty: Number(qtyVal.innerText), options, note: itemNote.value.trim() });
+  window.closeItemModal(); updateCartSummary();
+};
+
+function updateCartSummary() {
+  document.getElementById("cartCount").innerText = cart.reduce((s,x)=>s+x.qty, 0);
+  document.getElementById("cartTotalText").innerText = cart.reduce((s,x)=>s+x.price*x.qty, 0);
 }
 
-// UI 事件處理 (加入 e.stopPropagation 防止冒泡亂跳)
-window.openItemModal = (id) => { window.closeCart(); currentSelectItem = menuList.find(x => x.id === id); const modalItemName = document.getElementById("modalItemName"); const qtyVal = document.getElementById("qtyVal"); const itemNote = document.getElementById("itemNote"); modalItemName.innerText = currentSelectItem.name; qtyVal.innerText = "1"; itemNote.value = ""; const area = document.getElementById("optionArea"); area.innerHTML = ""; (currentSelectItem.custom_options || []).forEach((g, idx) => { area.innerHTML += `<div class="option-title">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`; }); document.getElementById("optionModalOverlay").style.display = "flex"; setTimeout(() => document.getElementById("optionModalOverlay").classList.add("show"), 10); };
-window.closeItemModal = (e) => { if(e) e.stopPropagation(); document.getElementById("optionModalOverlay").classList.remove("show"); setTimeout(() => document.getElementById("optionModalOverlay").style.display = "none", 300); };
-window.closeVoiceModal = (e) => { if(e.target.id === 'voiceModalOverlay') window.cancelVoiceOrder(); };
-window.changeQty = (n) => { const qtyVal = document.getElementById("qtyVal"); qtyVal.innerText = Math.max(1, Number(qtyVal.innerText) + n); };
-window.addItemToCart = () => { const itemNote = document.getElementById("itemNote"); const qtyVal = document.getElementById("qtyVal"); const options = {}; (currentSelectItem.custom_options || []).forEach((g, idx) => { options[g.title] = document.getElementById(`counter_opt_${idx}`).value; }); cart.push({ id: currentSelectItem.id, name: currentSelectItem.name, price: currentSelectItem.price, qty: Number(qtyVal.innerText), options, note: itemNote.value.trim() }); window.closeItemModal(); updateCartSummary(); };
-function updateCartSummary() { document.getElementById("cartCount").innerText = cart.reduce((s,x)=>s+x.qty, 0); document.getElementById("cartTotalText").innerText = cart.reduce((s,x)=>s+x.price*x.qty, 0); }
-window.openCart = () => { window.closeItemModal(); const area = document.getElementById("cartListArea"); area.innerHTML = ""; cart.forEach((x, idx) => { const opts = Object.entries(x.options).map(([k,v])=>`${k}:${v}`).join(", "); area.innerHTML += `<div class="cart-item"><div class="cart-item-name">${x.name} × ${x.qty}</div><div class="cart-item-meta">${opts} ${x.note?`[${x.note}]`:''}</div><div class="cart-item-price">${x.price*x.qty} 點</div><button class="cart-del" onclick="window.delCartItem(${idx})">刪除</button></div>`; }); const slide = document.getElementById("bottomCheckoutSlide"); slide.style.display = "flex"; setTimeout(() => { slide.classList.add("show"); }, 10); };
-window.closeCart = () => { document.getElementById("bottomCheckoutSlide").classList.remove("show"); setTimeout(()=>{ document.getElementById("bottomCheckoutSlide").style.display = "none"; }, 300); };
+window.openCart = () => {
+  window.closeItemModal(); const area = document.getElementById("cartListArea"); area.innerHTML = "";
+  cart.forEach((x, idx) => {
+    const opts = Object.entries(x.options).map(([k,v])=>`${k}:${v}`).join(", ");
+    area.innerHTML += `<div class="cart-item"><div class="cart-item-name">${x.name} × ${x.qty}</div><div class="cart-item-meta">${opts} ${x.note?`[${x.note}]`:''}</div><div class="cart-item-price">${x.price*x.qty} 點</div><button class="cart-del" onclick="window.delCartItem(${idx})">刪除</button></div>`;
+  });
+  const slide = document.getElementById("bottomCheckoutSlide");
+  slide.style.display = "flex";
+  setTimeout(() => { slide.style.transform = "translateY(0)"; }, 10);
+};
+window.closeCart = () => { document.getElementById("bottomCheckoutSlide").style.transform = "translateY(100%)"; setTimeout(()=>{ document.getElementById("bottomCheckoutSlide").style.display = "none"; }, 300); };
 window.delCartItem = (idx) => { cart.splice(idx,1); window.openCart(); updateCartSummary(); };
 window.toggleSeatSelect = () => { const diningType = document.getElementById("diningType"); const seatArea = document.getElementById("seatArea"); seatArea.style.display = diningType.value === "內用" ? "block" : "none"; };
 
-document.getElementById("submitOrderBtn").addEventListener("click", async () => { const diningType = document.getElementById("diningType"); const seatSelect = document.getElementById("seatSelect"); const total = cart.reduce((s,x)=>s+x.qty*x.price, 0); if(currentGranted + currentStored < total) { alert("點數不足！"); return; } await addDoc(collection(db, "orders"), { order_id: "ZH"+Date.now(), uid: profile.username, items: cart, total, dining_type: diningType.value, seat: diningType.value==="內用"?seatSelect.value:"", status: "等待接單", created_at: new Date().toISOString() }); await updateDoc(doc(db, "balances", balanceDocId), { granted_amount: currentGranted>=total?currentGranted-total:0, stored_amount: currentGranted>=total?currentStored:currentStored-(total-currentGranted), updated_by: "resident_auto" }); showSuccessModal(); });
+function loadStaticSeats() {
+  const select = document.getElementById("seatSelect"); if(!select) return;
+  select.innerHTML = "";
+  staticSeats.forEach(seatId => { select.innerHTML += `<option value="${seatId}">${seatId}</option>`; });
+}
 
-// 語音引擎
-function initSpeechRecognition() { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SpeechRecognition) return null; const rec = new SpeechRecognition(); rec.lang = "zh-TW"; rec.onresult = (e) => { recordedTranscript = e.results[0][0].transcript; document.getElementById("voiceResultText").innerText = recordedTranscript; }; return rec; }
-window.startVoiceOrder = () => { document.getElementById("voiceResultText").innerText = "請說出餐點..."; document.getElementById("voiceModalOverlay").style.display = "flex"; setTimeout(()=>document.getElementById("voiceModalOverlay").classList.add("show"), 10); if (!recognition) recognition = initSpeechRecognition(); if (recognition) try { recognition.start(); } catch(e) {} };
-window.cancelVoiceOrder = () => { document.getElementById("voiceModalOverlay").classList.remove("show"); setTimeout(()=>document.getElementById("voiceModalOverlay").style.display = "none", 300); };
-window.stopAndProcessVoice = () => { const text = document.getElementById("voiceResultText").innerText; const parsedItems = parseVoiceOrderLocally(text, menuList); if (parsedItems.length > 0) { parsedItems.forEach(i => cart.push(i)); updateCartSummary(); window.openCart(); } document.getElementById("voiceModalOverlay").style.display = "none"; };
+document.getElementById("submitOrderBtn").addEventListener("click", async () => {
+  const diningType = document.getElementById("diningType");
+  const seatSelect = document.getElementById("seatSelect");
+  const submitOrderBtn = document.getElementById("submitOrderBtn");
+  const total = cart.reduce((s,x)=>s+x.qty*x.price, 0); if(currentGranted + currentStored < total) { alert("點數不足！"); return; }
+  if(!cart.length) { alert("購物車目前為空！"); return; }
+  submitOrderBtn.disabled = true;
+  await addDoc(collection(db, "orders"), { order_id: "ZH"+Date.now(), uid: profile.username, items: cart, total, dining_type: diningType.value, seat: diningType.value==="內用"?seatSelect.value:"", status: "等待接單", created_at: new Date().toISOString() });
+  await updateDoc(doc(db, "balances", balanceDocId), { granted_amount: currentGranted>=total?currentGranted-total:0, stored_amount: currentGranted>=total?currentStored:currentStored-(total-currentGranted), updated_by: "resident_auto" });
+  alert("訂單送出成功！"); cart = []; location.href = "resident.html";
+});
 
-// 語意解析
-function parseVoiceOrderLocally(userText, currentMenu) {
-  const cleanedMenu = currentMenu.filter(m => m.enabled !== false).map(item => ({ rawItem: item, cleanName: item.name.replace(/[\(（\[【].*?[\)）\]】]/g, "").trim() })).sort((a,b) => b.cleanName.length - a.cleanName.length);
-  let occurrences = [], matchedRanges = [];
+// ==========================================
+// 🚀 多品項自然語言點餐引擎 (去重防跳二次 + 提示氣泡引導)
+// ==========================================
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("您的裝置不支援語音辨識，請使用最新版 Safari 或 Chrome 開啟！");
+    return null;
+  }
+  const rec = new SpeechRecognition();
+  rec.lang = "zh-TW";
+  rec.continuous = true;
+  rec.interimResults = true;
+
+  rec.onresult = (event) => {
+    let interimText = "";
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalAccumulatedText += transcript + " ";
+      } else {
+        interimText += transcript;
+      }
+    }
+    currentInterimText = interimText;
+    const displayText = (finalAccumulatedText + interimText).trim();
+    if (displayText) {
+      document.getElementById("voiceResultText").innerText = displayText;
+    }
+  };
+
+  rec.onend = () => {
+    if (!isExplicitStopped && !isUserPaused) {
+      try {
+        rec.start();
+      } catch (e) {}
+    }
+  };
+
+  rec.onerror = (event) => {
+    console.warn("語音辨識提示:", event.error);
+    if (event.error === "no-speech" && !isExplicitStopped && !isUserPaused) {
+      try { rec.start(); } catch (e) {}
+    }
+  };
+
+  return rec;
+}
+
+window.startVoiceOrder = () => {
+  finalAccumulatedText = "";
+  currentInterimText = "";
+  isUserPaused = false;
+  isExplicitStopped = false;
+  isSubmittingVoice = false;
+
+  const tip = document.getElementById("voiceTooltip");
+  if (tip) tip.classList.remove("show");
+
+  document.getElementById("voiceResultText").innerText = "請說出餐點與規格（支援連講多句，語速快也能辨識）...";
+  document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
+  document.getElementById("voiceWaveIcon").className = "voice-wave listening";
+  document.getElementById("voicePauseBtn").innerText = "暫停";
+  document.getElementById("voiceConfirmBtn").disabled = false;
+  document.getElementById("voiceModalOverlay").style.display = "flex";
+
+  if (!recognition) recognition = initSpeechRecognition();
+  if (recognition) {
+    try { recognition.start(); } catch(e) {}
+  }
+};
+
+window.togglePauseVoice = () => {
+  if (!recognition) return;
+  const pauseBtn = document.getElementById("voicePauseBtn");
+  const waveIcon = document.getElementById("voiceWaveIcon");
+  const statusTitle = document.getElementById("voiceStatusTitle");
+
+  if (!isUserPaused) {
+    isUserPaused = true;
+    try { recognition.stop(); } catch(e) {}
+    waveIcon.className = "voice-wave paused";
+    statusTitle.innerText = "已暫停聆聽";
+    pauseBtn.innerText = "繼續";
+  } else {
+    isUserPaused = false;
+    waveIcon.className = "voice-wave listening";
+    statusTitle.innerText = "正在聆聽中...";
+    pauseBtn.innerText = "暫停";
+    try { recognition.start(); } catch(e) {}
+  }
+};
+
+window.cancelVoiceOrder = () => {
+  isExplicitStopped = true;
+  isUserPaused = false;
+  isSubmittingVoice = false;
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  document.getElementById("voiceWaveIcon").className = "voice-wave";
+  document.getElementById("voiceModalOverlay").style.display = "none";
+};
+
+window.stopAndProcessVoice = () => {
+  if (isSubmittingVoice) return;
+  isSubmittingVoice = true;
+
+  isExplicitStopped = true;
+  isUserPaused = false;
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  document.getElementById("voiceWaveIcon").className = "voice-wave";
+  document.getElementById("voiceConfirmBtn").disabled = true;
+  
+  const text = (finalAccumulatedText + " " + currentInterimText).trim();
+  if (!text || text.length < 2 || text.startsWith("請說出餐點")) {
+    alert("尚未聽到您的點餐內容，請再試一次！");
+    window.cancelVoiceOrder();
+    return;
+  }
+
+  document.getElementById("voiceStatusTitle").innerText = "正在解析餐點、取餐方式與規格...";
+  
+  setTimeout(() => {
+    const parseResult = parseVoiceOrderLocally(text, menuList);
+    
+    if (!parseResult.items || parseResult.items.length === 0) {
+      alert("抱歉，系統未在菜單中找到您說的品項，請確認品項名稱或手動點餐！");
+    } else {
+      parseResult.items.forEach(item => cart.push(item));
+      updateCartSummary();
+
+      if (parseResult.diningType) {
+        const diningSelect = document.getElementById("diningType");
+        diningSelect.value = parseResult.diningType;
+        window.toggleSeatSelect();
+      }
+
+      if (parseResult.seat) {
+        const seatSelect = document.getElementById("seatSelect");
+        if (seatSelect) {
+          seatSelect.value = parseResult.seat;
+        }
+      }
+
+      alert(`已成功加入 ${parseResult.items.length} 項商品！${parseResult.diningType ? `【${parseResult.diningType}${parseResult.seat ? ` ${parseResult.seat}桌` : ''}】` : ''}`);
+      window.openCart();
+    }
+    document.getElementById("voiceModalOverlay").style.display = "none";
+    isSubmittingVoice = false;
+  }, 150);
+};
+
+// 🚀 核心自然語言解析模組 (重複字句過濾 + 嚴格區間去重)
+function parseVoiceOrderLocally(rawUserText, currentMenu) {
+  const availableItems = currentMenu.filter(m => m.enabled !== false);
+  const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
+
+  // 1. 同音詞校正
+  let userText = rawUserText
+    .replace(/(多鮮|多先|多仙|多掀|多萱)/g, "多纖")
+    .replace(/(負湯|負糖|副糖|付糖|服糖|父糖|附唐)/g, "附糖")
+    .replace(/(冰淇淋|冰其林|冰奇淋|冰奇林)/g, "冰淇淋")
+    .replace(/(那鐵|拿帖|拿田|那提)/g, "拿鐵")
+    .replace(/(乃茶|奶察|奈茶)/g, "奶茶")
+    .replace(/(鬆餅|宋餅|送餅)/g, "鬆餅")
+    .replace(/(三明治|三明智)/g, "三明治")
+    .replace(/(美式|每式|美士)/g, "美式")
+    .replace(/(湯匙|湯匙兒|唐池|唐匙)/g, "湯匙")
+    .replace(/(可可|顆顆|科科)/g, "可可")
+    .replace(/(歐蕾|歐雷|歐累)/g, "歐蕾")
+    .replace(/(抹茶|末茶|磨茶)/g, "抹茶")
+    .replace(/(乳香|乳香世家|魯香)/g, "乳香世家");
+
+  let detectedDiningType = null;
+  let detectedSeat = null;
+
+  if (/(內用|在裡面吃|店內吃|內吃|現場吃|坐在|桌號|座位)/.test(userText)) {
+    detectedDiningType = "內用";
+  } else if (/(外帶|帶走|包回去|拿走|帶回家)/.test(userText)) {
+    detectedDiningType = "外帶";
+  }
+
+  for (let s of staticSeats) {
+    const regex = new RegExp(`(?:坐在|座位(?:是)?|桌號(?:是)?|桌|號)?\\s*(${s})\\b`, "i");
+    if (regex.test(userText)) {
+      detectedSeat = s;
+      detectedDiningType = "內用";
+      break;
+    }
+  }
+
+  const cleanedMenu = availableItems.map(item => {
+    const cleanName = item.name.replace(/[\(（\[【].*?[\)）\]】]/g, "").trim();
+    return {
+      rawItem: item,
+      cleanName: cleanName || item.name.trim(),
+      length: (cleanName || item.name.trim()).length
+    };
+  }).sort((a, b) => b.length - a.length);
+
+  let occurrences = [];
+  let matchedRanges = [];
+  
   cleanedMenu.forEach(entry => {
     let pos = userText.indexOf(entry.cleanName);
+    
+    if (pos === -1 && entry.cleanName.length >= 3) {
+      for (let i = 0; i <= userText.length - entry.cleanName.length; i++) {
+        let sub = userText.substr(i, entry.cleanName.length);
+        let matchCharCount = 0;
+        for (let c of entry.cleanName) {
+          if (sub.includes(c)) matchCharCount++;
+        }
+        if (matchCharCount / entry.cleanName.length >= 0.75) {
+          pos = i;
+          break;
+        }
+      }
+    }
+
     while (pos !== -1) {
       const endPos = pos + entry.cleanName.length;
-      if (!matchedRanges.some(r => (pos >= r.start && pos < r.end) || (endPos > r.start && endPos <= r.end))) { occurrences.push({ item: entry.rawItem, index: pos, length: entry.cleanName.length }); matchedRanges.push({ start: pos, end: endPos }); }
+      // 確保匹配到的區間完全獨立且不與其他品項重疊
+      const isOverlap = matchedRanges.some(r => (pos >= r.start && pos < r.end) || (endPos > r.start && endPos <= r.end) || (pos <= r.start && endPos >= r.end));
+      
+      if (!isOverlap) {
+        occurrences.push({ item: entry.rawItem, index: pos, length: entry.cleanName.length, name: entry.cleanName });
+        matchedRanges.push({ start: pos, end: endPos });
+      }
       pos = userText.indexOf(entry.cleanName, pos + 1);
     }
   });
-  return occurrences.sort((a,b) => a.index - b.index).map((occ, idx) => {
+
+  if (occurrences.length === 0) {
+    return { items: [], diningType: detectedDiningType, seat: detectedSeat };
+  }
+
+  occurrences.sort((a, b) => a.index - b.index);
+
+  const finalItems = occurrences.map((occ, idx) => {
+    const prevEnd = idx === 0 ? 0 : occurrences[idx - 1].index + occurrences[idx - 1].length;
     const nextStart = idx === occurrences.length - 1 ? userText.length : occurrences[idx + 1].index;
-    const context = userText.substring(occ.index + occ.length, nextStart);
-    let qty = 1; const qtyMatch = userText.substring(Math.max(0, occ.index - 5), occ.index).match(/(\d+|[一二兩三四五六七八九十]+)/);
-    if (qtyMatch) qty = ({ "一":1, "二":2, "兩":2, "三":3, "四":4, "五":5, "六":6, "七":7, "八":8, "九":9, "十":10 })[qtyMatch[1]] || parseInt(qtyMatch[1]) || 1;
-    const options = {};
-    (occ.item.custom_options || []).forEach(g => { options[g.title] = g.choices.find(c => context.includes(c)) || (/(不要|不用|別|免|不加)/.test(context) ? g.choices.find(c => /(否|不要|不加|無)/.test(c)) : g.choices[0]) || ""; });
-    const noteMatch = context.match(/(?:備註|註明)[:：\s]*(.*?)(?=\s*(然後|還有|再|下一個|一份|一個|兩杯|一杯|$))/);
-    return { id: occ.item.id, name: occ.item.name, price: occ.item.price, qty, options, note: noteMatch ? noteMatch[1].trim() : "" };
+    
+    const prefixSegment = userText.substring(prevEnd, occ.index);
+    const suffixSegment = userText.substring(occ.index + occ.length, nextStart);
+    const fullSegment = prefixSegment + " " + suffixSegment;
+
+    let qty = 1;
+    const qtyMatch = (prefixSegment + suffixSegment).match(/(\d+|[一二兩三四五六七八九十]+)\s*(杯|個|份|碗|盤|瓶|隻|顆|罐|支)?/);
+    if (qtyMatch) {
+      const qStr = qtyMatch[1];
+      if (numMap[qStr]) qty = numMap[qStr];
+      else if (!isNaN(parseInt(qStr))) qty = parseInt(qStr);
+    }
+
+    const selectedOptions = {};
+    const usedOptionWords = [];
+
+    (occ.item.custom_options || []).forEach(group => {
+      let matchedChoice = null;
+      const choices = (group.choices || []).map(c => c.trim());
+
+      for (let c of choices) {
+        if (c && fullSegment.includes(c)) {
+          matchedChoice = c;
+          usedOptionWords.push(c);
+          break;
+        }
+      }
+
+      if (!matchedChoice) {
+        const groupTitle = group.title || "";
+        const isSugarOption = groupTitle.includes("糖") || choices.some(c => c.includes("糖"));
+        const isSpoonOption = groupTitle.includes("匙") || groupTitle.includes("餐具") || choices.some(c => c.includes("匙"));
+
+        if (isSugarOption) {
+          if (/(不要附糖|不附糖|免附糖|不用附糖|無糖|不要糖|不加糖|否)/.test(fullSegment)) {
+            matchedChoice = choices.find(c => /(否|不要|不附|無|不加)/.test(c)) || choices[choices.length - 1];
+            usedOptionWords.push("不要附糖", "不附糖", "無糖", "不要糖", "不加糖", "附糖");
+          } else if (/(要附糖|附糖|加糖|有附糖|是)/.test(fullSegment)) {
+            matchedChoice = choices.find(c => /(是|要|附糖|加)/.test(c)) || choices[0];
+            usedOptionWords.push("要附糖", "附糖", "加糖");
+          }
+        } else if (isSpoonOption) {
+          if (/(不要湯匙|不用湯匙|免湯匙|不附湯匙|否)/.test(fullSegment)) {
+            matchedChoice = choices.find(c => /(否|不要|不附|無|不需要)/.test(c)) || choices[choices.length - 1];
+            usedOptionWords.push("不要湯匙", "不用湯匙", "免湯匙", "湯匙");
+          } else if (/(要湯匙|附湯匙|加湯匙|需要湯匙|是)/.test(fullSegment)) {
+            matchedChoice = choices.find(c => /(是|要|附|需要)/.test(c)) || choices[0];
+            usedOptionWords.push("要湯匙", "附湯匙", "湯匙");
+          }
+        } else if (/(不要|不用|別|免|不加|無)/.test(fullSegment)) {
+          matchedChoice = choices.find(c => /(否|不要|不加|無|不需要|免)/.test(c));
+        } else if (/(要|需要|加|帶)/.test(fullSegment)) {
+          matchedChoice = choices.find(c => /(是|要|加|有|需要)/.test(c));
+        }
+      }
+
+      selectedOptions[group.title] = matchedChoice || (choices[0] || "");
+    });
+
+    let note = "";
+    const noteMatch = suffixSegment.match(/(?:幫我備註|請幫我備註|幫我註明|備註|註明)[:：\s]*(.*?)(?=\s*(然後|還有|再|下一個|一份|一個|兩杯|一杯|$))/);
+    
+    if (noteMatch && noteMatch[1]) {
+      let rawNote = noteMatch[1].trim();
+      usedOptionWords.forEach(w => {
+        if (w) rawNote = rawNote.replaceAll(w, "");
+      });
+      rawNote = rawNote.replace(/(內用|外帶|坐在[A-Z0-9]+|桌號[A-Z0-9]+|座位[A-Z0-9]+|去冰|微冰|少冰|正常冰|熱|溫|半糖|微糖|無糖|全糖|不要糖|附糖|湯匙)/gi, "").trim();
+      note = rawNote;
+    }
+
+    return {
+      id: occ.item.id,
+      name: occ.item.name,
+      price: Number(occ.item.price || 0),
+      qty,
+      options: selectedOptions,
+      note: note
+    };
   });
+
+  return {
+    items: finalItems,
+    diningType: detectedDiningType,
+    seat: detectedSeat
+  };
 }
 </script>
 </body>
