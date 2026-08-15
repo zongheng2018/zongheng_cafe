@@ -124,7 +124,7 @@ textarea{height:60px;resize:none}
 .fortune-header-title{font-size:21px;font-weight:900;color:#4a433d;margin-bottom:6px}
 .fortune-order-info{font-size:14px;color:#8c837a;margin-bottom:18px}
 .fortune-quote-box{background:#f9f6f2;border-left:3px solid #bcaea1;border-radius:12px;padding:16px 14px;margin-bottom:22px;text-align:left}
-.fortune-quote-tag{font-size:11px;font-weight:900;color:#9c8e81;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.fortune-quote-tag{font-size:11px;font-weight:900;color:#9c8e81;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
 .fortune-quote-text{font-size:15px;line-height:1.6;color:#554d46;font-style:italic;font-weight:600}
 .fortune-btn{background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;border-radius:14px;padding:13px;width:100%;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(85,77,70,0.2);transition:all 0.2s ease}
 .fortune-btn:active{transform:scale(0.96)}
@@ -179,7 +179,7 @@ textarea{height:60px;resize:none}
 
 <!-- 餐點規格彈窗 -->
 <div class="modal-overlay" id="optionModalOverlay" onclick="if(event.target===this)closeItemModal()">
-  <div class="bottom-option-slide">
+  <div class="bottom-option-slide" onclick="event.stopPropagation()">
     <div class="checkout-title-row">
       <div class="checkout-main-title" id="modalItemName">餐點規格</div>
       <button class="beautiful-close-btn" onclick="closeItemModal()">取消 ✕</button>
@@ -197,7 +197,7 @@ textarea{height:60px;resize:none}
 </div>
 
 <!-- 購物車滑出清單 -->
-<div class="bottom-checkout-slide" id="bottomCheckoutSlide">
+<div class="bottom-checkout-slide" id="bottomCheckoutSlide" onclick="event.stopPropagation()">
   <div class="checkout-title-row">
     <div class="checkout-main-title">確認購物車餐點</div>
     <button class="beautiful-close-btn" onclick="closeCart()">返回點餐</button>
@@ -233,7 +233,10 @@ textarea{height:60px;resize:none}
     <div class="fortune-order-info" id="fortuneOrderInfo">吧台已收到您的餐點，正在用心製作中</div>
     
     <div class="fortune-quote-box">
-      <div class="fortune-quote-tag">✦ Fortune Coffee ✦</div>
+      <div class="fortune-quote-tag">
+        <span>✦ Fortune Coffee ✦</span>
+        <span id="fortuneTimeLabel" style="font-size:10px; opacity:0.8;">時光絮語</span>
+      </div>
       <div class="fortune-quote-text" id="fortuneQuoteText">“建築是凝固的音樂，而咖啡是晨光中最溫柔的序曲。”</div>
     </div>
     
@@ -256,25 +259,83 @@ let sectionObserver=null;
 let isManualScrolling=false;
 
 let recognition=null;
-let finalAccumulatedText="";
+let finalSentencesArray=[];
 let currentInterimText="";
 let isUserPaused=false;
 let isExplicitStopped=false;
 let isSubmittingVoice=false;
 
-// 經典生活美學與咖啡箴言語錄庫
-const fortuneQuotes = [
-  "建築是凝固的音樂，而咖啡是晨光中最溫柔的序曲。",
-  "美好的生活不需要繁複的儀式，一杯恰到好處的熱拿鐵足以溫暖日常。",
-  "空間的留白給了靈魂呼吸的餘裕，咖啡的香氣讓時光悄悄慢了下來。",
-  "在昭揚縱橫的寧靜裡，每一次等待都是與自己對話的美好片段。",
-  "好的設計讓生活回歸純粹，一杯濃醇讓心思重獲澄澈。",
-  "光影在幾何線條間流動，杯中微苦在舌尖化作甘醇悠長。",
-  "生活不在別處，就在這份剛出爐的香氣與片刻的沉靜之中。",
-  "優雅不是耀眼奪目，而是將每一個日常細節過得舒適從容。",
-  "晨光熹微，讓咖啡的溫度為您開啟從容自信的一天。",
-  "簡單中見深邃，於縱橫空間裡，品味專屬於您的生活節奏。"
-];
+// ☕ 昭揚縱橫 時段自適應海量生活美學箴言資料庫 (60+ 句)
+const timeAdaptiveQuotes = {
+  morning: [
+    "晨光穿透幾何窗櫺，一杯溫熱的美式，正是開啟從容一日的序章。",
+    "早晨的第一縷咖啡香，是生活給予奮鬥者最溫柔的禮物。",
+    "光影在縱橫線條中流轉，帶著清醒與從容，迎向嶄新的挑戰。",
+    "建築是凝固的詩篇，而晨曦與熱咖啡，是生活的流動之美。",
+    "為自己留一杯咖啡的時間，讓清晨的步伐沉穩且堅定。",
+    "晨光熹微，生活的美好往往藏在第一口濃郁的香醇裡。",
+    "在日出與晨霧之間，用一杯手沖喚醒心中的無限可能。",
+    "安靜的清晨，一杯咖啡，一段與自己誠實對話的時光。",
+    "陽光灑進大廳的瞬間，生活的故事正在優雅展開。",
+    "以一杯咖啡的儀式感，告別昨夜的疲憊，擁抱今日的明朗。",
+    "晨風微涼，杯中微暖，每一天都值得被細心對待。",
+    "讓咖啡的香氣化為動力，在城市的節奏中踏出自己的步伐。",
+    "生活不在遠方，就在這口恰到好處的甘醇與晨光之中。",
+    "每一個清晨都是新的起點，願您的心情如咖啡般純粹明亮。",
+    "清爽的晨光與溫熱的咖啡，是獻給自律靈魂的最佳獎賞。"
+  ],
+  noon: [
+    "午後的留白，是為了讓靈魂在忙碌的節奏中好好深呼吸。",
+    "陽光正盛，不妨給自己半小時的微憩，品味生活悠閒。",
+    "簡單的午後輕食與咖啡，讓緊繃的心情悄悄融化在香氣裡。",
+    "空間的寬闊讓心境澄澈，短暫的停歇帶來更長遠的遠見。",
+    "於縱橫的靜謐角落，享受一段不被打擾的午間靜心時刻。",
+    "讓咖啡的微苦沉澱思緒，讓生活的甘甜在此刻悄然綻放。",
+    "繁忙日常裡，這一杯咖啡，就是專屬於您的心靈綠洲。",
+    "午間微風輕拂，放慢步調，重新找回生活的優雅節奏。",
+    "留白不是空虛，而是讓美好的事物有空間住進心裡。",
+    "在日光的轉移間，細品咖啡豆中蘊藏的四季風土。",
+    "一口冰涼、一口沉靜，為下半日的精彩注入飽滿能量。",
+    "好的設計讓人安心，一杯好的咖啡讓靈魂安定放鬆。",
+    "午憩的短暫寧靜，是獻給熱愛生活者的私密犒賞。",
+    "給思緒放個短假，在咖啡香中品味片刻的自在從容。",
+    "陽光剛好，溫度適中，生活在此刻展現出最迷人的模樣。"
+  ],
+  afternoon: [
+    "午後的陽光斜斜灑落，莫凡彼的甜美與咖啡的醇厚交織成詩。",
+    "慢下來，微風正吹拂著樹梢，生活的美好需要細細品嚐。",
+    "下午三點的儀式感，是犒賞努力生活的自己最好的方式。",
+    "咖啡因是午後的靈感催化劑，讓每一個好點子自由飛翔。",
+    "手作的溫度在杯中升騰，這是一份屬於社區的溫暖心意。",
+    "在咖啡的醇苦中品出層次，正如生活在淬鍊中遇見深刻。",
+    "午後斜陽拉長了影子，一杯拿鐵將時光沉澱得無比溫柔。",
+    "生活不在於追求繁複，而是在極簡中品味最真切的質感。",
+    "一杯單品手沖，一段悠長時光，讀懂風土與時光的密碼。",
+    "午後微甜，咖啡正暖，每一刻的當下都是不可複製的經典。",
+    "把繁雜的世界關在門外，沉浸在這一杯濃醇的午後靜謐中。",
+    "讓冰滴的清冽洗去煩憂，在午後的咖啡廳重獲寧靜與專注。",
+    "咖啡香是空間的隱形裝飾，讓整個午後都顯得格調非凡。",
+    "細細品味微酸與回甘，生活也是如此，層次豐富而優雅。",
+    "午後的悠閒不是奢侈，而是我們懂得熱愛生活的證明。"
+  ],
+  night: [
+    "暮色降臨，華燈初上，讓咖啡廳的微光溫暖歸家的路。",
+    "卸下一日的奔波與防備，回到屬於自己的寧靜港灣。",
+    "家是心靈最後的棲居地，縱橫的燈火永遠為您保留一處溫暖。",
+    "夜幕低垂，溫熱的香氣在靜謐中輕輕撫慰一整天的辛勞。",
+    "在夜色的寧靜裡，與家人分享一杯暖心的手作飲品。",
+    "星光璀璨，生活回歸純粹，今晚願您擁有甜美的好夢。",
+    "結束充實的一天，在熟悉的空間裡找回內心的平靜安詳。",
+    "夜色溫柔如水，讓這份香醇為今天畫下完美的句點。",
+    "晚風輕輕吹過窗櫺，心中的雜音隨之消散在夜幕之中。",
+    "在安靜的夜晚，品味一杯無負擔的溫熱，感受身心的放鬆。",
+    "縱橫的生活美學，就是讓每一個歸家的夜晚都倍感安心。",
+    "夜深人靜，月光如水，祝您今晚心懷美好，安然入睡。",
+    "讓溫暖的香氣包包裹住疲憊，明天依舊充滿希望與光芒。",
+    "家的溫暖，就在這盞明亮的燈火與隨手可得的貼心之中。",
+    "今夜星光正好，微風不燥，願您的夢境與生活一樣美好。"
+  ]
+};
 
 const staticSeats = [
   "A1", "A2", "A3", "A4",
@@ -286,7 +347,6 @@ function getTaipeiTimeInMinutes() { const now = new Date(new Date().toLocaleStri
 function getTaipeiDateString() { const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"})); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; }
 function timeStringToMinutes(t) { if(!t)return 0; const p=t.split(":"); return Number(p[0]||0)*60+Number(p[1]||0); }
 
-// 觸覺微震動支援
 function triggerHaptic() {
   if (navigator.vibrate) {
     try { navigator.vibrate(25); } catch(e) {}
@@ -401,7 +461,6 @@ function renderMenu() {
       if (m.enabled === false) { avail = false; badgeHtml = `<span class="status-badge soldout">今日售完</span>`; }
       else if (m.is_time_restricted) { const s=timeStringToMinutes(m.start_time), e=timeStringToMinutes(m.end_time); if(nowMin<s||nowMin>e) { avail=false; badgeHtml = `<span class="status-badge notime">限時供應</span>`; } }
       
-      // 滑動卡片容器結構
       const cardWrapper = document.createElement("div");
       cardWrapper.className = "swipe-card-wrapper";
 
@@ -444,36 +503,34 @@ function renderMenu() {
   initScrollSpy();
 }
 
-// 🚀 左右滑動極速加車 / 自訂規格 手勢演算法 (含阻尼回彈物理動效)
 function attachSwipeEvents(elem, item) {
-  let startX = 0, startY = 0, currentX = 0, isSwiping = false, isHorizontal = null;
-  const threshold = 68; // 觸發閾值
+  let startX = 0, startY = 0, currentX = 0, isTouching = false, isHorizontal = null;
+  const threshold = 68;
 
   elem.addEventListener("touchstart", (e) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     currentX = startX;
-    isSwiping = true;
+    isTouching = true;
     isHorizontal = null;
     elem.style.transition = "none";
   }, { passive: true });
 
   elem.addEventListener("touchmove", (e) => {
-    if (!isSwiping) return;
+    if (!isTouching) return;
     const touchX = e.touches[0].clientX;
     const touchY = e.touches[0].clientY;
     const diffX = touchX - startX;
     const diffY = touchY - startY;
 
     if (isHorizontal === null) {
-      if (Math.abs(diffX) > 8 || Math.abs(diffY) > 8) {
+      if (Math.abs(diffX) > 7 || Math.abs(diffY) > 7) {
         isHorizontal = Math.abs(diffX) > Math.abs(diffY);
       }
     }
 
     if (isHorizontal) {
       currentX = touchX;
-      // 阻尼公式
       const damping = 0.55;
       const transX = diffX * damping;
       elem.style.transform = `translateX(${transX}px)`;
@@ -481,8 +538,8 @@ function attachSwipeEvents(elem, item) {
   }, { passive: true });
 
   const handleTouchEnd = (e) => {
-    if (!isSwiping) return;
-    isSwiping = false;
+    if (!isTouching) return;
+    isTouching = false;
     const diffX = currentX - startX;
 
     elem.style.transition = "transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)";
@@ -490,15 +547,12 @@ function attachSwipeEvents(elem, item) {
 
     if (isHorizontal) {
       if (diffX > threshold) {
-        // 向右滑動：極速加入購物車
         quickAddDefaultItem(item);
       } else if (diffX < -threshold) {
-        // 向左滑動：自訂規格
         triggerHaptic();
         window.openItemModal(item.id);
       }
-    } else if (Math.abs(diffX) < 6 && isHorizontal === null) {
-      // 正常點擊
+    } else if (Math.abs(diffX) < 8 && (isHorizontal === null || !isHorizontal)) {
       window.openItemModal(item.id);
     }
   };
@@ -506,15 +560,14 @@ function attachSwipeEvents(elem, item) {
   elem.addEventListener("touchend", handleTouchEnd);
   elem.addEventListener("touchcancel", handleTouchEnd);
 
-  // 桌機滑鼠點擊兼容
-  elem.addEventListener("click", () => {
-    if (isHorizontal === null || !isHorizontal) {
+  elem.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!isHorizontal) {
       window.openItemModal(item.id);
     }
   });
 }
 
-// 快速加入預設規格品項
 function quickAddDefaultItem(item) {
   triggerHaptic();
   const defaultOptions = {};
@@ -533,7 +586,6 @@ function quickAddDefaultItem(item) {
 
   updateCartSummary();
 
-  // 購物車總計跳動反饋
   const countSpan = document.getElementById("cartCount");
   if (countSpan) {
     countSpan.style.transform = "scale(1.35)";
@@ -570,15 +622,23 @@ function initScrollSpy() {
 }
 
 window.openItemModal = (id) => {
-  window.closeCart(); currentSelectItem = menuList.find(x => x.id === id);
+  window.closeCart();
+  currentSelectItem = menuList.find(x => x.id === id);
+  if (!currentSelectItem) return;
+
   const modalItemName = document.getElementById("modalItemName");
   const qtyVal = document.getElementById("qtyVal");
   const itemNote = document.getElementById("itemNote");
-  modalItemName.innerText = currentSelectItem.name; qtyVal.innerText = "1"; itemNote.value = "";
-  const area = document.getElementById("optionArea"); area.innerHTML = "";
+  modalItemName.innerText = currentSelectItem.name; 
+  qtyVal.innerText = "1"; 
+  itemNote.value = "";
+  
+  const area = document.getElementById("optionArea"); 
+  area.innerHTML = "";
   (currentSelectItem.custom_options || []).forEach((g, idx) => {
     area.innerHTML += `<div class="option-title">${g.title}</div><select id="counter_opt_${idx}">${g.choices.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>`;
   });
+  
   const overlay = document.getElementById("optionModalOverlay");
   overlay.style.display = "flex";
   setTimeout(() => overlay.classList.add("show"), 10);
@@ -587,8 +647,9 @@ window.openItemModal = (id) => {
 window.closeItemModal = () => { 
   const overlay = document.getElementById("optionModalOverlay");
   overlay.classList.remove("show");
-  setTimeout(() => overlay.style.display = "none", 350);
+  setTimeout(() => { overlay.style.display = "none"; }, 350);
 };
+
 window.changeQty = (n) => { 
   triggerHaptic();
   const qtyVal = document.getElementById("qtyVal"); 
@@ -599,9 +660,22 @@ window.addItemToCart = () => {
   triggerHaptic();
   const itemNote = document.getElementById("itemNote");
   const qtyVal = document.getElementById("qtyVal");
-  const options = {}; (currentSelectItem.custom_options || []).forEach((g, idx) => { options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
-  cart.push({ id: currentSelectItem.id, name: currentSelectItem.name, price: currentSelectItem.price, qty: Number(qtyVal.innerText), options, note: itemNote.value.trim() });
-  window.closeItemModal(); updateCartSummary();
+  const options = {}; 
+  (currentSelectItem.custom_options || []).forEach((g, idx) => { 
+    options[g.title] = document.getElementById(`counter_opt_${idx}`).value; 
+  });
+  
+  cart.push({ 
+    id: currentSelectItem.id, 
+    name: currentSelectItem.name, 
+    price: currentSelectItem.price, 
+    qty: Number(qtyVal.innerText), 
+    options, 
+    note: itemNote.value.trim() 
+  });
+  
+  window.closeItemModal(); 
+  updateCartSummary();
 };
 
 function updateCartSummary() {
@@ -610,35 +684,54 @@ function updateCartSummary() {
 }
 
 window.openCart = () => {
-  window.closeItemModal(); const area = document.getElementById("cartListArea"); area.innerHTML = "";
+  window.closeItemModal(); 
+  const area = document.getElementById("cartListArea"); 
+  area.innerHTML = "";
+  
   cart.forEach((x, idx) => {
     const opts = Object.entries(x.options).map(([k,v])=>`${k}:${v}`).join(", ");
-    area.innerHTML += `<div class="cart-item"><div class="cart-item-name">${x.name} × ${x.qty}</div><div class="cart-item-meta">${opts} ${x.note?`[${x.note}]`:''}</div><div class="cart-item-price">${x.price*x.qty} 點</div><button class="cart-del" onclick="window.delCartItem(${idx})">刪除</button></div>`;
+    area.innerHTML += `
+      <div class="cart-item">
+        <div class="cart-item-name">${x.name} × ${x.qty}</div>
+        <div class="cart-item-meta">${opts} ${x.note?`[${x.note}]`:''}</div>
+        <div class="cart-item-price">${x.price*x.qty} 點</div>
+        <button class="cart-del" onclick="window.delCartItem(${idx})">刪除</button>
+      </div>`;
   });
+  
   const slide = document.getElementById("bottomCheckoutSlide");
   slide.style.display = "flex";
   setTimeout(() => { slide.classList.add("show"); }, 10);
 };
+
 window.closeCart = () => { 
   const slide = document.getElementById("bottomCheckoutSlide");
   slide.classList.remove("show"); 
   setTimeout(()=>{ slide.style.display = "none"; }, 350); 
 };
+
 window.delCartItem = (idx) => { 
   triggerHaptic();
   cart.splice(idx,1); 
   window.openCart(); 
   updateCartSummary(); 
 };
-window.toggleSeatSelect = () => { const diningType = document.getElementById("diningType"); const seatArea = document.getElementById("seatArea"); seatArea.style.display = diningType.value === "內用" ? "block" : "none"; };
+
+window.toggleSeatSelect = () => { 
+  const diningType = document.getElementById("diningType"); 
+  const seatArea = document.getElementById("seatArea"); 
+  seatArea.style.display = diningType.value === "內用" ? "block" : "none"; 
+};
 
 function loadStaticSeats() {
-  const select = document.getElementById("seatSelect"); if(!select) return;
+  const select = document.getElementById("seatSelect"); 
+  if(!select) return;
   select.innerHTML = "";
-  staticSeats.forEach(seatId => { select.innerHTML += `<option value="${seatId}">${seatId}</option>`; });
+  staticSeats.forEach(seatId => { 
+    select.innerHTML += `<option value="${seatId}">${seatId}</option>`; 
+  });
 }
 
-// 送出訂單 ➔ 啟動 Fortune Coffee 沉浸式美學彈窗
 document.getElementById("submitOrderBtn").addEventListener("click", async () => {
   const diningType = document.getElementById("diningType");
   const seatSelect = document.getElementById("seatSelect");
@@ -668,20 +761,64 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
     updated_by: "resident_auto" 
   });
 
-  // 關閉購物車並彈出專屬箴言彈窗
   window.closeCart();
   cart = [];
   showFortuneModal(diningType.value, seatSelect.value);
 });
 
+function getSmartFortuneQuote() {
+  const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
+  const hour = now.getHours();
+  let timeKey = "morning";
+  let timeLabel = "晨曦序曲 05:00-11:30";
+
+  if (hour >= 5 && hour < 11.5) {
+    timeKey = "morning";
+    timeLabel = "晨曦序曲 · 晨光篇";
+  } else if (hour >= 11.5 && hour < 14) {
+    timeKey = "noon";
+    timeLabel = "日光微憩 · 午間篇";
+  } else if (hour >= 14 && hour < 18) {
+    timeKey = "afternoon";
+    timeLabel = "午後漫步 · 悠閒篇";
+  } else {
+    timeKey = "night";
+    timeLabel = "夜幕歸心 · 溫馨篇";
+  }
+
+  const pool = timeAdaptiveQuotes[timeKey];
+  
+  let history = [];
+  try {
+    history = JSON.parse(localStorage.getItem("zh_fortune_history") || "[]");
+  } catch(e) {}
+
+  let availablePool = pool.filter(q => !history.includes(q));
+  if (availablePool.length === 0) {
+    availablePool = pool;
+    history = [];
+  }
+
+  const selectedQuote = availablePool[Math.floor(Math.random() * availablePool.length)];
+
+  history.push(selectedQuote);
+  if (history.length > 25) history.shift();
+  try {
+    localStorage.setItem("zh_fortune_history", JSON.stringify(history));
+  } catch(e) {}
+
+  return { quote: selectedQuote, timeLabel };
+}
+
 function showFortuneModal(diningType, seat) {
   const overlay = document.getElementById("fortuneModalOverlay");
   const quoteElem = document.getElementById("fortuneQuoteText");
+  const timeLabelElem = document.getElementById("fortuneTimeLabel");
   const infoElem = document.getElementById("fortuneOrderInfo");
 
-  // 隨機抽選生活箴言
-  const randomQuote = fortuneQuotes[Math.floor(Math.random() * fortuneQuotes.length)];
-  quoteElem.innerText = `“${randomQuote}”`;
+  const fortune = getSmartFortuneQuote();
+  quoteElem.innerText = `“${fortune.quote}”`;
+  timeLabelElem.innerText = fortune.timeLabel;
   
   infoElem.innerText = `取餐方式：${diningType}${diningType === '內用' && seat ? ` (${seat}桌)` : ''} · 吧台已收到您的餐點`;
 
@@ -690,7 +827,7 @@ function showFortuneModal(diningType, seat) {
 }
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (極速響應 + 連續對話與防重)
+// 🚀 多品項自然語言點餐引擎 (核心修復：語音串流絕對去重)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -706,15 +843,18 @@ function initSpeechRecognition() {
   rec.onresult = (event) => {
     let interimText = "";
     for (let i = event.resultIndex; i < event.results.length; ++i) {
-      const transcript = event.results[i][0].transcript;
+      const transcript = event.results[i][0].transcript.trim();
       if (event.results[i].isFinal) {
-        finalAccumulatedText += transcript + " ";
+        // 🚀 核心修復 1：即時比對最後一句，完全杜絕重疊寫入
+        if (transcript && (finalSentencesArray.length === 0 || finalSentencesArray[finalSentencesArray.length - 1] !== transcript)) {
+          finalSentencesArray.push(transcript);
+        }
       } else {
         interimText += transcript;
       }
     }
     currentInterimText = interimText;
-    const displayText = (finalAccumulatedText + interimText).trim();
+    const displayText = (finalSentencesArray.join(" ") + " " + interimText).trim();
     if (displayText) {
       document.getElementById("voiceResultText").innerText = displayText;
     }
@@ -740,7 +880,7 @@ function initSpeechRecognition() {
 
 window.startVoiceOrder = () => {
   triggerHaptic();
-  finalAccumulatedText = "";
+  finalSentencesArray = [];
   currentInterimText = "";
   isUserPaused = false;
   isExplicitStopped = false;
@@ -814,7 +954,7 @@ window.stopAndProcessVoice = () => {
   document.getElementById("voiceWaveIcon").className = "voice-wave";
   document.getElementById("voiceConfirmBtn").disabled = true;
   
-  const text = (finalAccumulatedText + " " + currentInterimText).trim();
+  const text = (finalSentencesArray.join(" ") + " " + currentInterimText).trim();
   if (!text || text.length < 2 || text.startsWith("請說出餐點")) {
     alert("尚未聽到您的點餐內容，請再試一次！");
     window.cancelVoiceOrder();
@@ -855,11 +995,12 @@ window.stopAndProcessVoice = () => {
   }, 150);
 };
 
-// 🚀 自然語言核心比對模組 (同音字容錯 + 正負語意映射 + 嚴格區間去重)
+// 🚀 核心自然語言解析模組 (重複詞句清洗 + 絕對區間鎖定)
 function parseVoiceOrderLocally(rawUserText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
 
+  // 1. 同音詞校正
   let userText = rawUserText
     .replace(/(多鮮|多先|多仙|多掀|多萱)/g, "多纖")
     .replace(/(負湯|負糖|副糖|付糖|服糖|父糖|附唐)/g, "附糖")
@@ -874,6 +1015,9 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
     .replace(/(歐蕾|歐雷|歐累)/g, "歐蕾")
     .replace(/(抹茶|末茶|磨茶)/g, "抹茶")
     .replace(/(乳香|乳香世家|魯香)/g, "乳香世家");
+
+  // 🚀 核心修復 2：過濾緊鄰且完全重複的字詞 (例如 "香草冰淇淋 香草冰淇淋" -> "香草冰淇淋")
+  userText = userText.replace(/(\b.+?\b)(?:\s+\1)+/gi, "$1");
 
   let detectedDiningType = null;
   let detectedSeat = null;
@@ -924,7 +1068,12 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
 
     while (pos !== -1) {
       const endPos = pos + entry.cleanName.length;
-      const isOverlap = matchedRanges.some(r => (pos >= r.start && pos < r.end) || (endPos > r.start && endPos <= r.end) || (pos <= r.start && endPos >= r.end));
+      // 🚀 核心修復 3：嚴格防重疊與同品項過近判定
+      const isOverlap = matchedRanges.some(r => {
+        return (pos >= r.start && pos < r.end) || 
+               (endPos > r.start && endPos <= r.end) || 
+               (pos <= r.start && endPos >= r.end);
+      });
       
       if (!isOverlap) {
         occurrences.push({ item: entry.rawItem, index: pos, length: entry.cleanName.length, name: entry.cleanName });
@@ -940,9 +1089,21 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
 
   occurrences.sort((a, b) => a.index - b.index);
 
-  const finalItems = occurrences.map((occ, idx) => {
-    const prevEnd = idx === 0 ? 0 : occurrences[idx - 1].index + occurrences[idx - 1].length;
-    const nextStart = idx === occurrences.length - 1 ? userText.length : occurrences[idx + 1].index;
+  // 🚀 核心修復 4：如果相鄰兩個命中品項相同且文字距離小於 4 個字（語音回音/重複吐字），自動合併為一筆
+  let sanitizedOccurrences = [];
+  for (let i = 0; i < occurrences.length; i++) {
+    if (i > 0 && occurrences[i].item.id === occurrences[i-1].item.id) {
+      const distance = occurrences[i].index - (occurrences[i-1].index + occurrences[i-1].length);
+      if (distance <= 4) {
+        continue; // 跳過重複的同品項
+      }
+    }
+    sanitizedOccurrences.push(occurrences[i]);
+  }
+
+  const finalItems = sanitizedOccurrences.map((occ, idx) => {
+    const prevEnd = idx === 0 ? 0 : sanitizedOccurrences[idx - 1].index + sanitizedOccurrences[idx - 1].length;
+    const nextStart = idx === sanitizedOccurrences.length - 1 ? userText.length : sanitizedOccurrences[idx + 1].index;
     
     const prefixSegment = userText.substring(prevEnd, occ.index);
     const suffixSegment = userText.substring(occ.index + occ.length, nextStart);
