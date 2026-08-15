@@ -436,7 +436,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (去重防跳二次 + 提示氣泡引導)
+// 🚀 多品項自然語言點餐引擎 (防重複跳兩次修復版)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -551,7 +551,12 @@ window.stopAndProcessVoice = () => {
   document.getElementById("voiceWaveIcon").className = "voice-wave";
   document.getElementById("voiceConfirmBtn").disabled = true;
   
-  const text = (finalAccumulatedText + " " + currentInterimText).trim();
+  // 🚀 關鍵修復：優先採用 finalAccumulatedText，若為空才採用 interim，絕不重複疊加兩者
+  let text = finalAccumulatedText.trim();
+  if (!text) {
+    text = currentInterimText.trim();
+  }
+  
   if (!text || text.length < 2 || text.startsWith("請說出餐點")) {
     alert("尚未聽到您的點餐內容，請再試一次！");
     window.cancelVoiceOrder();
@@ -587,10 +592,10 @@ window.stopAndProcessVoice = () => {
     }
     document.getElementById("voiceModalOverlay").style.display = "none";
     isSubmittingVoice = false;
-  }, 150);
+  }, 100);
 };
 
-// 🚀 核心自然語言解析模組 (重複字句過濾 + 嚴格區間去重)
+// 🚀 核心自然語言解析模組 (嚴格區間鎖定 + 去重防重疊)
 function parseVoiceOrderLocally(rawUserText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
@@ -660,8 +665,8 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
 
     while (pos !== -1) {
       const endPos = pos + entry.cleanName.length;
-      // 確保匹配到的區間完全獨立且不與其他品項重疊
-      const isOverlap = matchedRanges.some(r => (pos >= r.start && pos < r.end) || (endPos > r.start && endPos <= r.end) || (pos <= r.start && endPos >= r.end));
+      // 嚴格防止已匹配範圍重複被更短的詞重疊判定
+      const isOverlap = matchedRanges.some(r => !(endPos <= r.start || pos >= r.end));
       
       if (!isOverlap) {
         occurrences.push({ item: entry.rawItem, index: pos, length: entry.cleanName.length, name: entry.cleanName });
