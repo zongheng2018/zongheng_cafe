@@ -181,7 +181,7 @@ import { getFirestore, collection, getDocs, addDoc, query, where, doc, onSnapsho
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
-// 🔑 請將你的 Gemini API Key 填入此處
+// 🔑 請在此處填入你的 Gemini API Key
 const GEMINI_API_KEY = "AQ.Ab8RN6L1tGDqW3f9mQ21Tn2WgwQ52x8TdJBmvIMcl6HyBdFqUw";
 
 let profile=null; let menuList=[]; let cart=[]; let currentSelectItem=null; let balanceDocId=null;
@@ -358,7 +358,7 @@ document.getElementById("submitOrderBtn").addEventListener("click", async () => 
 });
 
 // ==========================================
-// 🚀 AI 語音點餐核心控制模組
+// 🚀 AI 語音點餐核心控制模組 (強化版)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -469,15 +469,22 @@ async function parseOrderWithGemini(userVoiceText, currentMenu) {
 ${JSON.stringify(simplifiedMenu, null, 2)}
 
 【規則】：
-1. 輸出格式必須是純 JSON Array，不要包含任何 markdown 標記（不要寫 \`\`\`json 或 \`\`\`）。
-2. JSON Array 內每個物件結構必須為：
-   - "id": 菜單中對應品項的 id
-   - "name": 菜單中對應品項的 exact name
-   - "price": 數字型態價格
-   - "qty": 數量 (整數，預設 1)
-   - "options": 根據品項的 custom_options 與使用者的語意進行對應（例如使用者說「熱的」對應「溫度: 熱」，若沒說則選該選項的第一個 choices 預設值）
-   - "note": 額外口語備註（若無則留空字串 ""）
-3. 若使用者說的品項不在菜單中，請忽略該品項。若完全沒有符合的品項，請回傳 []。
+1. 請具備語意理解與模糊匹配能力（例如使用者說「拿鐵」若菜單有「原味拿鐵」或「拿鐵咖啡」，請對應最接近的品項）。
+2. 輸出格式必須是標準 JSON Array，格式為：
+[
+  {
+    "id": "菜單中對應品項的 id",
+    "name": "菜單中對應品項的 exact name",
+    "price": 數字型態價格,
+    "qty": 數量 (整數，預設 1),
+    "options": {
+      "群組名稱": "對應 choices 中的選項值"
+    },
+    "note": "額外口語備註（若無則留空字串 \"\"）"
+  }
+]
+3. 關於 options：請根據品項的 custom_options 與使用者的語意進行對應（例如使用者說「熱的」對應「溫度: 熱」，若沒說則選該選項的第一個 choices 預設值）。
+4. 若使用者說的品項完全不在菜單中，請回傳 []。
 
 【使用者語音內容】：
 "${userVoiceText}"
@@ -488,14 +495,21 @@ ${JSON.stringify(simplifiedMenu, null, 2)}
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: systemPrompt }] }],
-      generationConfig: { temperature: 0.1 }
+      generationConfig: { 
+        response_mime_type: "application/json",
+        temperature: 0.1 
+      }
     })
   });
 
   const data = await response.json();
+  if (data.error) {
+    console.error("Gemini API Error:", data.error);
+    throw new Error(data.error.message);
+  }
+
   const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "[]";
-  const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-  return JSON.parse(cleanJson);
+  return JSON.parse(rawText);
 }
 </script>
 </body>
