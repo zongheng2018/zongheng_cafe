@@ -13,29 +13,36 @@
 <link rel="apple-touch-icon" href="logo.png">
 
 <style>
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}
-body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:140px}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;background:url("bg.jpg") center center/cover fixed no-repeat;color:#5f574f;padding-bottom:140px;overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);backdrop-filter:blur(5px);z-index:-1}
 
-.sticky-top-group{position:sticky;top:0;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+.sticky-top-group{position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.06);transition:box-shadow 0.3s ease}
 .header{height:72px;background:rgba(255,255,255,.95);border-bottom:1px solid #ddd5cc;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
-.brand img{width:72px;opacity:.85}
-.back-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:12px;padding:8px 14px;font-weight:800;text-decoration:none;font-size:15px}
+.brand img{width:72px;opacity:.85;transition:transform 0.3s ease}
+.back-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:12px;padding:8px 14px;font-weight:800;text-decoration:none;font-size:15px;transition:all 0.2s ease}
+.back-btn:active{transform:scale(0.94);background:#f5f1eb}
 
 .category-nav{display:flex;gap:10px;overflow-x:auto;padding:12px 16px;background:rgba(255,255,255,.95);border-bottom:1px solid #eee5dd;scrollbar-width:none;scroll-behavior:smooth}
 .category-nav::-webkit-scrollbar{display:none}
-.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 18px;border-radius:12px;font-weight:800;font-size:15px;white-space:nowrap;transition:background 0.25s ease, color 0.25s ease}
-.nav-item.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
+.nav-item{flex-shrink:0;border:none;background:#f5f1eb;color:#6d6258;padding:8px 18px;border-radius:12px;font-weight:800;font-size:15px;white-space:nowrap;transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1)}
+.nav-item.active{background:linear-gradient(135deg,#bcaea1,#9c8e81);color:white;transform:scale(1.03);box-shadow:0 4px 12px rgba(156,142,129,0.3)}
 
 .container{max-width:760px;margin:16px auto;padding:0 14px}
 .category-section{scroll-margin-top:140px;margin-bottom:28px}
 .category-title{font-size:21px;color:#6d6258;font-weight:900;margin:24px 0 12px 4px;letter-spacing:1px}
 
+/* 滑動卡片容器與底層指示 */
 .menu-grid{display:grid;grid-template-columns:1fr;gap:14px}
-.menu-card{background:rgba(255,255,255,.93);border-radius:12px;padding:14px;display:grid;grid-template-columns:90px 1fr;gap:14px;box-shadow:0 6px 20px rgba(0,0,0,.05);border:1px solid rgba(230,224,218,.6);cursor:pointer}
+.swipe-card-wrapper{position:relative;border-radius:14px;overflow:hidden;background:#ebe5df;box-shadow:0 4px 15px rgba(0,0,0,.04);touch-action:pan-y}
+.swipe-bg-layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-weight:900;font-size:15px;color:white;border-radius:14px;pointer-events:none}
+.swipe-bg-left{background:linear-gradient(90deg,#6b9e78,#8bbd98);justify-content:flex-start}
+.swipe-bg-right{background:linear-gradient(90deg,#c5a059,#9c8e81);justify-content:flex-end}
+
+.menu-card{position:relative;background:rgba(255,255,255,.96);border-radius:14px;padding:14px;display:grid;grid-template-columns:90px 1fr;gap:14px;box-shadow:0 4px 16px rgba(0,0,0,.03);border:1px solid rgba(230,224,218,.7);cursor:pointer;transform:translateX(0);transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);user-select:none;will-change:transform}
 .menu-card.disabled{cursor:not-allowed;opacity:0.65}
-.menu-img{width:90px;height:90px;object-fit:cover;border-radius:12px;background:#eee}
-.menu-info{display:flex;flex-direction:column;justify-content:space-between}
+.menu-img{width:90px;height:90px;object-fit:cover;border-radius:12px;background:#eee;pointer-events:none}
+.menu-info{display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
 .menu-name{font-size:19px;font-weight:900;color:#4a433d;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .menu-note{font-size:14px;color:#8c837a;line-height:1.4;margin:4px 0}
 .menu-price{font-size:20px;font-weight:900;color:#7a594c;margin-top:6px}
@@ -44,49 +51,57 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.74);
 .status-badge.soldout{background:#fde8e6;color:#b3514a;border:1px solid #f9cbd7}
 .status-badge.notime{background:#fff1d9;color:#9b681f;border:1px solid #ffe3be}
 
-.bottom-cart-panel{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,0.98);border-top:1px solid #ddd5cc;box-shadow:0 -6px 25px rgba(0,0,0,0.1);z-index:90}
+.bottom-cart-panel{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,0.98);border-top:1px solid #ddd5cc;box-shadow:0 -6px 25px rgba(0,0,0,0.08);z-index:90;backdrop-filter:blur(10px)}
 .cart-summary-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:white}
 .cart-item-name{font-weight:800;font-size:16px}
 .cart-info-text{font-size:17px;font-weight:800;color:#5f574f}
-.cart-info-text span{color:#7a594c;font-size:21px}
-.open-cart-btn{border:none;background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white;border-radius:12px;padding:10px 20px;font-weight:800;font-size:15px;cursor:pointer}
+.cart-info-text span{color:#7a594c;font-size:21px;transition:transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)}
+.open-cart-btn{border:none;background:linear-gradient(135deg,#bcaea1,#9c8e81);color:white;border-radius:12px;padding:10px 20px;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 4px 12px rgba(156,142,129,0.25);transition:all 0.2s ease}
+.open-cart-btn:active{transform:scale(0.95)}
 
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:150;display:none;align-items:flex-end}
-.bottom-option-slide{background:white;width:100%;border-top-left-radius:12px;border-top-right-radius:12px;padding:18px 16px 28px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;box-shadow:0 -8px 24px rgba(0,0,0,0.15);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);z-index:150;display:none;align-items:flex-end;opacity:0;transition:opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1)}
+.modal-overlay.show{opacity:1}
+.bottom-option-slide{background:white;width:100%;border-top-left-radius:20px;border-top-right-radius:20px;padding:20px 18px 30px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;box-shadow:0 -8px 30px rgba(0,0,0,0.15);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)}
 .modal-overlay.show .bottom-option-slide{transform:translateY(0)}
 
-.checkout-title-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:10px}
+.checkout-title-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:12px}
 .checkout-main-title{font-size:19px;font-weight:900;color:#554d46}
-.beautiful-close-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:12px;padding:6px 14px;font-weight:800;font-size:14px;cursor:pointer}
+.beautiful-close-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:12px;padding:6px 14px;font-weight:800;font-size:14px;cursor:pointer;transition:all 0.2s ease}
+.beautiful-close-btn:active{transform:scale(0.92)}
 
 .option-title{font-size:15px;font-weight:800;color:#6d6258;margin-top:4px}
-select,textarea{width:100%;border:none;background:#f5f1eb;border-radius:12px;padding:12px;font-size:15px;outline:none;color:#5f574f}
+select,textarea{width:100%;border:none;background:#f5f1eb;border-radius:12px;padding:12px;font-size:15px;outline:none;color:#5f574f;transition:all 0.2s ease}
+select:focus,textarea:focus{background:#ece5dc}
 textarea{height:60px;resize:none}
 .qty-row{display:grid;grid-template-columns:50px 1fr 50px;gap:12px;align-items:center;margin:8px 0;text-align:center}
-.qty-btn{border:none;background:#eaddd3;color:#5f574f;font-size:20px;font-weight:900;height:40px;border-radius:12px}
-.qty-val{font-size:18px;font-weight:900}
-.btn-primary-action{border:none;border-radius:12px;padding:13px;font-size:16px;font-weight:800;color:white;background:#6d6258;width:100%}
+.qty-btn{border:none;background:#eaddd3;color:#5f574f;font-size:20px;font-weight:900;height:42px;border-radius:12px;transition:all 0.15s ease}
+.qty-btn:active{transform:scale(0.92);background:#d5c5b8}
+.qty-val{font-size:19px;font-weight:900}
+.btn-primary-action{border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:800;color:white;background:linear-gradient(135deg,#7a6b60,#554d46);width:100%;box-shadow:0 6px 18px rgba(85,77,70,0.25);cursor:pointer;transition:all 0.2s ease}
+.btn-primary-action:active{transform:scale(0.97)}
 
-.bottom-checkout-slide{background:white;border-top:1px solid #ddd5cc;position:fixed;left:0;right:0;bottom:0;z-index:95;max-height:65vh;overflow-y:auto;padding:18px 16px 28px;display:none;flex-direction:column;gap:12px;box-shadow:0 -6px 20 rgba(0,0,0,0.1);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)}
+.bottom-checkout-slide{background:white;border-top:1px solid #ddd5cc;position:fixed;left:0;right:0;bottom:0;z-index:95;max-height:70vh;overflow-y:auto;padding:20px 18px 30px;display:none;flex-direction:column;gap:12px;box-shadow:0 -6px 25px rgba(0,0,0,0.12);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)}
 .bottom-checkout-slide.show{transform:translateY(0);display:flex}
 
-.cart-item{background:#f8f5f1;border-radius:12px;padding:12px;position:relative;margin-bottom:8px}
+.cart-item{background:#f8f5f1;border-radius:12px;padding:12px;position:relative;margin-bottom:8px;transition:transform 0.2s ease}
 .cart-item-name{font-weight:800;font-size:16px}
-.cart-item-meta{font-size:13px;color:#888}
-.cart-item-price{font-weight:700;color:#7a594c;font-size:15px}
-.cart-del{position:absolute;right:12px;top:12px;border:none;background:none;color:#c86b62;font-weight:bold;font-size:14px}
-.status-banner{background:rgba(109,98,88,.95);color:white;border-radius:12px;padding:14px;text-align:center;font-size:15px;font-weight:bold}
+.cart-item-meta{font-size:13px;color:#888;margin-top:2px}
+.cart-item-price{font-weight:800;color:#7a594c;font-size:15px;margin-top:4px}
+.cart-del{position:absolute;right:12px;top:12px;border:none;background:none;color:#c86b62;font-weight:bold;font-size:14px;cursor:pointer}
+.status-banner{background:rgba(109,98,88,.95);color:white;border-radius:14px;padding:16px;text-align:center;font-size:15px;font-weight:bold;box-shadow:0 4px 15px rgba(0,0,0,0.06)}
 
 /* 語音按鈕容器與引導氣泡 */
 .voice-float-wrapper{position:fixed;right:18px;bottom:85px;z-index:85;display:flex;flex-direction:column;align-items:flex-end}
-.voice-tooltip{position:absolute;bottom:68px;right:0;background:rgba(85,77,70,0.95);backdrop-filter:blur(4px);color:#fff;font-size:13px;font-weight:800;padding:8px 14px;border-radius:16px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,0.18);opacity:0;transform:translateY(8px) scale(0.92);transition:opacity 0.4s cubic-bezier(0.25,0.8,0.25,1), transform 0.4s cubic-bezier(0.25,0.8,0.25,1);pointer-events:none}
+.voice-tooltip{position:absolute;bottom:68px;right:0;background:rgba(85,77,70,0.95);backdrop-filter:blur(6px);color:#fff;font-size:13px;font-weight:800;padding:8px 14px;border-radius:16px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,0.18);opacity:0;transform:translateY(8px) scale(0.92);transition:opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);pointer-events:none}
 .voice-tooltip::after{content:"";position:absolute;bottom:-6px;right:22px;border-width:6px 6px 0;border-style:solid;border-color:rgba(85,77,70,0.95) transparent transparent}
 .voice-tooltip.show{opacity:1;transform:translateY(0) scale(1)}
 
-.voice-float-btn{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;box-shadow:0 6px 20px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s ease,box-shadow 0.2s ease}
+.voice-float-btn{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;box-shadow:0 6px 20px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),box-shadow 0.2s ease}
 .voice-float-btn:active{transform:scale(0.92)}
-.voice-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
-.voice-box{background:white;width:100%;max-width:360px;border-radius:20px;padding:22px 18px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+.voice-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1)}
+.voice-modal-overlay.show{opacity:1}
+.voice-box{background:white;width:100%;max-width:360px;border-radius:22px;padding:24px 20px;text-align:center;box-shadow:0 12px 36px rgba(0,0,0,0.2);transform:scale(0.9);transition:transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)}
+.voice-modal-overlay.show .voice-box{transform:scale(1)}
 .voice-wave{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#f0e8df;display:flex;align-items:center;justify-content:center;color:#6d6258;transition:background 0.25s ease}
 .voice-wave.listening{animation:pulse-wave 1.2s infinite;background:#eaddd3}
 .voice-wave.paused{background:#f0ede8;color:#9b9288;animation:none}
@@ -94,10 +109,25 @@ textarea{height:60px;resize:none}
 .voice-text-preview{font-size:14.5px;color:#554d46;min-height:56px;max-height:120px;overflow-y:auto;margin:12px 0;line-height:1.5;background:#f8f5f1;border-radius:12px;padding:10px 12px;text-align:left;word-break:break-all}
 
 .voice-btn-group{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:8px;margin-top:14px}
-.voice-action-btn{border-radius:12px;padding:9px 0;font-weight:800;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center}
+.voice-action-btn{border-radius:12px;padding:10px 0;font-weight:800;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease}
 .voice-btn-cancel{background:white;border:1px solid #c9c0b7;color:#6d6258}
 .voice-btn-pause{background:#f5f1eb;border:1px solid #d8cfc4;color:#6d6258}
 .voice-btn-submit{background:#6d6258;color:white}
+.voice-action-btn:active{transform:scale(0.94)}
+
+/* 每日專屬生活箴言 Fortune Coffee 彈窗 */
+.fortune-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:300;display:none;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)}
+.fortune-modal-overlay.show{opacity:1}
+.fortune-card{background:rgba(255,255,255,0.96);border-radius:24px;padding:28px 24px;width:100%;max-width:380px;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,0.22);transform:scale(0.85) translateY(20px);transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);border:1px solid rgba(255,255,255,0.8)}
+.fortune-modal-overlay.show .fortune-card{transform:scale(1) translateY(0)}
+.fortune-icon{width:64px;height:64px;background:linear-gradient(135deg,#eaddd3,#c5a059);border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 6px 18px rgba(197,160,89,0.3)}
+.fortune-header-title{font-size:21px;font-weight:900;color:#4a433d;margin-bottom:6px}
+.fortune-order-info{font-size:14px;color:#8c837a;margin-bottom:18px}
+.fortune-quote-box{background:#f9f6f2;border-left:3px solid #bcaea1;border-radius:12px;padding:16px 14px;margin-bottom:22px;text-align:left}
+.fortune-quote-tag{font-size:11px;font-weight:900;color:#9c8e81;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.fortune-quote-text{font-size:15px;line-height:1.6;color:#554d46;font-style:italic;font-weight:600}
+.fortune-btn{background:linear-gradient(135deg,#7a6b60,#554d46);color:white;border:none;border-radius:14px;padding:13px;width:100%;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(85,77,70,0.2);transition:all 0.2s ease}
+.fortune-btn:active{transform:scale(0.96)}
 </style>
 </head>
 
@@ -137,7 +167,7 @@ textarea{height:60px;resize:none}
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
     </div>
     <div style="font-weight:900; font-size:17px; color:#554d46;" id="voiceStatusTitle">正在聆聽中...</div>
-    <div class="voice-text-preview" id="voiceResultText">請說出餐點與規格...</div>
+    <div class="voice-text-preview" id="voiceResultText">請說出餐點與規格（支援連講多句，語速快也能辨識）...</div>
     
     <div class="voice-btn-group">
       <button class="voice-action-btn voice-btn-cancel" onclick="window.cancelVoiceOrder()">取消</button>
@@ -147,6 +177,7 @@ textarea{height:60px;resize:none}
   </div>
 </div>
 
+<!-- 餐點規格彈窗 -->
 <div class="modal-overlay" id="optionModalOverlay" onclick="if(event.target===this)closeItemModal()">
   <div class="bottom-option-slide">
     <div class="checkout-title-row">
@@ -165,6 +196,7 @@ textarea{height:60px;resize:none}
   </div>
 </div>
 
+<!-- 購物車滑出清單 -->
 <div class="bottom-checkout-slide" id="bottomCheckoutSlide">
   <div class="checkout-title-row">
     <div class="checkout-main-title">確認購物車餐點</div>
@@ -183,10 +215,29 @@ textarea{height:60px;resize:none}
   <button class="btn-primary-action" id="submitOrderBtn" style="margin-top:6px;">送出訂單</button>
 </div>
 
+<!-- 底部常駐購物車條 -->
 <div class="bottom-cart-panel">
   <div class="cart-summary-row">
     <div class="cart-info-text">已選擇 <span id="cartCount">0</span> 項商品，共 <span id="cartTotalText">0</span> 點</div>
     <button class="open-cart-btn" onclick="openCart()">查看購物車 ></button>
+  </div>
+</div>
+
+<!-- 每日專屬生活箴言 (Fortune Coffee) 彈窗 -->
+<div class="fortune-modal-overlay" id="fortuneModalOverlay">
+  <div class="fortune-card">
+    <div class="fortune-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+    </div>
+    <div class="fortune-header-title">點餐已送出</div>
+    <div class="fortune-order-info" id="fortuneOrderInfo">吧台已收到您的餐點，正在用心製作中</div>
+    
+    <div class="fortune-quote-box">
+      <div class="fortune-quote-tag">✦ Fortune Coffee ✦</div>
+      <div class="fortune-quote-text" id="fortuneQuoteText">“建築是凝固的音樂，而咖啡是晨光中最溫柔的序曲。”</div>
+    </div>
+    
+    <button class="fortune-btn" onclick="window.location.href='resident.html'">回到住戶首頁</button>
   </div>
 </div>
 
@@ -211,6 +262,20 @@ let isUserPaused=false;
 let isExplicitStopped=false;
 let isSubmittingVoice=false;
 
+// 經典生活美學與咖啡箴言語錄庫
+const fortuneQuotes = [
+  "建築是凝固的音樂，而咖啡是晨光中最溫柔的序曲。",
+  "美好的生活不需要繁複的儀式，一杯恰到好處的熱拿鐵足以溫暖日常。",
+  "空間的留白給了靈魂呼吸的餘裕，咖啡的香氣讓時光悄悄慢了下來。",
+  "在昭揚縱橫的寧靜裡，每一次等待都是與自己對話的美好片段。",
+  "好的設計讓生活回歸純粹，一杯濃醇讓心思重獲澄澈。",
+  "光影在幾何線條間流動，杯中微苦在舌尖化作甘醇悠長。",
+  "生活不在別處，就在這份剛出爐的香氣與片刻的沉靜之中。",
+  "優雅不是耀眼奪目，而是將每一個日常細節過得舒適從容。",
+  "晨光熹微，讓咖啡的溫度為您開啟從容自信的一天。",
+  "簡單中見深邃，於縱橫空間裡，品味專屬於您的生活節奏。"
+];
+
 const staticSeats = [
   "A1", "A2", "A3", "A4",
   "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8",
@@ -220,6 +285,13 @@ const staticSeats = [
 function getTaipeiTimeInMinutes() { const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"})); return now.getHours() * 60 + now.getMinutes(); }
 function getTaipeiDateString() { const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Taipei"})); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; }
 function timeStringToMinutes(t) { if(!t)return 0; const p=t.split(":"); return Number(p[0]||0)*60+Number(p[1]||0); }
+
+// 觸覺微震動支援
+function triggerHaptic() {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(25); } catch(e) {}
+  }
+}
 
 onAuthStateChanged(auth, async user => {
   if (!user) { location.href = "index.html"; return; }
@@ -329,15 +401,144 @@ function renderMenu() {
       if (m.enabled === false) { avail = false; badgeHtml = `<span class="status-badge soldout">今日售完</span>`; }
       else if (m.is_time_restricted) { const s=timeStringToMinutes(m.start_time), e=timeStringToMinutes(m.end_time); if(nowMin<s||nowMin>e) { avail=false; badgeHtml = `<span class="status-badge notime">限時供應</span>`; } }
       
-      const card = document.createElement("div"); card.className = "menu-card";
-      if(avail) card.onclick = () => window.openItemModal(m.id); else card.classList.add("disabled");
-      card.innerHTML = `<img class="menu-img" src="${m.image || 'logo.png'}"><div class="menu-info"><div><div class="menu-name"><span>${m.name}</span>${badgeHtml}</div><div class="menu-note">${m.note||""}</div></div><div class="menu-price">${m.price} 點</div></div>`;
-      grid.appendChild(card);
+      // 滑動卡片容器結構
+      const cardWrapper = document.createElement("div");
+      cardWrapper.className = "swipe-card-wrapper";
+
+      if (avail) {
+        cardWrapper.innerHTML = `
+          <div class="swipe-bg-layer swipe-bg-left">＋ 極速加入</div>
+          <div class="swipe-bg-layer swipe-bg-right">自訂規格 ➔</div>
+          <div class="menu-card" id="card_item_${m.id}">
+            <img class="menu-img" src="${m.image || 'logo.png'}">
+            <div class="menu-info">
+              <div>
+                <div class="menu-name"><span>${m.name}</span>${badgeHtml}</div>
+                <div class="menu-note">${m.note||""}</div>
+              </div>
+              <div class="menu-price">${m.price} 點</div>
+            </div>
+          </div>
+        `;
+        const cardElem = cardWrapper.querySelector(".menu-card");
+        attachSwipeEvents(cardElem, m);
+      } else {
+        cardWrapper.innerHTML = `
+          <div class="menu-card disabled">
+            <img class="menu-img" src="${m.image || 'logo.png'}">
+            <div class="menu-info">
+              <div>
+                <div class="menu-name"><span>${m.name}</span>${badgeHtml}</div>
+                <div class="menu-note">${m.note||""}</div>
+              </div>
+              <div class="menu-price">${m.price} 點</div>
+            </div>
+          </div>
+        `;
+      }
+      grid.appendChild(cardWrapper);
     });
     section.appendChild(grid); container.appendChild(section);
   });
 
   initScrollSpy();
+}
+
+// 🚀 左右滑動極速加車 / 自訂規格 手勢演算法 (含阻尼回彈物理動效)
+function attachSwipeEvents(elem, item) {
+  let startX = 0, startY = 0, currentX = 0, isSwiping = false, isHorizontal = null;
+  const threshold = 68; // 觸發閾值
+
+  elem.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    currentX = startX;
+    isSwiping = true;
+    isHorizontal = null;
+    elem.style.transition = "none";
+  }, { passive: true });
+
+  elem.addEventListener("touchmove", (e) => {
+    if (!isSwiping) return;
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const diffX = touchX - startX;
+    const diffY = touchY - startY;
+
+    if (isHorizontal === null) {
+      if (Math.abs(diffX) > 8 || Math.abs(diffY) > 8) {
+        isHorizontal = Math.abs(diffX) > Math.abs(diffY);
+      }
+    }
+
+    if (isHorizontal) {
+      currentX = touchX;
+      // 阻尼公式
+      const damping = 0.55;
+      const transX = diffX * damping;
+      elem.style.transform = `translateX(${transX}px)`;
+    }
+  }, { passive: true });
+
+  const handleTouchEnd = (e) => {
+    if (!isSwiping) return;
+    isSwiping = false;
+    const diffX = currentX - startX;
+
+    elem.style.transition = "transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)";
+    elem.style.transform = "translateX(0)";
+
+    if (isHorizontal) {
+      if (diffX > threshold) {
+        // 向右滑動：極速加入購物車
+        quickAddDefaultItem(item);
+      } else if (diffX < -threshold) {
+        // 向左滑動：自訂規格
+        triggerHaptic();
+        window.openItemModal(item.id);
+      }
+    } else if (Math.abs(diffX) < 6 && isHorizontal === null) {
+      // 正常點擊
+      window.openItemModal(item.id);
+    }
+  };
+
+  elem.addEventListener("touchend", handleTouchEnd);
+  elem.addEventListener("touchcancel", handleTouchEnd);
+
+  // 桌機滑鼠點擊兼容
+  elem.addEventListener("click", () => {
+    if (isHorizontal === null || !isHorizontal) {
+      window.openItemModal(item.id);
+    }
+  });
+}
+
+// 快速加入預設規格品項
+function quickAddDefaultItem(item) {
+  triggerHaptic();
+  const defaultOptions = {};
+  (item.custom_options || []).forEach(g => {
+    defaultOptions[g.title] = (g.choices && g.choices[0]) ? g.choices[0].trim() : "";
+  });
+
+  cart.push({
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    qty: 1,
+    options: defaultOptions,
+    note: ""
+  });
+
+  updateCartSummary();
+
+  // 購物車總計跳動反饋
+  const countSpan = document.getElementById("cartCount");
+  if (countSpan) {
+    countSpan.style.transform = "scale(1.35)";
+    setTimeout(() => { countSpan.style.transform = "scale(1)"; }, 250);
+  }
 }
 
 function initScrollSpy() {
@@ -386,11 +587,16 @@ window.openItemModal = (id) => {
 window.closeItemModal = () => { 
   const overlay = document.getElementById("optionModalOverlay");
   overlay.classList.remove("show");
-  setTimeout(() => overlay.style.display = "none", 300);
+  setTimeout(() => overlay.style.display = "none", 350);
 };
-window.changeQty = (n) => { const qtyVal = document.getElementById("qtyVal"); qtyVal.innerText = Math.max(1, Number(qtyVal.innerText) + n); };
+window.changeQty = (n) => { 
+  triggerHaptic();
+  const qtyVal = document.getElementById("qtyVal"); 
+  qtyVal.innerText = Math.max(1, Number(qtyVal.innerText) + n); 
+};
 
 window.addItemToCart = () => {
+  triggerHaptic();
   const itemNote = document.getElementById("itemNote");
   const qtyVal = document.getElementById("qtyVal");
   const options = {}; (currentSelectItem.custom_options || []).forEach((g, idx) => { options[g.title] = document.getElementById(`counter_opt_${idx}`).value; });
@@ -411,10 +617,19 @@ window.openCart = () => {
   });
   const slide = document.getElementById("bottomCheckoutSlide");
   slide.style.display = "flex";
-  setTimeout(() => { slide.style.transform = "translateY(0)"; }, 10);
+  setTimeout(() => { slide.classList.add("show"); }, 10);
 };
-window.closeCart = () => { document.getElementById("bottomCheckoutSlide").style.transform = "translateY(100%)"; setTimeout(()=>{ document.getElementById("bottomCheckoutSlide").style.display = "none"; }, 300); };
-window.delCartItem = (idx) => { cart.splice(idx,1); window.openCart(); updateCartSummary(); };
+window.closeCart = () => { 
+  const slide = document.getElementById("bottomCheckoutSlide");
+  slide.classList.remove("show"); 
+  setTimeout(()=>{ slide.style.display = "none"; }, 350); 
+};
+window.delCartItem = (idx) => { 
+  triggerHaptic();
+  cart.splice(idx,1); 
+  window.openCart(); 
+  updateCartSummary(); 
+};
 window.toggleSeatSelect = () => { const diningType = document.getElementById("diningType"); const seatArea = document.getElementById("seatArea"); seatArea.style.display = diningType.value === "內用" ? "block" : "none"; };
 
 function loadStaticSeats() {
@@ -423,20 +638,59 @@ function loadStaticSeats() {
   staticSeats.forEach(seatId => { select.innerHTML += `<option value="${seatId}">${seatId}</option>`; });
 }
 
+// 送出訂單 ➔ 啟動 Fortune Coffee 沉浸式美學彈窗
 document.getElementById("submitOrderBtn").addEventListener("click", async () => {
   const diningType = document.getElementById("diningType");
   const seatSelect = document.getElementById("seatSelect");
   const submitOrderBtn = document.getElementById("submitOrderBtn");
-  const total = cart.reduce((s,x)=>s+x.qty*x.price, 0); if(currentGranted + currentStored < total) { alert("點數不足！"); return; }
+  const total = cart.reduce((s,x)=>s+x.qty*x.price, 0); 
+  
+  if(currentGranted + currentStored < total) { alert("點數不足！"); return; }
   if(!cart.length) { alert("購物車目前為空！"); return; }
+  
   submitOrderBtn.disabled = true;
-  await addDoc(collection(db, "orders"), { order_id: "ZH"+Date.now(), uid: profile.username, items: cart, total, dining_type: diningType.value, seat: diningType.value==="內用"?seatSelect.value:"", status: "等待接單", created_at: new Date().toISOString() });
-  await updateDoc(doc(db, "balances", balanceDocId), { granted_amount: currentGranted>=total?currentGranted-total:0, stored_amount: currentGranted>=total?currentStored:currentStored-(total-currentGranted), updated_by: "resident_auto" });
-  alert("訂單送出成功！"); cart = []; location.href = "resident.html";
+  triggerHaptic();
+
+  await addDoc(collection(db, "orders"), { 
+    order_id: "ZH"+Date.now(), 
+    uid: profile.username, 
+    items: cart, 
+    total, 
+    dining_type: diningType.value, 
+    seat: diningType.value==="內用"?seatSelect.value:"", 
+    status: "等待接單", 
+    created_at: new Date().toISOString() 
+  });
+  
+  await updateDoc(doc(db, "balances", balanceDocId), { 
+    granted_amount: currentGranted>=total?currentGranted-total:0, 
+    stored_amount: currentGranted>=total?currentStored:currentStored-(total-currentGranted), 
+    updated_by: "resident_auto" 
+  });
+
+  // 關閉購物車並彈出專屬箴言彈窗
+  window.closeCart();
+  cart = [];
+  showFortuneModal(diningType.value, seatSelect.value);
 });
 
+function showFortuneModal(diningType, seat) {
+  const overlay = document.getElementById("fortuneModalOverlay");
+  const quoteElem = document.getElementById("fortuneQuoteText");
+  const infoElem = document.getElementById("fortuneOrderInfo");
+
+  // 隨機抽選生活箴言
+  const randomQuote = fortuneQuotes[Math.floor(Math.random() * fortuneQuotes.length)];
+  quoteElem.innerText = `“${randomQuote}”`;
+  
+  infoElem.innerText = `取餐方式：${diningType}${diningType === '內用' && seat ? ` (${seat}桌)` : ''} · 吧台已收到您的餐點`;
+
+  overlay.style.display = "flex";
+  setTimeout(() => overlay.classList.add("show"), 20);
+}
+
 // ==========================================
-// 🚀 多品項自然語言點餐引擎 (去重防跳二次 + 提示氣泡引導)
+// 🚀 多品項自然語言點餐引擎 (極速響應 + 連續對話與防重)
 // ==========================================
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -485,6 +739,7 @@ function initSpeechRecognition() {
 }
 
 window.startVoiceOrder = () => {
+  triggerHaptic();
   finalAccumulatedText = "";
   currentInterimText = "";
   isUserPaused = false;
@@ -494,12 +749,15 @@ window.startVoiceOrder = () => {
   const tip = document.getElementById("voiceTooltip");
   if (tip) tip.classList.remove("show");
 
-  document.getElementById("voiceResultText").innerText = "請說出餐點與規格...（支援自動帶入內用座位、備注）";
+  document.getElementById("voiceResultText").innerText = "請說出餐點與規格（支援連講多句，語速快也能辨識）...";
   document.getElementById("voiceStatusTitle").innerText = "正在聆聽中...";
   document.getElementById("voiceWaveIcon").className = "voice-wave listening";
   document.getElementById("voicePauseBtn").innerText = "暫停";
   document.getElementById("voiceConfirmBtn").disabled = false;
-  document.getElementById("voiceModalOverlay").style.display = "flex";
+  
+  const overlay = document.getElementById("voiceModalOverlay");
+  overlay.style.display = "flex";
+  setTimeout(() => overlay.classList.add("show"), 10);
 
   if (!recognition) recognition = initSpeechRecognition();
   if (recognition) {
@@ -509,6 +767,7 @@ window.startVoiceOrder = () => {
 
 window.togglePauseVoice = () => {
   if (!recognition) return;
+  triggerHaptic();
   const pauseBtn = document.getElementById("voicePauseBtn");
   const waveIcon = document.getElementById("voiceWaveIcon");
   const statusTitle = document.getElementById("voiceStatusTitle");
@@ -529,6 +788,7 @@ window.togglePauseVoice = () => {
 };
 
 window.cancelVoiceOrder = () => {
+  triggerHaptic();
   isExplicitStopped = true;
   isUserPaused = false;
   isSubmittingVoice = false;
@@ -536,13 +796,16 @@ window.cancelVoiceOrder = () => {
     try { recognition.stop(); } catch(e) {}
   }
   document.getElementById("voiceWaveIcon").className = "voice-wave";
-  document.getElementById("voiceModalOverlay").style.display = "none";
+  const overlay = document.getElementById("voiceModalOverlay");
+  overlay.classList.remove("show");
+  setTimeout(() => { overlay.style.display = "none"; }, 350);
 };
 
 window.stopAndProcessVoice = () => {
   if (isSubmittingVoice) return;
   isSubmittingVoice = true;
 
+  triggerHaptic();
   isExplicitStopped = true;
   isUserPaused = false;
   if (recognition) {
@@ -585,17 +848,18 @@ window.stopAndProcessVoice = () => {
       alert(`已成功加入 ${parseResult.items.length} 項商品！${parseResult.diningType ? `【${parseResult.diningType}${parseResult.seat ? ` ${parseResult.seat}桌` : ''}】` : ''}`);
       window.openCart();
     }
-    document.getElementById("voiceModalOverlay").style.display = "none";
+    const overlay = document.getElementById("voiceModalOverlay");
+    overlay.classList.remove("show");
+    setTimeout(() => { overlay.style.display = "none"; }, 350);
     isSubmittingVoice = false;
   }, 150);
 };
 
-// 🚀 核心自然語言解析模組 (重複字句過濾 + 嚴格區間去重)
+// 🚀 自然語言核心比對模組 (同音字容錯 + 正負語意映射 + 嚴格區間去重)
 function parseVoiceOrderLocally(rawUserText, currentMenu) {
   const availableItems = currentMenu.filter(m => m.enabled !== false);
   const numMap = { "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
 
-  // 1. 同音詞校正
   let userText = rawUserText
     .replace(/(多鮮|多先|多仙|多掀|多萱)/g, "多纖")
     .replace(/(負湯|負糖|副糖|付糖|服糖|父糖|附唐)/g, "附糖")
@@ -660,7 +924,6 @@ function parseVoiceOrderLocally(rawUserText, currentMenu) {
 
     while (pos !== -1) {
       const endPos = pos + entry.cleanName.length;
-      // 確保匹配到的區間完全獨立且不與其他品項重疊
       const isOverlap = matchedRanges.some(r => (pos >= r.start && pos < r.end) || (endPos > r.start && endPos <= r.end) || (pos <= r.start && endPos >= r.end));
       
       if (!isOverlap) {
