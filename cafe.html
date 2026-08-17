@@ -80,7 +80,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
 .category-sort-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee5dd; font-weight: bold; }
 
-/* 庫存管理專屬樣式 */
 .inv-subtabs{display:flex;gap:10px;margin-bottom:16px;border-bottom:1px solid #eee5dd;padding-bottom:12px;overflow-x:auto}
 .inv-subtab{border:none;background:#f5f1eb;color:#6d6258;border-radius:10px;padding:8px 16px;font-weight:800;font-size:14px;cursor:pointer}
 .inv-subtab.active{background:#6d6258;color:white}
@@ -98,7 +97,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .inv-table th{background:#e7ded5;color:#6d6258;padding:10px;font-weight:700;text-align:left}
 .inv-table td{padding:10px;border-bottom:1px solid #eedfd3;color:#5f574f}
 
-/* 配方 BOM 項目行 */
 .recipe-row{display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;align-items:center;margin-top:8px;background:white;padding:8px 12px;border-radius:10px;border:1px solid #eedfd3}
 
 @media print {
@@ -138,7 +136,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="card"><div class="section-title">已完成 / 已取消</div><div id="doneOrders" class="order-grid"></div></div>
   </section>
 
-  <!-- 菜單管理 (已整合配方 BOM) -->
+  <!-- 菜單管理 -->
   <section id="menuTab" class="hidden">
     <div class="card">
       <div class="section-title">新增菜單</div>
@@ -163,7 +161,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <textarea id="mNote" placeholder="品項備註，可空白"></textarea>
       </div>
       
-      <!-- 配方 BOM 綁定 -->
       <div class="option-editor" style="margin-top:14px;">
         <div class="option-title">扣料配方設定 (點餐自動扣除原料)</div>
         <div id="newRecipeList"></div>
@@ -194,7 +191,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <div class="card">
       <div class="section-title">菜單列表</div>
       <input id="menuSearchInput" placeholder="輸入關鍵字即時搜尋品項..." oninput="window.handleMenuSearchFilter(this.value)" style="margin-bottom: 16px; background: #fff; border: 1px solid #ddd5cc;">
-      <div id="menuList"></div>
+      <div id="menuList">載入菜單列表中...</div>
     </div>
   </section>
 
@@ -231,7 +228,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     </div>
   </section>
 
-  <!-- 庫存管理 (完整功能) -->
+  <!-- 庫存管理 -->
   <section id="inventoryTab" class="hidden">
     <div class="card">
       <div class="section-title">原物料與庫存管理</div>
@@ -428,7 +425,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
   </div>
 </div>
 
-<!-- 編輯選單獨立彈窗 (已整合配方 BOM) -->
+<!-- 編輯選單獨立彈窗 -->
 <div class="modal-bg" id="editModalBg">
   <div class="modal">
     <div class="section-title">編輯品項</div>
@@ -487,9 +484,9 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where, deleteDoc, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88"};
+const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
 
 let menuCache=[]; let categoryCache=[]; let newOptionGroups=[]; let editOptionGroups=[]; let knownOrderIds=new Set();
@@ -522,10 +519,18 @@ window.toggleTimeInputs = (prefix) => {
   if (checkbox && div) { div.style.display = checkbox.checked ? "grid" : "none"; }
 };
 
-onAuthStateChanged(auth,async user=>{
+onAuthStateChanged(auth, async user => {
   if(!user){location.href="index.html";return}
   const raw=localStorage.getItem("zh_user"); if(!raw){location.href="index.html";return}
-  cafeProfile=JSON.parse(raw); listenSettings(); listenOrders(); listenBroadcastSettings(); await loadInventoryData(); await loadMenu(); loadStaticSeatsForCounter();
+  cafeProfile=JSON.parse(raw);
+  
+  try { listenSettings(); } catch(e){}
+  try { listenOrders(); } catch(e){}
+  try { listenBroadcastSettings(); } catch(e){}
+  
+  await loadMenu();
+  loadStaticSeatsForCounter();
+  loadInventoryData();
 });
 
 window.showTab=(tab,btn)=>{
@@ -618,9 +623,7 @@ function listenOrders(){
       }
       
       const timeHtml = `<div class="meta" style="color:#8a7e73; font-weight:700;">填寫時間：${formatLocalTime(o.created_at)}</div>`;
-
       const div=document.createElement("div"); div.className="order-card";
-      
       div.innerHTML = `<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       
       if(status === "等待接單") waitingBox.appendChild(div); 
@@ -640,7 +643,6 @@ window.openModifyOrderByIndex = (index) => {
   if(order) window.openModifyOrderModal(order);
 };
 
-// 取消訂單：同時退回點數與原物料庫存
 window.executeCancelOrderById = async (id) => {
   const order = globalOrdersCache.find(x => x.id === id);
   if(!order) return;
@@ -656,7 +658,6 @@ window.executeCancelOrderById = async (id) => {
     });
   }
 
-  // 若該單已扣料，執行原物料回補
   if (order.inventory_deducted === true) {
     await revertOrderInventoryDeduction(order);
   }
@@ -669,7 +670,6 @@ window.executeCancelOrderById = async (id) => {
   await loadInventoryData();
 };
 
-// 接單並自動扣除原料庫存
 window.acceptAndPrintOrder = async (id) => {
   const order = globalOrdersCache.find(x => x.id === id);
   if (!order) return;
@@ -683,15 +683,17 @@ window.acceptAndPrintOrder = async (id) => {
     });
   } catch(e) {
     console.error("扣料失敗:", e);
-    alert("接單成功，但部分原料庫存更新異常：" + e.message);
   }
   await loadInventoryData();
 };
 
-// ==========================================
-// 🚀 全自動 BOM 配方扣料與回補核心
-// ==========================================
 async function deductOrderInventory(order) {
+  if (!inventoryCache || !inventoryCache.length) {
+    const snap = await getDocs(collection(db, "inventory"));
+    inventoryCache = [];
+    snap.forEach(d => inventoryCache.push({ id: d.id, ...d.data() }));
+  }
+
   for (const item of (order.items || [])) {
     const menuItem = menuCache.find(m => m.id === item.id || m.name === item.name);
     if (!menuItem || !menuItem.recipes || menuItem.recipes.length === 0) continue;
@@ -725,6 +727,12 @@ async function deductOrderInventory(order) {
 }
 
 async function revertOrderInventoryDeduction(order) {
+  if (!inventoryCache || !inventoryCache.length) {
+    const snap = await getDocs(collection(db, "inventory"));
+    inventoryCache = [];
+    snap.forEach(d => inventoryCache.push({ id: d.id, ...d.data() }));
+  }
+
   for (const item of (order.items || [])) {
     const menuItem = menuCache.find(m => m.id === item.id || m.name === item.name);
     if (!menuItem || !menuItem.recipes || menuItem.recipes.length === 0) continue;
@@ -884,7 +892,6 @@ window.executeCounterOrderAndPrint = async () => {
   const orderDocRef = await addDoc(collection(db, "orders"), orderData);
   orderData.id = orderDocRef.id;
 
-  // 櫃檯代客點餐自動執行扣料
   await deductOrderInventory(orderData);
   await updateDoc(doc(db, "orders", orderDocRef.id), { inventory_deducted: true });
 
@@ -1119,7 +1126,6 @@ function getCleanOptions(groups) {
   return groups.map(g => ({ title: g.title.trim(), choices: g.choices.map(c => c.trim()).filter(c => c !== "") })).filter(g => g.title !== "");
 }
 
-// 配方 BOM 管理方法
 window.addNewRecipeRow = () => {
   newRecipes.push({ inv_id: (inventoryCache[0] ? inventoryCache[0].id : ""), amount: 1 });
   window.renderNewRecipes();
@@ -1132,6 +1138,10 @@ window.renderNewRecipes = () => {
   const container = document.getElementById("newRecipeList");
   if (!container) return;
   container.innerHTML = "";
+  if (!inventoryCache || inventoryCache.length === 0) {
+    container.innerHTML = `<div style="font-size:13px; color:#888; padding:6px 0;">請先至「庫存管理」新增原物料，方可綁定配方。</div>`;
+    return;
+  }
   newRecipes.forEach((r, idx) => {
     let optionsHtml = inventoryCache.map(inv => `<option value="${inv.id}" ${inv.id === r.inv_id ? 'selected' : ''}>${inv.name} (${inv.unit})</option>`).join("");
     const row = document.createElement("div");
@@ -1157,6 +1167,10 @@ window.renderEditRecipes = () => {
   const container = document.getElementById("editRecipeList");
   if (!container) return;
   container.innerHTML = "";
+  if (!inventoryCache || inventoryCache.length === 0) {
+    container.innerHTML = `<div style="font-size:13px; color:#888; padding:6px 0;">請先至「庫存管理」新增原物料，方可綁定配方。</div>`;
+    return;
+  }
   editRecipes.forEach((r, idx) => {
     let optionsHtml = inventoryCache.map(inv => `<option value="${inv.id}" ${inv.id === r.inv_id ? 'selected' : ''}>${inv.name} (${inv.unit})</option>`).join("");
     const row = document.createElement("div");
@@ -1270,6 +1284,11 @@ window.renderFilteredMenuList = () => {
     filtered = menuCache.filter(m => (m.name || "").toLowerCase().includes(menuSearchKeyword) || (m.category || "").toLowerCase().includes(menuSearchKeyword));
   }
   
+  if (filtered.length === 0) {
+    menuListBox.innerHTML = `<div style="color:#aaa; padding:16px 0;">目前無符合之品項</div>`;
+    return;
+  }
+
   filtered.forEach(m => {
     const row = document.createElement("div"); row.className = "menu-row";
     row.innerHTML = `<img class="menu-img" src="${m.image || 'logo.png'}"><div><div class="menu-name">${m.name||""}</div><div class="menu-meta">${m.price||0} 點｜${m.category||"未分類"}｜${m.enabled===false?"暫停供應":"供應中"}</div></div><div class="btn-row"><button class="btn light" onclick="window.openEditMenu('${m.id}')">編輯</button><button class="btn danger" onclick="toggleMenu('${m.id}',${m.enabled!==false})">${m.enabled===false?"恢復":"暫停"}</button><button class="btn danger" style="background:#c86b62;" onclick="window.deleteMenuCategoryItem('${m.id}')">刪除</button></div>`;
@@ -1278,36 +1297,44 @@ window.renderFilteredMenuList = () => {
 };
 
 async function loadMenu(){
-  const snap=await getDocs(collection(db,"menu")); 
-  menuCache=[]; 
-  let rawCategories = [];
-  
-  snap.forEach(d => { 
-    const m = {id:d.id,...d.data()}; 
-    menuCache.push(m); 
-    if(m.category && !rawCategories.includes(m.category)) rawCategories.push(m.category); 
-  });
-  
-  menuCache.sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));
-  
-  const orderDoc = await getDoc(doc(db, "settings", "categories_order"));
-  if(orderDoc.exists() && orderDoc.data().order_list) {
-    const savedOrder = orderDoc.data().order_list;
-    categoryCache = savedOrder.filter(c => rawCategories.includes(c));
-    rawCategories.forEach(c => { if(!categoryCache.includes(c)) categoryCache.push(c); });
-  } else {
-    categoryCache = rawCategories;
-  }
-  
-  const mSelect = document.getElementById("mCategorySelect");
-  if(mSelect) {
-    mSelect.innerHTML = '<option value="">選擇既有分類</option>';
-    categoryCache.forEach(c => { mSelect.innerHTML += `<option value="${c}">${c}</option>`; });
-  }
+  try {
+    const snap=await getDocs(collection(db,"menu")); 
+    menuCache=[]; 
+    let rawCategories = [];
+    
+    snap.forEach(d => { 
+      const m = {id:d.id,...d.data()}; 
+      menuCache.push(m); 
+      if(m.category && !rawCategories.includes(m.category)) rawCategories.push(m.category); 
+    });
+    
+    menuCache.sort((a,b)=>Number(a.sort_order||999)-Number(b.sort_order||999));
+    
+    try {
+      const orderDoc = await getDoc(doc(db, "settings", "categories_order"));
+      if(orderDoc.exists() && orderDoc.data().order_list) {
+        const savedOrder = orderDoc.data().order_list;
+        categoryCache = savedOrder.filter(c => rawCategories.includes(c));
+        rawCategories.forEach(c => { if(!categoryCache.includes(c)) categoryCache.push(c); });
+      } else {
+        categoryCache = rawCategories;
+      }
+    } catch(e) {
+      categoryCache = rawCategories;
+    }
+    
+    const mSelect = document.getElementById("mCategorySelect");
+    if(mSelect) {
+      mSelect.innerHTML = '<option value="">選擇既有分類</option>';
+      categoryCache.forEach(c => { mSelect.innerHTML += `<option value="${c}">${c}</option>`; });
+    }
 
-  window.renderFilteredMenuList();
-  window.renderCategorySelects();
-  window.renderCounterMenu();
+    window.renderFilteredMenuList();
+    window.renderCategorySelects();
+    window.renderCounterMenu();
+  } catch (err) {
+    console.error("載入菜單失敗:", err);
+  }
 }
 
 window.deleteMenuCategoryItem = async (id) => {
@@ -1555,14 +1582,19 @@ window.showInvSubtab = (subtab, btn) => {
 };
 
 window.loadInventoryData = async () => {
-  const snap = await getDocs(collection(db, "inventory"));
-  inventoryCache = [];
-  snap.forEach(d => {
-    inventoryCache.push({ id: d.id, ...d.data() });
-  });
-  inventoryCache.sort((a,b) => (a.category || "").localeCompare(b.category || "") || a.name.localeCompare(b.name));
-  window.renderInventoryGrid();
-  window.renderLossSelectOptions();
+  try {
+    const snap = await getDocs(collection(db, "inventory"));
+    inventoryCache = [];
+    snap.forEach(d => {
+      inventoryCache.push({ id: d.id, ...d.data() });
+    });
+    inventoryCache.sort((a,b) => (a.category || "").localeCompare(b.category || "") || a.name.localeCompare(b.name));
+    window.renderInventoryGrid();
+    window.renderLossSelectOptions();
+    if (typeof window.renderNewRecipes === "function") window.renderNewRecipes();
+  } catch (err) {
+    console.error("載入庫存失敗:", err);
+  }
 };
 
 window.renderInventoryGrid = () => {
@@ -1767,9 +1799,6 @@ window.loadInventoryLogs = async () => {
   }
 };
 
-// ==========================================
-// 🚀 CSV 報表匯出功能 (支援 Excel 繁體中文防亂碼 BOM)
-// ==========================================
 window.exportInventoryStockCSV = () => {
   if (!inventoryCache.length) { alert("目前無庫存資料可匯出！"); return; }
   let csvContent = "\uFEFF原物料名稱,分類,目前庫存量,單位,安全警戒量,庫存狀態\n";
