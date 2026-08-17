@@ -17,7 +17,7 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .logout,.sound-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:9px 14px;font-weight:800}
 .sound-btn.on{background:#6b8b61;color:white;border-color:#6b8b61}
 .container{max-width:1180px;margin:22px auto;padding:0 16px 40px}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
 .tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06);cursor:pointer}
 .tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 .card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
@@ -78,8 +78,25 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 .badge.cancel{background:#fde8e6;color:#b3514a;border:1px solid #f9cbd7}
 
 .edit-order-item-row { display: flex; justify-content: space-between; align-items: center; background: #fdfaf7; border: 1px solid #eedfd3; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
-
 .category-sort-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee5dd; font-weight: bold; }
+
+/* 庫存管理專屬樣式 */
+.inv-subtabs{display:flex;gap:10px;margin-bottom:16px;border-bottom:1px solid #eee5dd;padding-bottom:12px;overflow-x:auto}
+.inv-subtab{border:none;background:#f5f1eb;color:#6d6258;border-radius:10px;padding:8px 16px;font-weight:800;font-size:14px;cursor:pointer}
+.inv-subtab.active{background:#6d6258;color:white}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.inv-card{background:white;border-radius:16px;padding:16px;border:1px solid #eee5dd;box-shadow:0 4px 14px rgba(0,0,0,.04);display:flex;flex-direction:column;justify-content:space-between}
+.inv-card.low-stock{border:1px solid #f9cbd7;background:#fff8f7}
+.inv-name{font-size:17px;font-weight:900;color:#4a433d}
+.inv-stock-num{font-size:24px;font-weight:900;color:#7a594c;margin:6px 0}
+.inv-card.low-stock .inv-stock-num{color:#b3514a}
+.inv-meta{font-size:13px;color:#888;line-height:1.5}
+.inv-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700;background:#eee5dd;color:#6d6258;margin-bottom:6px}
+.inv-tag.alert{background:#fde8e6;color:#b3514a}
+
+.inv-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+.inv-table th{background:#e7ded5;color:#6d6258;padding:10px;font-weight:700;text-align:left}
+.inv-table td{padding:10px;border-bottom:1px solid #eedfd3;color:#5f574f}
 
 @media print {
   body * { visibility: hidden; }
@@ -107,15 +124,18 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <button class="tab active" id="tabOrdersLink" onclick="window.showTab('orders',this)">訂單管理</button>
     <button class="tab" id="tabMenuLink" onclick="window.showTab('menu',this)">菜單管理</button>
     <button class="tab" id="tabCounterLink" onclick="window.showTab('counter',this)">代客點餐</button>
+    <button class="tab" id="tabInventoryLink" onclick="window.showTab('inventory',this)">庫存管理</button>
     <button class="tab" id="tabSettingsLink" onclick="window.showTab('settings',this)">系統設定</button>
   </div>
 
+  <!-- 訂單管理 -->
   <section id="ordersTab">
     <div class="card"><div class="section-title">等待接單</div><div id="waitingOrders" class="order-grid"></div></div>
     <div class="card"><div class="section-title">製作中</div><div id="makingOrders" class="order-grid"></div></div>
     <div class="card"><div class="section-title">已完成 / 已取消</div><div id="doneOrders" class="order-grid"></div></div>
   </section>
 
+  <!-- 菜單管理 -->
   <section id="menuTab" class="hidden">
     <div class="card">
       <div class="section-title">新增菜單</div>
@@ -168,6 +188,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     </div>
   </section>
 
+  <!-- 代客點餐 -->
   <section id="counterTab" class="hidden">
     <div class="card">
       <div class="section-title">代客點餐</div>
@@ -200,6 +221,86 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     </div>
   </section>
 
+  <!-- 庫存管理 (新功能) -->
+  <section id="inventoryTab" class="hidden">
+    <div class="card">
+      <div class="section-title">原物料與庫存管理</div>
+      
+      <div class="inv-subtabs">
+        <button class="inv-subtab active" onclick="window.showInvSubtab('stock', this)">即時庫存總覽</button>
+        <button class="inv-subtab" onclick="window.showInvSubtab('create', this)">新增原物料</button>
+        <button class="inv-subtab" onclick="window.showInvSubtab('loss', this)">耗損與報廢</button>
+        <button class="inv-subtab" onclick="window.showInvSubtab('logs', this)">異動流水帳</button>
+      </div>
+
+      <!-- 子頁面 1: 即時庫存總覽 -->
+      <div id="invStockView">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <input id="invSearchInput" placeholder="搜尋原物料或分類..." oninput="window.renderInventoryGrid()" style="max-width:280px; background:#fff; border:1px solid #ddd5cc; padding:10px 14px;">
+          <button class="btn done" onclick="window.loadInventoryData()">重新整理庫存</button>
+        </div>
+        <div id="inventoryGridArea" class="inv-grid">讀取庫存中...</div>
+      </div>
+
+      <!-- 子頁面 2: 新增原物料 -->
+      <div id="invCreateView" class="hidden">
+        <div class="form-grid">
+          <input id="invAddName" placeholder="原物料名稱 (例如：全脂鮮奶)">
+          <input id="invAddCategory" placeholder="分類 (例如：乳製品、咖啡豆、包材)">
+          <input id="invAddStock" type="number" placeholder="初始庫存量">
+          <input id="invAddUnit" placeholder="扣料單位 (例如：ml、g、個)">
+          <input id="invAddThreshold" type="number" placeholder="安全庫存警示量 (低於此數值提醒)">
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn primary" onclick="window.addInventoryItem()">建立原物料檔案</button>
+        </div>
+      </div>
+
+      <!-- 子頁面 3: 耗損與報廢登記 -->
+      <div id="invLossView" class="hidden">
+        <div class="form-grid">
+          <select id="invLossSelect"><option value="">選擇要登記耗損的原物料</option></select>
+          <input id="invLossAmount" type="number" placeholder="耗損扣除數量 (基礎單位)">
+          <select id="invLossReason">
+            <option value="過期變質">過期變質</option>
+            <option value="摔破損壞">摔破損壞</option>
+            <option value="製作失敗倒除">製作失敗倒除</option>
+            <option value="設備測試清洗">設備測試清洗</option>
+            <option value="其他原因">其他原因</option>
+          </select>
+          <input id="invLossNote" placeholder="詳細備註說明 (可空白)">
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn danger" onclick="window.submitInventoryLoss()">確認登記耗損並扣庫存</button>
+        </div>
+      </div>
+
+      <!-- 子頁面 4: 異動流水帳 -->
+      <div id="invLogsView" class="hidden">
+        <div style="overflow-x:auto;">
+          <table class="inv-table">
+            <thead>
+              <tr>
+                <th>時間</th>
+                <th>原物料</th>
+                <th>類型</th>
+                <th>變更量</th>
+                <th>變更後剩餘</th>
+                <th>備註說明</th>
+                <th>操作人員</th>
+              </tr>
+            </thead>
+            <tbody id="invLogsTableBody">
+              <tr><td colspan="7" style="text-align:center; color:#aaa; padding:18px;">讀取異動紀錄中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 系統設定 -->
   <section id="settingsTab" class="hidden">
     <div class="card">
       <div class="section-title">點餐系統控制面板</div>
@@ -267,6 +368,29 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       </div>
     </div>
   </section>
+</div>
+
+<!-- 快速補貨入庫彈窗 -->
+<div class="modal-bg" id="invRestockModalBg">
+  <div class="modal" style="max-width: 420px;">
+    <div class="section-title">原物料進貨補庫存</div>
+    <div id="restockItemNameText" style="font-size:17px; font-weight:900; color:#6d6258; margin-bottom:10px;"></div>
+    <input type="hidden" id="restockItemId">
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div>
+        <label style="font-weight:800; font-size:13px;">本次進貨增加數量：</label>
+        <input id="restockAmountInput" type="number" placeholder="輸入補貨數量 (基礎單位)">
+      </div>
+      <div>
+        <label style="font-weight:800; font-size:13px;">進貨備註：</label>
+        <input id="restockNoteInput" placeholder="例如：廠商送達 2 箱">
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn done" style="flex:1;" onclick="window.submitRestockInventory()">確認補貨入庫</button>
+      <button class="btn light" onclick="document.getElementById('invRestockModalBg').style.display='none'">取消</button>
+    </div>
+  </div>
 </div>
 
 <!-- 變更品項彈窗 -->
@@ -354,6 +478,7 @@ let activeEditingItems = [];
 let globalOrdersCache = []; 
 let globalReceiptCopyCount = 2; 
 let menuSearchKeyword = ""; 
+let inventoryCache = [];
 
 const staticSeats = [
   "A1", "A2", "A3", "A4", 
@@ -373,17 +498,19 @@ window.toggleTimeInputs = (prefix) => {
 onAuthStateChanged(auth,async user=>{
   if(!user){location.href="index.html";return}
   const raw=localStorage.getItem("zh_user"); if(!raw){location.href="index.html";return}
-  cafeProfile=JSON.parse(raw); listenSettings(); listenOrders(); listenBroadcastSettings(); await loadMenu(); loadStaticSeatsForCounter();
+  cafeProfile=JSON.parse(raw); listenSettings(); listenOrders(); listenBroadcastSettings(); await loadMenu(); loadStaticSeatsForCounter(); loadInventoryData();
 });
 
 window.showTab=(tab,btn)=>{
   document.getElementById("ordersTab").classList.add("hidden"); 
   document.getElementById("menuTab").classList.add("hidden"); 
   document.getElementById("counterTab").classList.add("hidden"); 
+  document.getElementById("inventoryTab").classList.add("hidden");
   document.getElementById("settingsTab").classList.add("hidden");
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); btn.classList.add("active");
   document.getElementById(tab+"Tab").classList.remove("hidden"); 
   if(tab === "counter"){ window.renderCounterMenu(); window.renderCounterCart(); }
+  if(tab === "inventory"){ window.loadInventoryData(); }
 };
 
 function formatItems(items){
@@ -398,7 +525,7 @@ function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
   try {
     const d = new Date(isoString);
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
   } catch(e) {
     return "時間格式錯誤";
   }
@@ -732,7 +859,7 @@ document.getElementById("addQuickItemToEditOrderBtn").onclick = () => {
 
 document.getElementById("submitEditedOrderBtn").onclick = async () => {
   if(activeEditingItems.length === 0) {
-    alert("訂單內不能沒有 any 品項！");
+    alert("訂單內不能沒有任何品項！");
     return;
   }
   
@@ -885,7 +1012,7 @@ window.addMenu=async()=>{
     name, 
     price, 
     category, 
-    image,
+    image, 
     sort_order,
     enabled:true, 
     custom_options:getCleanOptions(newOptionGroups), 
@@ -1157,7 +1284,6 @@ window.renderEditOptionGroups = () => {
     const div=document.createElement("div"); div.className="option-group-box";
     let choicesHtml = (group.choices || []).map((c, cIndex) => `
       <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-        <!-- 🚀 終極除錯核心點：在這裡，不管是原本就存在的細項、還是新點出來的細項，通通精密銲接上 data-gidx 與 data-cidx 屬性，防堵控制台盲區失聯！ -->
         <input placeholder="細項值" value="${c}" data-gidx="${gIndex}" data-cidx="${cIndex}" oninput="window.updateEditChoiceValue(this)" style="padding:8px 12px; font-size:14px;">
         <button type="button" style="border:none; background:none; color:#c86b62; font-weight:bold; font-size:16px; cursor:pointer;" onclick="window.deleteEditChoice(${gIndex},${cIndex})">✕</button>
       </div>
@@ -1207,7 +1333,7 @@ window.calculateMonthlyRevenue = async () => {
       }
     });
     const sortedSummary = Object.entries(itemSummary).sort((a, b) => b[1] - a[1]);
-    let itemsHtml = sortedSummary.map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); if(!itemsHtml) itemsHtml = "<li>該月份無 any 餐點銷售紀錄</li>";
+    let itemsHtml = sortedSummary.map(([name, qty]) => `<li>${name}：共賣出 <b>${qty}</b> 份</li>`).join(""); if(!itemsHtml) itemsHtml = "<li>該月份無任何餐點銷售紀錄</li>";
     document.getElementById("monthlyStatReport").innerHTML = `<div style="font-size: 18px; font-weight: 900; color: #7a594c; margin-bottom: 10px;">月度營收結算報告</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;"><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總成交訂單數：<br><span style="font-size: 22px; font-weight: 900; color: #6d6258;">${totalOrders} 筆</span></div><div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #ddd;">總營業額點數：<br><span style="font-size: 22px; font-weight: 900; color: #6b8b61;">${totalRevenue} 點</span></div></div><div style="font-weight: 800; margin-bottom: 6px;">品項數量排行榜（依販售數由高至低）：</div><ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: #6d6258;">${itemsHtml}</ul>`;
   } catch (error) { document.getElementById("monthlyStatReport").innerHTML = "讀取資料庫失敗，請確認 Firebase 權限。"; }
 };
@@ -1220,6 +1346,249 @@ window.logoutSystem = async () => {
 };
 
 window.updateOrder=async(id,status)=>{ await updateDoc(doc(db,"orders",id),{status,updated_at:new Date().toISOString()}); };
+
+// ==========================================
+// 庫存管理核心邏輯
+// ==========================================
+window.showInvSubtab = (subtab, btn) => {
+  document.getElementById("invStockView").classList.add("hidden");
+  document.getElementById("invCreateView").classList.add("hidden");
+  document.getElementById("invLossView").classList.add("hidden");
+  document.getElementById("invLogsView").classList.add("hidden");
+  document.querySelectorAll(".inv-subtab").forEach(x => x.classList.remove("active"));
+  btn.classList.add("active");
+
+  if(subtab === 'stock') {
+    document.getElementById("invStockView").classList.remove("hidden");
+    window.renderInventoryGrid();
+  } else if(subtab === 'create') {
+    document.getElementById("invCreateView").classList.remove("hidden");
+  } else if(subtab === 'loss') {
+    document.getElementById("invLossView").classList.remove("hidden");
+    window.renderLossSelectOptions();
+  } else if(subtab === 'logs') {
+    document.getElementById("invLogsView").classList.remove("hidden");
+    window.loadInventoryLogs();
+  }
+};
+
+window.loadInventoryData = async () => {
+  const snap = await getDocs(collection(db, "inventory"));
+  inventoryCache = [];
+  snap.forEach(d => {
+    inventoryCache.push({ id: d.id, ...d.data() });
+  });
+  inventoryCache.sort((a,b) => (a.category || "").localeCompare(b.category || "") || a.name.localeCompare(b.name));
+  window.renderInventoryGrid();
+  window.renderLossSelectOptions();
+};
+
+window.renderInventoryGrid = () => {
+  const area = document.getElementById("inventoryGridArea");
+  if(!area) return;
+  area.innerHTML = "";
+
+  const kw = (document.getElementById("invSearchInput") ? document.getElementById("invSearchInput").value : "").trim().toLowerCase();
+  let list = inventoryCache;
+  if(kw) {
+    list = list.filter(x => (x.name || "").toLowerCase().includes(kw) || (x.category || "").toLowerCase().includes(kw));
+  }
+
+  if(list.length === 0) {
+    area.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#aaa; padding:24px;">目前尚無任何原物料庫存資料</div>`;
+    return;
+  }
+
+  list.forEach(item => {
+    const currentStock = Number(item.current_stock || 0);
+    const threshold = Number(item.safe_threshold || 0);
+    const isLow = threshold > 0 && currentStock <= threshold;
+
+    const card = document.createElement("div");
+    card.className = `inv-card ${isLow ? 'low-stock' : ''}`;
+    card.innerHTML = `
+      <div>
+        <span class="inv-tag ${isLow ? 'alert' : ''}">${item.category || '未分類'} ${isLow ? '· 庫存偏低' : ''}</span>
+        <div class="inv-name">${item.name}</div>
+        <div class="inv-stock-num">${currentStock} <span style="font-size:14px; font-weight:normal; color:#888;">${item.unit || ''}</span></div>
+        <div class="inv-meta">安全警戒量：${threshold} ${item.unit || ''}</div>
+      </div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn done" style="flex:1; padding:8px;" onclick="window.openRestockModal('${item.id}')">進貨補庫存</button>
+        <button class="btn danger" style="padding:8px;" onclick="window.deleteInventoryItem('${item.id}')">刪除</button>
+      </div>
+    `;
+    area.appendChild(card);
+  });
+};
+
+window.renderLossSelectOptions = () => {
+  const sel = document.getElementById("invLossSelect");
+  if(!sel) return;
+  sel.innerHTML = '<option value="">選擇要登記耗損的原物料</option>';
+  inventoryCache.forEach(item => {
+    sel.innerHTML += `<option value="${item.id}">${item.name} (目前剩餘: ${item.current_stock} ${item.unit})</option>`;
+  });
+};
+
+window.addInventoryItem = async () => {
+  const name = document.getElementById("invAddName").value.trim();
+  const category = document.getElementById("invAddCategory").value.trim() || "未分類";
+  const stock = Number(document.getElementById("invAddStock").value || 0);
+  const unit = document.getElementById("invAddUnit").value.trim() || "個";
+  const threshold = Number(document.getElementById("invAddThreshold").value || 0);
+
+  if(!name) { alert("請輸入原物料名稱！"); return; }
+
+  const docRef = await addDoc(collection(db, "inventory"), {
+    name,
+    category,
+    current_stock: stock,
+    unit,
+    safe_threshold: threshold,
+    updated_at: new Date().toISOString()
+  });
+
+  await addDoc(collection(db, "inventory_logs"), {
+    inv_id: docRef.id,
+    inv_name: name,
+    type: "initial",
+    change_amount: stock,
+    after_stock: stock,
+    unit,
+    note: "建檔初始庫存",
+    operator: cafeProfile.username || "櫃檯人員",
+    created_at: new Date().toISOString()
+  });
+
+  alert("原物料建檔成功！");
+  document.getElementById("invAddName").value = "";
+  document.getElementById("invAddCategory").value = "";
+  document.getElementById("invAddStock").value = "";
+  document.getElementById("invAddUnit").value = "";
+  document.getElementById("invAddThreshold").value = "";
+  await window.loadInventoryData();
+  window.showInvSubtab('stock', document.querySelectorAll(".inv-subtab")[0]);
+};
+
+window.openRestockModal = (id) => {
+  const item = inventoryCache.find(x => x.id === id);
+  if(!item) return;
+  document.getElementById("restockItemId").value = item.id;
+  document.getElementById("restockItemNameText").innerText = `${item.name}（目前庫存：${item.current_stock} ${item.unit}）`;
+  document.getElementById("restockAmountInput").value = "";
+  document.getElementById("restockNoteInput").value = "";
+  document.getElementById("invRestockModalBg").style.display = "flex";
+};
+
+window.submitRestockInventory = async () => {
+  const id = document.getElementById("restockItemId").value;
+  const item = inventoryCache.find(x => x.id === id);
+  const amount = Number(document.getElementById("restockAmountInput").value || 0);
+  const note = document.getElementById("restockNoteInput").value.trim() || "手動進貨補庫存";
+
+  if(!item || amount <= 0) { alert("請輸入大於 0 的正確補貨數量！"); return; }
+
+  const newStock = Number(item.current_stock || 0) + amount;
+  await updateDoc(doc(db, "inventory", id), {
+    current_stock: newStock,
+    updated_at: new Date().toISOString()
+  });
+
+  await addDoc(collection(db, "inventory_logs"), {
+    inv_id: id,
+    inv_name: item.name,
+    type: "inbound",
+    change_amount: amount,
+    after_stock: newStock,
+    unit: item.unit || "",
+    note,
+    operator: cafeProfile.username || "櫃檯人員",
+    created_at: new Date().toISOString()
+  });
+
+  alert("補貨入庫完成！");
+  document.getElementById("invRestockModalBg").style.display = "none";
+  await window.loadInventoryData();
+};
+
+window.submitInventoryLoss = async () => {
+  const id = document.getElementById("invLossSelect").value;
+  const item = inventoryCache.find(x => x.id === id);
+  const amount = Number(document.getElementById("invLossAmount").value || 0);
+  const reason = document.getElementById("invLossReason").value;
+  const note = document.getElementById("invLossNote").value.trim();
+
+  if(!item) { alert("請選擇要登記的原物料！"); return; }
+  if(amount <= 0) { alert("請輸入大於 0 的扣除數量！"); return; }
+
+  const current = Number(item.current_stock || 0);
+  const newStock = Math.max(0, current - amount);
+
+  await updateDoc(doc(db, "inventory", id), {
+    current_stock: newStock,
+    updated_at: new Date().toISOString()
+  });
+
+  await addDoc(collection(db, "inventory_logs"), {
+    inv_id: id,
+    inv_name: item.name,
+    type: "waste",
+    change_amount: -amount,
+    after_stock: newStock,
+    unit: item.unit || "",
+    note: `耗損登記: ${reason} ${note ? `(${note})` : ''}`,
+    operator: cafeProfile.username || "櫃檯人員",
+    created_at: new Date().toISOString()
+  });
+
+  alert("耗損登記完成，已自庫存扣除！");
+  document.getElementById("invLossAmount").value = "";
+  document.getElementById("invLossNote").value = "";
+  await window.loadInventoryData();
+  window.showInvSubtab('stock', document.querySelectorAll(".inv-subtab")[0]);
+};
+
+window.loadInventoryLogs = async () => {
+  const tbody = document.getElementById("invLogsTableBody");
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#aaa; padding:18px;">正在撈取異動流水帳...</td></tr>`;
+
+  try {
+    const snap = await getDocs(query(collection(db, "inventory_logs"), orderBy("created_at", "desc")));
+    if(snap.empty) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#aaa; padding:18px;">目前尚無任何庫存異動紀錄</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = "";
+    snap.forEach(d => {
+      const log = d.data();
+      const isPlus = Number(log.change_amount || 0) > 0;
+      const typeMap = { "inbound": "進貨入庫", "waste": "耗損報廢", "sales": "銷售扣料", "initial": "初始建檔" };
+      
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${formatLocalTime(log.created_at)}</td>
+        <td style="font-weight:700;">${log.inv_name || ""}</td>
+        <td><span class="inv-tag" style="margin:0;">${typeMap[log.type] || log.type}</span></td>
+        <td style="font-weight:700; color:${isPlus ? '#3f7f47' : '#c86b62'};">${isPlus ? `+${log.change_amount}` : log.change_amount} ${log.unit || ""}</td>
+        <td><b>${log.after_stock}</b> ${log.unit || ""}</td>
+        <td style="color:#666;">${log.note || ""}</td>
+        <td>${log.operator || "系統"}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#c86b62; padding:18px;">讀取日誌失敗，請檢查網路連線</td></tr>`;
+  }
+};
+
+window.deleteInventoryItem = async (id) => {
+  if(!confirm("確定要將此原物料從庫存中永久刪除嗎？")) return;
+  await deleteDoc(doc(db, "inventory", id));
+  alert("已成功刪除！");
+  await window.loadInventoryData();
+};
 </script>
 </body>
 </html>
