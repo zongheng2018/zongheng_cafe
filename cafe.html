@@ -17,8 +17,8 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.76);
 .logout,.sound-btn{border:1px solid #c9c0b7;background:white;color:#6d6258;border-radius:10px;padding:9px 14px;font-weight:800}
 .sound-btn.on{background:#6b8b61;color:white;border-color:#6b8b61}
 .container{max-width:1180px;margin:22px auto;padding:0 16px 40px}
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
-.tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06);cursor:pointer}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px}
+.tab{border:none;background:white;color:#7a6b60;border-radius:16px;padding:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.06);cursor:pointer;position:relative}
 .tab.active{background:linear-gradient(to bottom,#bcaea1,#9c8e81);color:white}
 .card{background:rgba(255,255,255,.92);border:1px solid rgba(230,224,218,.8);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
 
@@ -99,12 +99,33 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 
 .recipe-row{display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;align-items:center;margin-top:8px;background:white;padding:8px 12px;border-radius:10px;border:1px solid #eedfd3}
 
+/* 櫃台通訊中心樣式 */
+.chat-tab-badge{position:absolute;top:6px;right:6px;background:#c86b62;color:white;font-size:11px;font-weight:900;padding:2px 6px;border-radius:999px;display:none}
+.chat-center-grid{display:grid;grid-template-columns:300px 1fr;gap:16px;height:620px}
+.chat-room-list{overflow-y:auto;background:white;border-radius:16px;border:1px solid #eee5dd;padding:8px}
+.chat-room-item{padding:12px;border-radius:12px;margin-bottom:6px;cursor:pointer;background:#faf8f5;border:1px solid #eee5dd;display:flex;justify-content:space-between;align-items:center}
+.chat-room-item.active{background:#9c8e81;color:white;border-color:#9c8e81}
+.chat-room-item.active .chat-room-sub{color:#f5f1eb}
+.chat-room-sub{font-size:12px;color:#888;margin-top:2px}
+.chat-main-window{display:flex;flex-direction:column;background:white;border-radius:16px;border:1px solid #eee5dd;overflow:hidden}
+.chat-main-head{height:54px;background:#f8f5f1;border-bottom:1px solid #eee5dd;padding:0 16px;display:flex;align-items:center;justify-content:space-between;font-weight:900;color:#6d6258}
+.chat-main-msgs{flex:1;padding:16px;overflow-y:auto;background:#faf8f5;display:flex;flex-direction:column;gap:10px}
+.chat-msg-row{display:flex;flex-direction:column;max-width:75%}
+.chat-msg-row.me{align-self:flex-end;align-items:flex-end}
+.chat-msg-row.other{align-self:flex-start;align-items:flex-start}
+.chat-bubble{padding:9px 14px;border-radius:14px;font-size:14.5px;line-height:1.5;word-break:break-all}
+.chat-msg-row.me .chat-bubble{background:#6d6258;color:white;border-bottom-right-radius:2px}
+.chat-msg-row.other .chat-bubble{background:#eee7df;color:#4a433d;border-bottom-left-radius:2px}
+.chat-msg-time{font-size:11px;color:#a89f96;margin-top:4px;padding:0 4px}
+.chat-main-input-row{padding:12px;background:white;border-top:1px solid #eee5dd;display:flex;gap:10px}
+
 @media print {
   body * { visibility: hidden; }
   #printKitchenReceiptContainer, #printKitchenReceiptContainer * { visibility: visible; }
   #printKitchenReceiptContainer { position: absolute; left: 0; top: 0; width: 79mm; font-family: monospace; color: #000; line-height: 1.4; background: #fff; padding: 0; margin: 0; }
   .receipt-break-page { page-break-after: always; }
 }
+@media(max-width:768px){.chat-center-grid{grid-template-columns:1fr;height:auto}.tabs{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 
@@ -126,6 +147,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     <button class="tab" id="tabMenuLink" onclick="window.showTab('menu',this)">菜單管理</button>
     <button class="tab" id="tabCounterLink" onclick="window.showTab('counter',this)">代客點餐</button>
     <button class="tab" id="tabInventoryLink" onclick="window.showTab('inventory',this)">庫存管理</button>
+    <button class="tab" id="tabChatLink" onclick="window.showTab('chat',this)">通訊中心<span class="chat-tab-badge" id="chatTotalUnreadBadge">0</span></button>
     <button class="tab" id="tabSettingsLink" onclick="window.showTab('settings',this)">系統設定</button>
   </div>
 
@@ -240,7 +262,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <button class="inv-subtab" onclick="window.showInvSubtab('logs', this)">異動流水帳</button>
       </div>
 
-      <!-- 子頁面 1: 即時庫存總覽 -->
       <div id="invStockView">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
           <input id="invSearchInput" placeholder="搜尋原物料或分類..." oninput="window.renderInventoryGrid()" style="max-width:260px; background:#fff; border:1px solid #ddd5cc; padding:10px 14px;">
@@ -252,7 +273,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         <div id="inventoryGridArea" class="inv-grid">讀取庫存中...</div>
       </div>
 
-      <!-- 子頁面 2: 新增原物料 -->
       <div id="invCreateView" class="hidden">
         <div class="form-grid">
           <input id="invAddName" placeholder="原物料名稱 (例如：全脂鮮奶)">
@@ -266,7 +286,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         </div>
       </div>
 
-      <!-- 子頁面 3: 耗損與報廢登記 -->
       <div id="invLossView" class="hidden">
         <div class="form-grid">
           <select id="invLossSelect"><option value="">選擇要登記耗損的原物料</option></select>
@@ -285,7 +304,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
         </div>
       </div>
 
-      <!-- 子頁面 4: 異動流水帳 -->
       <div id="invLogsView" class="hidden">
         <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
           <button class="btn primary" onclick="window.exportInventoryLogsCSV()">匯出異動流水帳 (CSV)</button>
@@ -309,7 +327,34 @@ textarea{height:86px;resize:none;grid-column:1/-1}
           </table>
         </div>
       </div>
+    </div>
+  </section>
 
+  <!-- 通訊中心 (全新整合) -->
+  <section id="chatTab" class="hidden">
+    <div class="card">
+      <div class="section-title">住戶即時通訊中心</div>
+      <div class="chat-center-grid">
+        <div class="chat-room-list">
+          <div style="display:flex; gap:6px; margin-bottom:10px;">
+            <input id="searchResidentChatUid" placeholder="搜尋戶號 (如 A001)..." style="font-size:13.5px; padding:9px 12px; background:#fff; border:1px solid #ddd5cc;">
+            <button class="btn primary" style="padding:9px 12px; min-width:auto;" onclick="window.searchAndOpenChat()">對話</button>
+          </div>
+          <div id="chatActiveRoomsContainer">載入對話清單中...</div>
+        </div>
+        <div class="chat-main-window">
+          <div class="chat-main-head">
+            <span id="currentChatTargetTitle">請從左側選擇或搜尋住戶對話</span>
+          </div>
+          <div class="chat-main-msgs" id="counterChatMessagesArea">
+            <div style="text-align:center; color:#aaa; margin-top:40px;">尚未選擇任何對話</div>
+          </div>
+          <div class="chat-main-input-row" id="counterChatInputBar" style="display:none;">
+            <input id="counterChatInputText" placeholder="輸入要傳送給住戶的訊息..." style="flex:1;" onkeydown="if(event.key==='Enter') window.sendCounterChatMessage()">
+            <button class="btn primary" onclick="window.sendCounterChatMessage()">送出</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -449,7 +494,6 @@ textarea{height:86px;resize:none;grid-column:1/-1}
       <textarea id="editNote" placeholder="品項備註"></textarea>
     </div>
 
-    <!-- 編輯配方 BOM -->
     <div class="option-editor" style="margin-top:14px;">
       <div class="option-title">扣料配方設定 (點餐自動扣除原料)</div>
       <div id="editRecipeList"></div>
@@ -504,6 +548,10 @@ let menuSearchKeyword = "";
 let inventoryCache = [];
 let inventoryLogsCache = [];
 
+let activeChatResidentUid = null;
+let unsubscribeChatMessages = null;
+let unsubscribeAllChatsSummary = null;
+
 const staticSeats = [
   "A1", "A2", "A3", "A4", 
   "B1", "B2", "B3", "B4", "B5", "B6", "7", "B8", 
@@ -527,6 +575,7 @@ onAuthStateChanged(auth, async user => {
   try { listenSettings(); } catch(e){}
   try { listenOrders(); } catch(e){}
   try { listenBroadcastSettings(); } catch(e){}
+  try { listenAllChatRooms(); } catch(e){}
   
   await loadMenu();
   loadStaticSeatsForCounter();
@@ -538,6 +587,7 @@ window.showTab=(tab,btn)=>{
   document.getElementById("menuTab").classList.add("hidden"); 
   document.getElementById("counterTab").classList.add("hidden"); 
   document.getElementById("inventoryTab").classList.add("hidden");
+  document.getElementById("chatTab").classList.add("hidden");
   document.getElementById("settingsTab").classList.add("hidden");
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); btn.classList.add("active");
   document.getElementById(tab+"Tab").classList.remove("hidden"); 
@@ -557,9 +607,19 @@ function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
   try {
     const d = new Date(isoString);
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   } catch(e) {
     return "時間格式錯誤";
+  }
+}
+
+function formatChatTime(isoString) {
+  if(!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  } catch(e) {
+    return "";
   }
 }
 
@@ -610,6 +670,7 @@ function listenOrders(){
         btnHtml = `
           <div class="btn-row">
             <button class="btn primary" onclick="window.acceptAndPrintOrder('${d.id}')">接單扣料</button>
+            <button class="btn light" onclick="window.directChatFromOrder('${o.uid}')">聯繫住戶</button>
             <button class="btn light" onclick="window.openModifyOrderByIndex(${idx})">編輯訂單</button>
             <button class="btn danger" onclick="window.executeCancelOrderById('${d.id}')">取消退點</button>
           </div>`;
@@ -617,6 +678,7 @@ function listenOrders(){
         btnHtml = `
           <div class="btn-row">
             <button class="btn done" onclick="window.updateOrder('${d.id}','已完成')">完成</button>
+            <button class="btn light" onclick="window.directChatFromOrder('${o.uid}')">聯繫住戶</button>
             <button class="btn light" onclick="window.openModifyOrderByIndex(${idx})">編輯訂單</button>
             <button class="btn danger" onclick="window.executeCancelOrderById('${d.id}')">取消退點</button>
           </div>`;
@@ -637,6 +699,160 @@ function listenOrders(){
     isInitialLoad = false;
   });
 }
+
+// ==========================================
+// 櫃台通訊中心核心邏輯
+// ==========================================
+function listenAllChatRooms() {
+  if (unsubscribeAllChatsSummary) unsubscribeAllChatsSummary();
+  const q = query(collection(db, "chat_messages"), orderBy("created_at", "desc"));
+  
+  unsubscribeAllChatsSummary = onSnapshot(q, snap => {
+    let roomsMap = {};
+    let totalUnread = 0;
+
+    snap.forEach(d => {
+      const msg = d.data();
+      const uid = msg.resident_uid;
+      if (!uid) return;
+
+      if (!roomsMap[uid]) {
+        roomsMap[uid] = {
+          resident_uid: uid,
+          last_message: msg.text,
+          last_time: msg.created_at,
+          unread_count: 0
+        };
+      }
+
+      if (msg.sender_role === "resident" && msg.is_read === false) {
+        roomsMap[uid].unread_count++;
+        totalUnread++;
+      }
+    });
+
+    const totalBadge = document.getElementById("chatTotalUnreadBadge");
+    if (totalBadge) {
+      if (totalUnread > 0) {
+        totalBadge.innerText = totalUnread;
+        totalBadge.style.display = "inline-block";
+      } else {
+        totalBadge.style.display = "none";
+      }
+    }
+
+    renderActiveChatRoomsList(Object.values(roomsMap));
+  });
+}
+
+function renderActiveChatRoomsList(rooms) {
+  const container = document.getElementById("chatActiveRoomsContainer");
+  if (!container) return;
+
+  if (rooms.length === 0) {
+    container.innerHTML = `<div style="text-align:center; color:#aaa; padding:20px 0;">尚無任何對話紀錄</div>`;
+    return;
+  }
+
+  container.innerHTML = "";
+  rooms.forEach(r => {
+    const item = document.createElement("div");
+    item.className = `chat-room-item ${activeChatResidentUid === r.resident_uid ? 'active' : ''}`;
+    item.onclick = () => window.openResidentChatRoom(r.resident_uid);
+    item.innerHTML = `
+      <div>
+        <div style="font-weight:900;">住戶 ${r.resident_uid}</div>
+        <div class="chat-room-sub">${r.last_message || ''}</div>
+      </div>
+      <div>
+        ${r.unread_count > 0 ? `<span style="background:#c86b62; color:white; font-size:11px; font-weight:bold; padding:2px 7px; border-radius:999px;">${r.unread_count}</span>` : ''}
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+window.searchAndOpenChat = () => {
+  const input = document.getElementById("searchResidentChatUid");
+  const uid = input.value.trim().toUpperCase();
+  if (!uid) { alert("請輸入住戶戶號！"); return; }
+  window.openResidentChatRoom(uid);
+};
+
+window.directChatFromOrder = (uid) => {
+  if (!uid) return;
+  const tabBtn = document.getElementById("tabChatLink");
+  window.showTab('chat', tabBtn);
+  window.openResidentChatRoom(uid);
+};
+
+window.openResidentChatRoom = async (uid) => {
+  activeChatResidentUid = uid;
+  document.getElementById("currentChatTargetTitle").innerText = `與住戶 ${uid} 對話中`;
+  document.getElementById("counterChatInputBar").style.display = "flex";
+
+  const container = document.getElementById("chatActiveRoomsContainer");
+  if (container) {
+    Array.from(container.children).forEach(el => {
+      if (el.innerText.includes(uid)) el.classList.add("active");
+      else el.classList.remove("active");
+    });
+  }
+
+  if (unsubscribeChatMessages) unsubscribeChatMessages();
+  const roomId = `chat_${uid}`;
+  const q = query(collection(db, "chat_messages"), where("room_id", "==", roomId), orderBy("created_at", "asc"));
+
+  unsubscribeChatMessages = onSnapshot(q, snap => {
+    const area = document.getElementById("counterChatMessagesArea");
+    if (!area) return;
+
+    if (snap.empty) {
+      area.innerHTML = `<div style="text-align:center; color:#aaa; margin-top:40px;">尚無與 ${uid} 住戶的對話紀錄，您可以直接在下方輸入訊息發送。</div>`;
+      return;
+    }
+
+    let html = "";
+    snap.forEach(d => {
+      const msg = d.data();
+      const isCafe = msg.sender_role === "cafe";
+
+      if (!isCafe && msg.is_read === false) {
+        updateDoc(doc(db, "chat_messages", d.id), { is_read: true });
+      }
+
+      html += `
+        <div class="chat-msg-row ${isCafe ? 'me' : 'other'}">
+          <div class="chat-bubble">${msg.text}</div>
+          <div class="chat-msg-time">${formatChatTime(msg.created_at)}</div>
+        </div>
+      `;
+    });
+
+    area.innerHTML = html;
+    area.scrollTop = area.scrollHeight;
+  });
+};
+
+window.sendCounterChatMessage = async () => {
+  if (!activeChatResidentUid) { alert("請先選擇住戶！"); return; }
+  const input = document.getElementById("counterChatInputText");
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = "";
+  const roomId = `chat_${activeChatResidentUid}`;
+
+  await addDoc(collection(db, "chat_messages"), {
+    room_id: roomId,
+    resident_uid: activeChatResidentUid,
+    sender_role: "cafe",
+    sender_name: "咖啡廳吧台",
+    text: text,
+    is_read: false,
+    created_at: new Date().toISOString()
+  });
+};
 
 window.openModifyOrderByIndex = (index) => {
   const order = globalOrdersCache[index];
