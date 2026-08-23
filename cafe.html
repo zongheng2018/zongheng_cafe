@@ -330,7 +330,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
     </div>
   </section>
 
-  <!-- 通訊中心 (全新整合) -->
+  <!-- 通訊中心 -->
   <section id="chatTab" class="hidden">
     <div class="card">
       <div class="section-title">住戶即時通訊中心</div>
@@ -528,7 +528,7 @@ textarea{height:86px;resize:none;grid-column:1/-1}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, setDoc, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, setDoc, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
 const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app);
@@ -646,7 +646,7 @@ function getBadgeStatusClass(status) {
 
 function listenOrders(){
   if(ordersUnsubscribe) ordersUnsubscribe();
-  ordersUnsubscribe=onSnapshot(query(collection(db,"orders"),orderBy("created_at","desc")),snap=>{
+  ordersUnsubscribe=onSnapshot(collection(db,"orders"),snap=>{
     const waitingBox = document.getElementById("waitingOrders");
     const makingBox = document.getElementById("makingOrders");
     const doneBox = document.getElementById("doneOrders");
@@ -656,43 +656,45 @@ function listenOrders(){
     if(snap.empty) { isInitialLoad = false; return; }
     globalOrdersCache = [];
     
-    let hasNewIncomingOrder = false;
-    let idx = 0;
+    let rawOrders = [];
+    snap.forEach(d => {
+      rawOrders.push({ id: d.id, ...d.data() });
+    });
+    rawOrders.sort((a,b) => (b.created_at || "").localeCompare(a.created_at || ""));
+    globalOrdersCache = rawOrders;
 
-    snap.forEach(d=>{
-      const o=d.data(); o.id = d.id; 
-      globalOrdersCache.push(o);
+    let hasNewIncomingOrder = false;
+
+    rawOrders.forEach((o, idx)=>{
       const status=o.status||"等待接單";
-      if(status === "等待接單" && !knownOrderIds.has(d.id)){ if(!isInitialLoad){ hasNewIncomingOrder = true; } knownOrderIds.add(d.id); } else { knownOrderIds.add(d.id); }
+      if(status === "等待接單" && !knownOrderIds.has(o.id)){ if(!isInitialLoad){ hasNewIncomingOrder = true; } knownOrderIds.add(o.id); } else { knownOrderIds.add(o.id); }
       
       let btnHtml = "";
       if (status === "等待接單") {
         btnHtml = `
           <div class="btn-row">
-            <button class="btn primary" onclick="window.acceptAndPrintOrder('${d.id}')">接單扣料</button>
+            <button class="btn primary" onclick="window.acceptAndPrintOrder('${o.id}')">接單扣料</button>
             <button class="btn light" onclick="window.directChatFromOrder('${o.uid}')">聯繫住戶</button>
             <button class="btn light" onclick="window.openModifyOrderByIndex(${idx})">編輯訂單</button>
-            <button class="btn danger" onclick="window.executeCancelOrderById('${d.id}')">取消退點</button>
+            <button class="btn danger" onclick="window.executeCancelOrderById('${o.id}')">取消退點</button>
           </div>`;
       } else if (status === "製作中") {
         btnHtml = `
           <div class="btn-row">
-            <button class="btn done" onclick="window.updateOrder('${d.id}','已完成')">完成</button>
+            <button class="btn done" onclick="window.updateOrder('${o.id}','已完成')">完成</button>
             <button class="btn light" onclick="window.directChatFromOrder('${o.uid}')">聯繫住戶</button>
             <button class="btn light" onclick="window.openModifyOrderByIndex(${idx})">編輯訂單</button>
-            <button class="btn danger" onclick="window.executeCancelOrderById('${d.id}')">取消退點</button>
+            <button class="btn danger" onclick="window.executeCancelOrderById('${o.id}')">取消退點</button>
           </div>`;
       }
       
       const timeHtml = `<div class="meta" style="color:#8a7e73; font-weight:700;">填寫時間：${formatLocalTime(o.created_at)}</div>`;
       const div=document.createElement("div"); div.className="order-card";
-      div.innerHTML = `<div class="order-head"><div><div class="order-id">${o.order_id||d.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
+      div.innerHTML = `<div class="order-head"><div><div class="order-id">${o.order_id||o.id}</div>${timeHtml}<div class="meta">住戶：${o.uid||""}</div><div class="meta">${o.dining_type||""}${o.seat?`｜座位：${o.seat}`:""}</div><div class="meta">金額：${o.total||0} 點</div></div><div class="badge ${getBadgeStatusClass(status)}">${status}</div></div>${formatItems(o.items||[])}${btnHtml}`;
       
       if(status === "等待接單") waitingBox.appendChild(div); 
       else if(status === "製作中") makingBox.appendChild(div); 
       else doneBox.appendChild(div);
-      
-      idx++;
     });
 
     if(hasNewIncomingOrder){ playPremiumCrystalSound(); }
@@ -700,19 +702,20 @@ function listenOrders(){
   });
 }
 
-// ==========================================
-// 櫃台通訊中心核心邏輯
-// ==========================================
 function listenAllChatRooms() {
   if (unsubscribeAllChatsSummary) unsubscribeAllChatsSummary();
-  const q = query(collection(db, "chat_messages"), orderBy("created_at", "desc"));
   
-  unsubscribeAllChatsSummary = onSnapshot(q, snap => {
+  unsubscribeAllChatsSummary = onSnapshot(collection(db, "chat_messages"), snap => {
     let roomsMap = {};
     let totalUnread = 0;
+    let allMsgs = [];
 
     snap.forEach(d => {
-      const msg = d.data();
+      allMsgs.push(d.data());
+    });
+    allMsgs.sort((a,b) => (b.created_at || "").localeCompare(a.created_at || ""));
+
+    allMsgs.forEach(msg => {
       const uid = msg.resident_uid;
       if (!uid) return;
 
@@ -801,7 +804,7 @@ window.openResidentChatRoom = async (uid) => {
 
   if (unsubscribeChatMessages) unsubscribeChatMessages();
   const roomId = `chat_${uid}`;
-  const q = query(collection(db, "chat_messages"), where("room_id", "==", roomId), orderBy("created_at", "asc"));
+  const q = query(collection(db, "chat_messages"), where("room_id", "==", roomId));
 
   unsubscribeChatMessages = onSnapshot(q, snap => {
     const area = document.getElementById("counterChatMessagesArea");
@@ -812,13 +815,17 @@ window.openResidentChatRoom = async (uid) => {
       return;
     }
 
-    let html = "";
+    let msgs = [];
     snap.forEach(d => {
-      const msg = d.data();
-      const isCafe = msg.sender_role === "cafe";
+      msgs.push({ id: d.id, ...d.data() });
+    });
+    msgs.sort((a,b) => (a.created_at || "").localeCompare(b.created_at || ""));
 
+    let html = "";
+    msgs.forEach(msg => {
+      const isCafe = msg.sender_role === "cafe";
       if (!isCafe && msg.is_read === false) {
-        updateDoc(doc(db, "chat_messages", d.id), { is_read: true });
+        updateDoc(doc(db, "chat_messages", msg.id), { is_read: true });
       }
 
       html += `
@@ -1028,7 +1035,7 @@ window.printKitchenReceipt = (order, titleType, customContentHtml = "", needSign
           <div style="color:#666;">時間：${formatLocalTime(order.created_at || new Date().toISOString())}</div>
           <div style="font-size:14px; font-weight:bold; margin-top:2px;">位置：${order.dining_type === "內用" ? (order.seat || "未填") : "外帶"}</div>
         </div>
-        <div style="text-align:center; margin:4px 0;">------------------------</div>
+        <div style="text-align:margin:4px 0;">------------------------</div>
         
         ${customContentHtml ? customContentHtml : `
           <div style="display:flex; justify-content:space-between; font-weight:bold; padding:0 4px;"><span>餐點品項</span><span>數量</span></div>
@@ -1984,17 +1991,22 @@ window.loadInventoryLogs = async () => {
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#aaa; padding:18px;">正在撈取異動流水帳...</td></tr>`;
 
   try {
-    const snap = await getDocs(query(collection(db, "inventory_logs"), orderBy("created_at", "desc")));
+    const snap = await getDocs(collection(db, "inventory_logs"));
     inventoryLogsCache = [];
     if(snap.empty) {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#aaa; padding:18px;">目前尚無任何庫存異動紀錄</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = "";
+    let logs = [];
     snap.forEach(d => {
-      const log = d.data();
-      inventoryLogsCache.push(log);
+      logs.push({ id: d.id, ...d.data() });
+    });
+    logs.sort((a,b) => (b.created_at || "").localeCompare(a.created_at || ""));
+    inventoryLogsCache = logs;
+
+    tbody.innerHTML = "";
+    logs.forEach(log => {
       const isPlus = Number(log.change_amount || 0) > 0;
       const typeMap = { "inbound": "進貨入庫", "waste": "耗損報廢", "sales": "銷售扣料", "initial": "初始建檔", "revert": "取消回補" };
       
