@@ -74,6 +74,27 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
 .eng-btn.close{background:#f5f1eb;color:#6d6258}
 .eng-btn.never{background:#6d6258;color:white}
 
+/* 站內即時通訊樣式 */
+.chat-float-btn{position:fixed;right:18px;bottom:92px;width:56px;height:56px;border-radius:50%;background:#6d6258;color:white;border:none;box-shadow:0 6px 20px rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:80}
+.chat-float-btn svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2.2}
+.chat-badge{position:absolute;top:-2px;right:-2px;background:#c86b62;color:white;font-size:11px;font-weight:900;padding:2px 6px;border-radius:999px;border:2px solid white;display:none}
+
+.chat-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;z-index:150}
+.chat-modal-card{background:white;width:100%;max-width:560px;height:78vh;border-top-left-radius:20px;border-top-right-radius:20px;display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(0,0,0,0.18);overflow:hidden}
+.chat-header{height:60px;background:#f8f5f1;border-bottom:1px solid #eee5dd;padding:0 18px;display:flex;align-items:center;justify-content:space-between}
+.chat-header-title{font-size:17px;font-weight:900;color:#6d6258}
+.chat-body{flex:1;padding:16px;overflow-y:auto;background:#faf8f5;display:flex;flex-direction:column;gap:12px}
+.chat-msg-row{display:flex;flex-direction:column;max-width:78%}
+.chat-msg-row.me{align-self:flex-end;align-items:flex-end}
+.chat-msg-row.other{align-self:flex-start;align-items:flex-start}
+.chat-bubble{padding:10px 14px;border-radius:14px;font-size:15px;line-height:1.5;word-break:break-all}
+.chat-msg-row.me .chat-bubble{background:#9c8e81;color:white;border-bottom-right-radius:2px}
+.chat-msg-row.other .chat-bubble{background:#eee7df;color:#4a433d;border-bottom-left-radius:2px}
+.chat-msg-time{font-size:11px;color:#a89f96;margin-top:4px;padding:0 4px}
+.chat-input-box{padding:12px 14px;background:white;border-top:1px solid #eedfd3;display:flex;gap:10px;align-items:center}
+.chat-input{flex:1;border:none;background:#f5f1eb;border-radius:12px;padding:11px 14px;font-size:15px;outline:none;color:#5f574f}
+.chat-send-btn{border:none;background:#6d6258;color:white;border-radius:12px;padding:10px 18px;font-weight:800;font-size:15px;cursor:pointer}
+
 @media(max-width:560px){.point-grid{grid-template-columns:1fr}.section-title{font-size:24px}.announcement{font-size:16px}}
 </style>
 </head>
@@ -110,6 +131,29 @@ body::before{content:"";position:fixed;inset:0;background:rgba(255,255,255,.72);
       <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
       <div class="menu-text">個人設定</div>
     </button>
+  </div>
+</div>
+
+<!-- 懸浮聯繫吧台按鈕 -->
+<button class="chat-float-btn" id="chatFloatBtn" onclick="window.openChatDrawer()">
+  <span class="chat-badge" id="chatUnreadBadge">0</span>
+  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+</button>
+
+<!-- 站內通訊抽屜視窗 -->
+<div class="chat-modal-bg" id="chatModalBg" onclick="if(event.target===this) window.closeChatDrawer()">
+  <div class="chat-modal-card">
+    <div class="chat-header">
+      <div class="chat-header-title">昭揚縱橫 咖啡廳吧台</div>
+      <button class="logout" style="padding:6px 12px; font-size:13px;" onclick="window.closeChatDrawer()">關閉</button>
+    </div>
+    <div class="chat-body" id="chatMessageList">
+      <div style="text-align:center; color:#aaa; padding:20px 0;">正在載入對話紀錄...</div>
+    </div>
+    <div class="chat-input-box">
+      <input class="chat-input" id="chatTextInput" placeholder="輸入訊息..." onkeydown="if(event.key==='Enter') window.sendChatMessage()">
+      <button class="chat-send-btn" onclick="window.sendChatMessage()">送出</button>
+    </div>
   </div>
 </div>
 
@@ -157,7 +201,7 @@ import {
   getAuth,onAuthStateChanged,signOut,updatePassword,EmailAuthProvider,reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore,collection,getDocs,query,where,updateDoc,doc,onSnapshot,orderBy,limit
+  getFirestore,collection,getDocs,query,where,updateDoc,doc,onSnapshot,orderBy,limit,addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyDp5hZbAyHSn34UzJLWtrAAiAb2zROU6mU",authDomain:"zonghengcafe.firebaseapp.com",projectId:"zonghengcafe",storageBucket:"zonghengcafe.firebasestorage.app",messagingSenderId:"207027108121",appId:"1:207027108121:web:e7a39e19982ed77f9aed88",measurementId:"G-8ZE4SE2T7T"};
@@ -174,10 +218,12 @@ const content=document.getElementById("content");
 let unsubscribeLatestOrder = null;
 let unsubscribeAnnouncements = null;
 let unsubscribeEngineerBroadcast = null;
+let unsubscribeChat = null;
 
 let selectedFilterMonth = ""; 
 let lastKnownStatus = null;
 let currentBroadcastTimeTag = "";
+let isChatOpen = false;
 
 function formatLocalTime(isoString) {
   if(!isoString) return "未知時間";
@@ -186,6 +232,16 @@ function formatLocalTime(isoString) {
     return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
   } catch(e) {
     return "時間格式錯誤";
+  }
+}
+
+function formatChatTime(isoString) {
+  if(!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  } catch(e) {
+    return "";
   }
 }
 
@@ -200,6 +256,7 @@ onAuthStateChanged(auth,async user=>{
   await loadAccountInfo();
   checkNotificationPermission();
   listenEngineerBroadcast();
+  listenResidentChat();
   document.getElementById("loading").style.display="none";
   appDiv.style.display="block";
   await showNotice();
@@ -229,6 +286,103 @@ async function loadAccountInfo(){
     localStorage.setItem("zh_user", JSON.stringify(profile));
   }
 }
+
+// ==========================================
+// 站內即時通訊核心邏輯 (住戶端)
+// ==========================================
+function listenResidentChat() {
+  if(unsubscribeChat) unsubscribeChat();
+  const roomId = `chat_${profile.username}`;
+  const q = query(
+    collection(db, "chat_messages"),
+    where("room_id", "==", roomId),
+    orderBy("created_at", "asc")
+  );
+
+  unsubscribeChat = onSnapshot(q, snap => {
+    let unreadCount = 0;
+    const msgListEl = document.getElementById("chatMessageList");
+    let html = "";
+
+    if(snap.empty) {
+      html = `<div style="text-align:center; color:#aaa; padding:24px 0;">尚無對話紀錄，您可以直接在下方輸入訊息聯繫咖啡廳吧台。</div>`;
+    } else {
+      snap.forEach(d => {
+        const msg = d.data();
+        const isMe = msg.sender_role === "resident";
+        if (!isMe && msg.is_read === false) {
+          unreadCount++;
+          if (isChatOpen) {
+            updateDoc(doc(db, "chat_messages", d.id), { is_read: true });
+          }
+        }
+        html += `
+          <div class="chat-msg-row ${isMe ? 'me' : 'other'}">
+            <div class="chat-bubble">${msg.text}</div>
+            <div class="chat-msg-time">${formatChatTime(msg.created_at)}</div>
+          </div>
+        `;
+      });
+    }
+
+    if(msgListEl) {
+      msgListEl.innerHTML = html;
+      msgListEl.scrollTop = msgListEl.scrollHeight;
+    }
+
+    const badge = document.getElementById("chatUnreadBadge");
+    if (badge) {
+      if (unreadCount > 0 && !isChatOpen) {
+        badge.innerText = unreadCount;
+        badge.style.display = "block";
+      } else {
+        badge.style.display = "none";
+      }
+    }
+  }, err => {
+    console.error("監聽通訊失敗:", err);
+  });
+}
+
+window.openChatDrawer = async () => {
+  isChatOpen = true;
+  document.getElementById("chatModalBg").style.display = "flex";
+  document.getElementById("chatUnreadBadge").style.display = "none";
+
+  // 將所有未讀的吧台訊息標記為已讀
+  const roomId = `chat_${profile.username}`;
+  const snap = await getDocs(query(collection(db, "chat_messages"), where("room_id", "==", roomId), where("sender_role", "==", "cafe"), where("is_read", "==", false)));
+  snap.forEach(d => {
+    updateDoc(doc(db, "chat_messages", d.id), { is_read: true });
+  });
+
+  const msgListEl = document.getElementById("chatMessageList");
+  if(msgListEl) msgListEl.scrollTop = msgListEl.scrollHeight;
+};
+
+window.closeChatDrawer = () => {
+  isChatOpen = false;
+  document.getElementById("chatModalBg").style.display = "none";
+};
+
+window.sendChatMessage = async () => {
+  const input = document.getElementById("chatTextInput");
+  const text = input.value.trim();
+  if(!text) return;
+
+  input.value = "";
+  const roomId = `chat_${profile.username}`;
+
+  await addDoc(collection(db, "chat_messages"), {
+    room_id: roomId,
+    resident_uid: profile.username,
+    sender_role: "resident",
+    sender_name: `${profile.username} 住戶`,
+    text: text,
+    is_read: false,
+    created_at: new Date().toISOString()
+  });
+};
 
 function listenEngineerBroadcast() {
   if(unsubscribeEngineerBroadcast) unsubscribeEngineerBroadcast();
@@ -701,6 +855,7 @@ window.changeResidentPassword=async function(){
 
 document.getElementById("logoutBtn").addEventListener("click",async()=>{
   stopAllSnapshots();
+  if (unsubscribeChat) unsubscribeChat();
   await signOut(auth);
   localStorage.removeItem("zh_user");
   location.href="index.html";
